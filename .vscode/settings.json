@@ -1,0 +1,21 @@
+{
+  // ==== 本项目专属配置（风格类配置已提升为全局） ====
+  // 本项目统一使用 UTF-8（覆盖全局的 GBK）
+  "files.encoding": "utf8",
+
+  // 保存时用 Prettier 自动格式化
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // ESLint 对 Vue/TS 文件生效，保存时自动修复
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // 文件监听排除构建产物目录
+  "files.watcherExclude": {
+    "**/src-tauri/target/**": true,
+    "**/node_modules/**": true
+  },
+  // rust-analyzer 保存时检查
+  "rust-analyzer.checkOnSave": true
+}
