@@ -31,23 +31,26 @@ export interface Assistant {
   updatedAt: string
 }
 
-/** 课程表（ADR-002 5.2 course）。课程是"排班的障碍物"：占用的时间即不可值班时间 */
+/** 课程表（ADR-002 5.2 course，2026-09-11 修订：节次支持非数字标签）。课程是"排班的障碍物"：占用的时间即不可值班时间 */
 export interface Course {
   id?: number
   assistantId: number
-  /** 课程编号，如 10125121047（同编号可因不同班次重复出现） */
+  /** 课程编号，如 10125121047；实验课为批次号如 20261-07741（同编号可因不同班次重复出现） */
   courseNo: string
   courseName: string
   /** 生效周次区间列表，如 [[1,4],[6,17]] 表示第 1~4 周和第 6~17 周有课 */
   weekRanges: [number, number][]
   /** 1 = 周一 … 7 = 周日（约定 1 起始，避免 JS Date 的 0 起始星期歧义） */
   dayOfWeek: number
-  /** 起始节次（含），如 1 表示第一节 */
-  sectionStart: number
-  /** 结束节次（含） */
-  sectionEnd: number
+  /** 节次原文（如 "第三节-中课2"），始终保留用于展示 */
+  sectionText: string
+  /** 数字节次起止；含非数字标签（中课/晚课）时为 null */
+  sectionStart: number | null
+  sectionEnd: number | null
   location?: string
   teacher?: string
+  /** 补充说明，如实验课的实验项目与批次 */
+  note?: string
 }
 
 /** 排班记录（ADR-002 5.2 duty_schedule）。一条 = 某周某天某时段安排了一名助理 */
