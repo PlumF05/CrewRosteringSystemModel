@@ -81,7 +81,8 @@ async function handleSave() {
   // validate() 不通过时抛出校验错误对象，用 try/catch 吞掉即可（界面已红字提示）
   try {
     await formRef.value?.validate()
-  } catch {
+  } catch (e) {
+    console.error("[form] validate 未通过", e)
     return
   }
   saving.value = true
@@ -107,7 +108,8 @@ async function handleSave() {
     emit('saved')
   } catch (e) {
     // 仓储层抛出的业务错误（如并发窗口内学号撞车）在这里兜底展示
-    ElMessage.error(e instanceof Error ? e.message : '保存失败')
+    console.error("[form] 保存异常", e)
+    ElMessage.error(e instanceof Error ? e.message : "保存失败")
   } finally {
     saving.value = false
   }

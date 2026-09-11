@@ -223,8 +223,9 @@ export function parseTimetableWorkbook(data: Uint8Array | ArrayBuffer): Timetabl
   if (!studentNo) problems.push({ text: '未在表头区找到"学生：姓名(学号)"信息', reason: '缺少学生标识，导入时需手动选择归属助理' })
 
   // 4. 未确定时间的课程区（表头之前，"上课时间暂未确定的课程"之后）
-  //    注意：标签与课程内容在同一行（如 A4=标签、D4:I4=内容），不能整行 continue
-  const undetermined: string[] = []
+  //    注意：标签与课程内容在同一行（如 A4=标签、D4:I4=内容），不能整行 continue；
+  //    内容是横向合并单元格，按列展开会重复命中，故按文本去重
+  const undeterminedSet = new Set<string>()
   let inUndetermined = false
   for (let r = dims.s.r; r < headerRow; r++) {
     const a = expanded(r, dims.s.c) ?? ''
@@ -233,9 +234,10 @@ export function parseTimetableWorkbook(data: Uint8Array | ArrayBuffer): Timetabl
     if (!inUndetermined) continue
     for (let c = dims.s.c + 1; c <= dims.e.c; c++) {
       const v = expanded(r, c)
-      if (v && v.trim() && !v.includes('上课时间暂未确定')) undetermined.push(v.trim())
+      if (v && v.trim() && !v.includes('上课时间暂未确定')) undeterminedSet.add(v.trim())
     }
   }
+  const undetermined = [...undeterminedSet]
   for (const u of undetermined) {
     problems.push({ text: u, reason: '该课程上课时间暂未确定，未计入空闲时间计算，请人工确认' })
   }
