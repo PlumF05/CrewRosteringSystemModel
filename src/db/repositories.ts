@@ -70,6 +70,11 @@ export const assistantRepo = {
     return db.assistant.get(id)
   },
 
+  /** 按学号精确查找（表单异步查重用） */
+  findByStudentNo(studentNo: string): Promise<Assistant | undefined> {
+    return db.assistant.where('studentNo').equals(studentNo).first()
+  },
+
   list(): Promise<Assistant[]> {
     return db.assistant.orderBy('name').toArray()
   },
