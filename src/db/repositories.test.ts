@@ -65,7 +65,7 @@ describe('assistantRepo', () => {
   it('删除助理时级联删除其课程', async () => {
     const id = await assistantRepo.add({ ...baseAssistant })
     await courseRepo.replaceForAssistant(id, [
-      { assistantId: id, courseNo: 'C1', courseName: '高数', weekRanges: [[1, 17]], dayOfWeek: 1, sectionStart: 1, sectionEnd: 2 },
+      { assistantId: id, courseNo: 'C1', courseName: '高数', weekRanges: [[1, 17]], dayOfWeek: 1, sectionText: '第一节-第二节', sectionStart: 1, sectionEnd: 2 },
     ])
     expect(await courseRepo.count()).toBe(1)
     await assistantRepo.remove(id)
@@ -79,7 +79,7 @@ describe('courseRepo', () => {
     const id = await assistantRepo.add({ ...baseAssistant })
     const mk = (courseNo: string) => ({
       assistantId: id, courseNo, courseName: `课-${courseNo}`,
-      weekRanges: [[1, 17]] as [number, number][], dayOfWeek: 2, sectionStart: 3, sectionEnd: 5,
+      weekRanges: [[1, 17]] as [number, number][], dayOfWeek: 2, sectionText: '第三节-第五节', sectionStart: 3, sectionEnd: 5,
     })
     await courseRepo.replaceForAssistant(id, [mk('C1'), mk('C2'), mk('C3')])
     await courseRepo.replaceForAssistant(id, [mk('C9')])
