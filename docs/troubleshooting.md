@@ -23,3 +23,10 @@
 - **现象**：`npm run build` 失败在 `vue-tsc` 阶段，报错行号指向编译产物。
 - **解决**：先单独跑 `npx vue-tsc --noEmit` 拿到 .vue 源文件级别的报错行号，再修；不要直接读 vite 打包日志。
 - **教训**：前端构建链分"类型检查（vue-tsc）→ 转译打包（vite）"两层，分别排查。
+
+## T-004 Dexie `delete()` 后实例不会自动重开
+
+- **现象**：单测 `beforeEach` 中 `await db.delete()` 后，首个数据库操作抛 `DatabaseClosedError: Database has been closed`，全部用例连挂。
+- **根因**：原以为 Dexie 实例在 delete 后的下次操作会自动重开（autoOpen），实测（fake-indexeddb 环境，探针验证）delete 后实例保持 closed，autoOpen 不触发。
+- **解决**：`await db.delete()` 之后显式 `await db.open()`。
+- **教训**：对库的行为假设要用最小探针验证（10 行代码），而不是凭印象写 12 个用例再全挂；探针法把 30 分钟排查压缩成 1 次 15ms 的运行。
