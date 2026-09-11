@@ -153,8 +153,6 @@ export const dutyScheduleRepo = {
   },
 }
 
-type NewSnapshot = Omit<ScheduleSnapshot, 'id' | 'createdAt'>
-
 export const scheduleSnapshotRepo = {
   /** 保存快照：对传入数组做深拷贝，保证后续对原数据的修改不影响快照（撤销栈正确性关键） */
   async save(label: string, data: DutySchedule[]): Promise<number> {
