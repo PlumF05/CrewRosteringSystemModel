@@ -51,3 +51,10 @@
 - **根因**：长时间会话中 HMR 多次热替换 + guest 页面缓存，导致"服务端代码 / 页面运行代码 / 输入事件通道"三方不一致。表现为任何单一角度的排查都自相矛盾（编辑按钮好用、删除按钮不好用）。
 - **解决**：完全重启 Vite（注意 git-bash 的 kill 杀不掉 Windows 进程，要用 `taskkill //F //PID`）→ 浏览器新开标签页 → 加临时 console.log 探针确认运行的代码版本 → 全绿。
 - **教训**：① 排查"灵异问题"前先确认三方版本一致（服务器/页面/事件通道）；② `console.log` 探针是判定"代码版本"的最快手段；③ git-bash 下杀 Windows 进程用 taskkill；④ 将 ElMessageBox（命令式服务）替换为声明式 el-dialog 后，确认框行为一致且在该环境下可测——命令式服务在自动化环境中更脆弱。
+
+## T-008 响应式 Proxy 对象写入 IndexedDB 抛 DataCloneError
+
+- **现象**：导入课程确认入库时报 `Failed to execute 'add' on 'IDBObjectStore': [object Array] could not be cloned`。
+- **根因**：解析结果存入 Vue `ref` 后变成响应式 Proxy（深层），IndexedDB 的 structuredClone 不能克隆 Proxy 对象。spread 展开（`{...c}`）只是浅拷贝，嵌套的 `weekRanges` 仍是 Proxy。
+- **解决**：在数据落库边界**逐字段构造纯对象**（含把嵌套数组显式重建），或用 Vue 的 `toRaw()` 后深拷贝。
+- **教训**：① "Vue 状态 ≠ 纯数据"——跨出响应式系统的边界（IndexedDB、fetch body、Web Worker postMessage）必须先脱壳；② 这类错误只在运行时暴露，把落库操作放在仓储层并配集成测试才能尽早拦截。
