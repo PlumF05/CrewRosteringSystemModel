@@ -81,6 +81,7 @@ async function confirmImport() {
         assistantId: targetId,
         courseNo: c.courseNo,
         courseName: c.courseName,
+        kind: c.kind,
         className: c.className,
         weekRanges: c.weekRanges.map(([s, e]) => [s, e] as [number, number]),
         dayOfWeek: c.dayOfWeek,

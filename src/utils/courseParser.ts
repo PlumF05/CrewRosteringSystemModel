@@ -12,11 +12,14 @@
  * 5. "上课时间暂未确定的课程" 区与无法解析的单元格 → 进入 problems，不静默丢弃。
  */
 import * as XLSX from 'xlsx'
+import type { CourseKind } from '../db/schema'
 import { parseWeekList, WeekParseError, type WeekRange } from './weekParser'
 
 export interface ParsedCourse {
   courseNo: string
   courseName: string
+  /** theory=（本）/（研），experiment=（实） */
+  kind: CourseKind
   className?: string
   note?: string
   weekRanges: WeekRange[]
@@ -81,7 +84,7 @@ const TAG_RE = /^[（(](.+?)[)）](.+)$/
 function parseInfoLine(
   text: string,
   source: string,
-): Omit<ParsedCourse, 'courseNo' | 'courseName' | 'className' | 'note' | 'sourceText'> {
+): Omit<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'className' | 'note' | 'sourceText'> {
   const parts = text.replace(/，/g, ',').split(',').map((s) => s.trim()).filter((s) => s.length > 0)
   const dayIdx = parts.findIndex((p) => DAY_RE.test(p))
   if (dayIdx < 0) throw new Error(`缺少星期信息：${source}`)
@@ -100,7 +103,7 @@ function parseInfoLine(
 }
 
 /** 解析条目首行：（本）课程号-课程名[班次] / （实）批次号-课程名-实验项目-第N批次 */
-function parseTitleLine(line: string): Pick<ParsedCourse, 'courseNo' | 'courseName' | 'className' | 'note'> {
+function parseTitleLine(line: string): Pick<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'className' | 'note'> {
   const m = line.match(TAG_RE)
   if (!m) throw new Error(`课程条目格式不正确（缺少（本/研/实）前缀）：${line}`)
   const tag = m[1]
@@ -111,12 +114,12 @@ function parseTitleLine(line: string): Pick<ParsedCourse, 'courseNo' | 'courseNa
     if (segs.length < 3) throw new Error(`实验课条目格式不正确：${line}`)
     const courseNo = segs.slice(0, 2).join('-')
     const courseName = segs[2]
-    return { courseNo, courseName, note: segs.slice(3).join('-') }
+    return { courseNo, courseName, kind: 'experiment', note: segs.slice(3).join('-') }
   }
   // （本|研）10125121047-软件工程[02]
   const m2 = rest.match(/^(\d+)-(.+?)(?:\[(.+)\])?$/)
   if (!m2) throw new Error(`课程条目格式不正确：${line}`)
-  return { courseNo: m2[1], courseName: m2[2], className: m2[3] }
+  return { courseNo: m2[1], courseName: m2[2], kind: 'theory', className: m2[3] }
 }
 
 function isTitleLine(line: string): boolean {
