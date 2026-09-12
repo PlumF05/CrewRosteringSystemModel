@@ -156,6 +156,17 @@ export const dutyScheduleRepo = {
   async clearWeek(weekNo: number): Promise<void> {
     await db.duty_schedule.where('weekNo').equals(weekNo).delete()
   },
+
+  /** 整周替换（自动排班/重排的落库语义：清周 + 批量写入，事务保证） */
+  async replaceWeek(weekNo: number, rows: NewDuty[]): Promise<number> {
+    const ts = now()
+    return db.transaction('rw', db.duty_schedule, async () => {
+      await db.duty_schedule.where('weekNo').equals(weekNo).delete()
+      return db.duty_schedule.bulkAdd(
+        rows.map((r) => ({ status: 'normal', source: 'auto', ...r, weekNo, createdAt: ts, updatedAt: ts }) as DutySchedule),
+      )
+    })
+  },
 }
 
 export const scheduleSnapshotRepo = {
