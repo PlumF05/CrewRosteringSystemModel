@@ -20,6 +20,7 @@ const assistants = ref<Assistant[]>([])
 const selectedAssistantId = ref<number>()
 const parseResult = ref<TimetableParseResult | null>(null)
 const importing = ref(false)
+const creating = ref(false)
 const storedCourses = ref<Course[]>([])
 const fileInput = ref<HTMLInputElement>()
 
@@ -29,6 +30,48 @@ const matchedAssistant = computed(() =>
     ? assistants.value.find((a) => a.studentNo === parseResult.value!.studentNo)
     : undefined,
 )
+
+/**
+ * 自动创建助理（2026-09-11 新需求）：解析出的学生在库中不存在时，
+ * 按学生姓名+学号一键建档；身份由课程条目的（本）/（研）标记推导
+ * （出现（研）即研究生，否则本科生）。
+ */
+const derivedIdentity = computed(() =>
+  parseResult.value?.courses.some((c) => c.identity === 'graduate') ? 'graduate' : 'undergrad',
+)
+const canAutoCreate = computed(
+  () =>
+    !!parseResult.value &&
+    !matchedAssistant.value &&
+    !!parseResult.value.studentName &&
+    !!parseResult.value.studentNo,
+)
+
+async function createAssistantFromParse() {
+  const p = parseResult.value
+  if (!p?.studentName || !p.studentNo) return
+  creating.value = true
+  try {
+    const id = await assistantRepo.add({
+      name: p.studentName,
+      studentNo: p.studentNo,
+      identity: derivedIdentity.value,
+    })
+    await operationLogRepo.add('assistant.add', {
+      studentNo: p.studentNo,
+      name: p.studentName,
+      via: 'course-import',
+    })
+    ElMessage.success(`已自动创建助理：${p.studentName}（${p.studentNo}）`)
+    await refreshAssistants()
+    selectedAssistantId.value = id
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '创建失败')
+    await refreshAssistants()
+  } finally {
+    creating.value = false
+  }
+}
 
 async function refreshAssistants() {
   assistants.value = await assistantRepo.list()
@@ -82,6 +125,7 @@ async function confirmImport() {
         courseNo: c.courseNo,
         courseName: c.courseName,
         kind: c.kind,
+        identity: c.identity,
         className: c.className,
         weekRanges: c.weekRanges.map(([s, e]) => [s, e] as [number, number]),
         dayOfWeek: c.dayOfWeek,
@@ -135,7 +179,23 @@ async function confirmImport() {
       :title="`已按学号匹配到助理：${matchedAssistant.name}（${matchedAssistant.studentNo}）`"
       class="block"
     />
-    <el-alert v-else type="warning" :closable="false" title="未匹配到该学号的助理，请手动选择归属" class="block" />
+    <template v-else>
+      <el-alert type="warning" :closable="false" title="未匹配到该学号的助理" class="block">
+        <template #default>
+          <span>可手动选择归属，或</span>
+          <el-button
+            v-if="canAutoCreate"
+            link
+            type="primary"
+            :loading="creating"
+            @click="createAssistantFromParse"
+          >
+            自动创建助理：{{ parseResult.studentName }}（{{ parseResult.studentNo }}，
+            {{ derivedIdentity === 'graduate' ? '研究生' : '本科生' }}）
+          </el-button>
+        </template>
+      </el-alert>
+    </template>
 
     <div class="block">
       <span class="label">归属助理：</span>
@@ -170,6 +230,13 @@ async function confirmImport() {
     <el-table :data="parseResult.courses" border size="small" max-height="360">
       <el-table-column prop="courseName" label="课程" min-width="140" />
       <el-table-column prop="courseNo" label="课程号" width="120" />
+      <el-table-column label="类别" width="70">
+        <template #default="{ row }">
+          <el-tag :type="row.kind === 'experiment' ? 'warning' : 'primary'" size="small">
+            {{ row.kind === 'experiment' ? '实' : '本' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="星期" width="70">
         <template #default="{ row }">星期{{ row.dayOfWeek }}</template>
       </el-table-column>
