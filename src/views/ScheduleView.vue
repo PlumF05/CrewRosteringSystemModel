@@ -133,7 +133,7 @@ async function write() {
   }
 }
 
-/** 网格行：上班节次区间 × 工作日，格子里是姓名列表 */
+/** 网格行：**每个节次一行**（第 1 节、第 2 节…），列 = 工作日，格子里是姓名列表 */
 interface GridRow {
   label: string
   cells: Record<number, string>
@@ -147,15 +147,21 @@ function buildGrid(rows: Array<{ dayOfWeek: number; timeSlot: string; assistantI
     list.push(nameById.value.get(r.assistantId) ?? `#${r.assistantId}`)
     map.set(key, list)
   }
-  return rules.value.workSections.map((sec) => ({
-    label: `${sec.label} 第${sec.start}~${sec.end}节`,
-    cells: Object.fromEntries(
-      [...rules.value.workdays].sort((a, b) => a - b).map((day) => [
-        day,
-        (map.get(`${day}|c${sec.start}-${sec.end}`) ?? []).join('、'),
-      ]),
-    ),
-  }))
+  const gridRows: GridRow[] = []
+  for (const sec of rules.value.workSections) {
+    for (let s = sec.start; s <= sec.end; s++) {
+      gridRows.push({
+        label: `${sec.label} 第${s}节`,
+        cells: Object.fromEntries(
+          [...rules.value.workdays].sort((a, b) => a - b).map((day) => [
+            day,
+            (map.get(`${day}|c${s}`) ?? []).join('、'),
+          ]),
+        ),
+      })
+    }
+  }
+  return gridRows
 }
 
 const previewGrid = computed(() =>
