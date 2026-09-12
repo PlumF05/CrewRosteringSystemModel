@@ -28,3 +28,6 @@ Desktop.ini
 
 # ==== Office 临时锁文件 ====
 ~$*
+
+# ==== 测试/导出产物 ====
+test-export.xlsx
