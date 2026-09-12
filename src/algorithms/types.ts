@@ -61,9 +61,9 @@ export const DEFAULT_RULES: SchedulingRules = {
 }
 
 /**
- * 由 工作日 × 上班节次 推导排班时段。
- * key = `c{start}-{end}`（如 c1-4），即 duty_schedule.timeSlot 存的键——
- * 排班表按节次显示的依据。
+ * 由 工作日 × 上班节次 推导排班时段——**按单节拆分**（第 1 节、第 2 节…各自是
+ * 一个独立排班时段，用户要求按时段节次逐一显示）。
+ * key = `c{节号}`（如 c1、c11），即 duty_schedule.timeSlot 存的键。
  */
 export interface Slot {
   dayOfWeek: number
@@ -77,13 +77,15 @@ export function buildSlots(rules: SchedulingRules): Slot[] {
   const slots: Slot[] = []
   for (const day of [...rules.workdays].sort((a, b) => a - b)) {
     for (const sec of rules.workSections) {
-      slots.push({
-        dayOfWeek: day,
-        key: `c${sec.start}-${sec.end}`,
-        label: `${sec.label} 第${sec.start}~${sec.end}节`,
-        sectionStart: sec.start,
-        sectionEnd: sec.end,
-      })
+      for (let s = sec.start; s <= sec.end; s++) {
+        slots.push({
+          dayOfWeek: day,
+          key: `c${s}`,
+          label: `${sec.label} 第${s}节`,
+          sectionStart: s,
+          sectionEnd: s,
+        })
+      }
     }
   }
   return slots
@@ -126,6 +128,11 @@ export interface CourseInput {
   sectionEnd: number | null
   weekRanges: [number, number][]
 }
+
+/**
+ * 排班时段为单节（每时段 1 节），工时上限即"最多时段数"。
+ * minSectionsPerAssistant / maxSectionsPerAssistant 语义不变（节数）。
+ */
 
 /** F08 的"保留手动调整"：重排前已确定的人岗（阶段 6 使用，算法即已支持） */
 export interface KeepEntry {

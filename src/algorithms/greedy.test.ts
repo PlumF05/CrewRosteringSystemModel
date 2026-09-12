@@ -62,18 +62,16 @@ function checkInvariants(input: ScheduleInput, out: ReturnType<typeof scheduleOn
   for (const s of out.summaries) {
     expect(s.sections).toBeLessThanOrEqual(input.rules.maxSectionsPerAssistant)
   }
-  // 忙的格子不允许有排班（按时段真实节次区间判断重叠）
+  // 忙的格子不允许有排班（时段=单节，按时节号判断课程是否覆盖该节）
   for (const a of out.assignments) {
-    const sec = input.rules.workSections.find(
-      (w) => `c${w.start}-${w.end}` === a.slotKey,
-    )!
+    const secNum = Number(a.slotKey.slice(1))
     const busyCourse = input.courses.some(
       (c) =>
         c.assistantId === a.assistantId &&
         c.dayOfWeek === a.dayOfWeek &&
         c.weekRanges.some(([s, e]) => input.weekNo >= s && input.weekNo <= e) &&
         (c.sectionStart === null ||
-          (c.sectionEnd !== null && c.sectionStart <= sec.end && c.sectionEnd >= sec.start)),
+          (c.sectionEnd !== null && c.sectionStart <= secNum && c.sectionEnd >= secNum)),
     )
     expect(busyCourse).toBe(false)
   }
@@ -83,18 +81,18 @@ describe('scheduleOneWeek（贪心排班）', () => {
   it('单人在工时上限内尽量填满时段', () => {
     const input = mkInput({ assistants: [A(1)] })
     const out = scheduleOneWeek(input)
-    // 7 天 × 2 节，上限 8 节 → 排 4 个时段
+    // 7 天 × 2 个单节时段（c1/c2），上限 8 节 → 排 8 个时段
     expect(out.summaries[0].sections).toBe(8)
-    expect(out.summaries[0].slots).toBe(4)
-    expect(out.unmetSlots).toHaveLength(3)
+    expect(out.summaries[0].slots).toBe(8)
+    expect(out.unmetSlots).toHaveLength(6)
     checkInvariants(input, out)
   })
 
   it('两人轮流值班且负载大体均衡（稀缺度优先）', () => {
     const input = mkInput({ assistants: [A(1), A(2)] })
     const out = scheduleOneWeek(input)
-    expect(out.summaries[0].slots).toBe(4)
-    expect(out.summaries[1].slots).toBe(3)
+    expect(out.summaries[0].slots).toBe(7)
+    expect(out.summaries[1].slots).toBe(7)
     expect(out.unmetSlots).toHaveLength(0)
     checkInvariants(input, out)
   })
@@ -106,8 +104,8 @@ describe('scheduleOneWeek（贪心排班）', () => {
     })
     const out = scheduleOneWeek(input)
     const day1 = out.assignments.filter((a) => a.dayOfWeek === 1)
-    expect(day1).toHaveLength(1)
-    expect(day1[0].assistantId).toBe(2)
+    // 周一两个单节时段（c1/c2），助理 1 都被课占用 → 都排助理 2
+    expect(day1.map((a) => a.assistantId)).toEqual([2, 2])
     checkInvariants(input, out)
   })
 
@@ -130,7 +128,7 @@ describe('scheduleOneWeek（贪心排班）', () => {
       courses: [{ assistantId: 1, dayOfWeek: 1, sectionStart: null, sectionEnd: null, weekRanges: [[1, 17]] }],
     })
     const out = scheduleOneWeek(input)
-    expect(out.assignments.filter((a) => a.dayOfWeek === 1).map((a) => a.assistantId)).toEqual([2])
+    expect(out.assignments.filter((a) => a.dayOfWeek === 1).map((a) => a.assistantId)).toEqual([2, 2])
     checkInvariants(input, out)
   })
 
@@ -138,19 +136,20 @@ describe('scheduleOneWeek（贪心排班）', () => {
     const input = mkInput({
       rules: baseRules({ maxPerSlot: 2 }),
       assistants: [A(1), A(2)],
-      keep: [{ dayOfWeek: 1, slotKey: 'c1-2', assistantId: 2 }],
+      keep: [{ dayOfWeek: 1, slotKey: 'c1', assistantId: 2 }],
     })
     const out = scheduleOneWeek(input)
     const day1 = out.assignments.filter((a) => a.dayOfWeek === 1)
     expect(day1.find((a) => a.assistantId === 2)!.source).toBe('manual')
-    expect(day1).toHaveLength(2)
+    // 周一两个单节时段（c1/c2），每时段容量 2 → 共 4 条
+    expect(day1).toHaveLength(4)
     checkInvariants(input, out)
   })
 
   it('无解场景：没有助理时全部时段进入未满足清单', () => {
     const out = scheduleOneWeek(mkInput({ assistants: [] }))
     expect(out.assignments).toHaveLength(0)
-    expect(out.unmetSlots).toHaveLength(7)
+    expect(out.unmetSlots).toHaveLength(14)
     expect(out.unmetSlots[0].short).toBe(1)
   })
 
@@ -180,7 +179,7 @@ describe('新需求：工作日 × 上班节次推导时段', () => {
     const days = new Set(out.assignments.map((a) => a.dayOfWeek))
     expect([...days].every((d) => d <= 5)).toBe(true)
     const keys = new Set(out.assignments.map((a) => a.slotKey))
-    expect([...keys].every((k) => k === 'c1-4' || k === 'c8-11')).toBe(true)
+    expect([...keys].every((k) => /^c([1-4]|8|9|1[01])$/.test(k))).toBe(true)
     // 时段键按节次显示
     expect(out.unmetSlots.every((u) => u.slotKey.startsWith('c'))).toBe(true)
   })
