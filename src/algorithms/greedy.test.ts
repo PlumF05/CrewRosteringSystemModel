@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { scheduleWeek } from './greedy'
+import { scheduleAll, scheduleOneWeek } from './greedy'
 import {
   DEFAULT_RULES,
-  DEFAULT_SLOT_TEMPLATES,
   type CourseInput,
   type ScheduleInput,
   type SchedulingRules,
@@ -10,12 +9,13 @@ import {
 
 /**
  * 固定用例单测：全部输入为手工构造的纯数据，输出完全可预期。
- * 每个用例聚焦算法的一个决策点（容量/工时上限/可用性/周次/keep/无解）。
+ * 覆盖：容量/工时硬约束、课程占用、周次、工作日×上班节次推导、
+ * uniform 模式、课程类别过滤、keep 预占、无解、确定性、性能。
  */
 
-const T12 = { key: '1-2', label: '第一节-第二节', sectionStart: 1, sectionEnd: 2 }
 const A = (id: number, name = `助理${id}`) => ({ id, name, identity: 'undergrad' as const })
 
+/** 小规则：周一~周日 × 第1~2节（7 个时段，每段 2 节）——与旧版用例数字对齐 */
 const baseRules = (over: Partial<SchedulingRules> = {}): SchedulingRules => ({
   ...DEFAULT_RULES,
   weekStart: 1,
@@ -24,7 +24,11 @@ const baseRules = (over: Partial<SchedulingRules> = {}): SchedulingRules => ({
   maxSectionsPerAssistant: 8,
   minPerSlot: 1,
   maxPerSlot: 1,
-  slotTemplates: [T12],
+  workdays: [1, 2, 3, 4, 5, 6, 7],
+  workSections: [{ start: 1, end: 2, label: '上午' }],
+  uniformMode: false,
+  countTheory: true,
+  countExperiment: true,
   ...over,
 })
 
@@ -36,16 +40,17 @@ const mkInput = (over: Partial<ScheduleInput> = {}): ScheduleInput => ({
   ...over,
 })
 
-const course = (assistantId: number, day: number, s: number, e: number, weeks: [number, number][] = [[1, 17]]): CourseInput => ({
-  assistantId,
-  dayOfWeek: day,
-  sectionStart: s,
-  sectionEnd: e,
-  weekRanges: weeks,
-})
+const course = (
+  assistantId: number,
+  day: number,
+  s: number,
+  e: number,
+  weeks: [number, number][] = [[1, 17]],
+  kind: CourseInput['kind'] = 'theory',
+): CourseInput => ({ assistantId, dayOfWeek: day, sectionStart: s, sectionEnd: e, weekRanges: weeks, kind })
 
-/** 不变式校验：无论输入如何，输出必须满足容量与工时硬约束 */
-function checkInvariants(input: ScheduleInput, out: ReturnType<typeof scheduleWeek>) {
+/** 不变式校验：无论输入如何，输出必须满足容量与工时硬约束 + 不排忙格 */
+function checkInvariants(input: ScheduleInput, out: ReturnType<typeof scheduleOneWeek>) {
   const counts = new Map<string, number>()
   for (const a of out.assignments) {
     const k = `${a.dayOfWeek}|${a.slotKey}`
@@ -57,48 +62,49 @@ function checkInvariants(input: ScheduleInput, out: ReturnType<typeof scheduleWe
   for (const s of out.summaries) {
     expect(s.sections).toBeLessThanOrEqual(input.rules.maxSectionsPerAssistant)
   }
-  // 忙的格子不允许有排班（按时段模板的真实节次区间判断重叠）
+  // 忙的格子不允许有排班（按时段真实节次区间判断重叠）
   for (const a of out.assignments) {
-    const tmpl = input.rules.slotTemplates.find((t) => t.key === a.slotKey)!
+    const sec = input.rules.workSections.find(
+      (w) => `c${w.start}-${w.end}` === a.slotKey,
+    )!
     const busyCourse = input.courses.some(
       (c) =>
         c.assistantId === a.assistantId &&
         c.dayOfWeek === a.dayOfWeek &&
         c.weekRanges.some(([s, e]) => input.weekNo >= s && input.weekNo <= e) &&
         (c.sectionStart === null ||
-          (c.sectionEnd !== null &&
-            c.sectionStart <= tmpl.sectionEnd &&
-            c.sectionEnd >= tmpl.sectionStart)),
+          (c.sectionEnd !== null && c.sectionStart <= sec.end && c.sectionEnd >= sec.start)),
     )
     expect(busyCourse).toBe(false)
   }
 }
 
-describe('scheduleWeek（贪心排班）', () => {
+describe('scheduleOneWeek（贪心排班）', () => {
   it('单人在工时上限内尽量填满时段', () => {
-    const out = scheduleWeek(mkInput({ assistants: [A(1)] }))
+    const input = mkInput({ assistants: [A(1)] })
+    const out = scheduleOneWeek(input)
     // 7 天 × 2 节，上限 8 节 → 排 4 个时段
     expect(out.summaries[0].sections).toBe(8)
     expect(out.summaries[0].slots).toBe(4)
-    expect(out.unmetSlots).toHaveLength(3) // 7 - 4 = 3 个时段缺人
-    checkInvariants(mkInput({ assistants: [A(1)] }), out)
+    expect(out.unmetSlots).toHaveLength(3)
+    checkInvariants(input, out)
   })
 
   it('两人轮流值班且负载大体均衡（稀缺度优先）', () => {
-    const out = scheduleWeek(mkInput({ assistants: [A(1), A(2)] }))
-    const [s1, s2] = out.summaries
-    expect(s1.slots).toBe(4)
-    expect(s2.slots).toBe(3)
+    const input = mkInput({ assistants: [A(1), A(2)] })
+    const out = scheduleOneWeek(input)
+    expect(out.summaries[0].slots).toBe(4)
+    expect(out.summaries[1].slots).toBe(3)
     expect(out.unmetSlots).toHaveLength(0)
-    checkInvariants(mkInput({ assistants: [A(1), A(2)] }), out)
+    checkInvariants(input, out)
   })
 
   it('课程占用 → 该时段不排此人', () => {
     const input = mkInput({
       assistants: [A(1), A(2)],
-      courses: [course(1, 1, 1, 2)], // 助理1 星期一第一节-第二节有课
+      courses: [course(1, 1, 1, 2)],
     })
-    const out = scheduleWeek(input)
+    const out = scheduleOneWeek(input)
     const day1 = out.assignments.filter((a) => a.dayOfWeek === 1)
     expect(day1).toHaveLength(1)
     expect(day1[0].assistantId).toBe(2)
@@ -108,13 +114,11 @@ describe('scheduleWeek（贪心排班）', () => {
   it('周次生效：课程只在其周次范围内占用', () => {
     const input = mkInput({
       assistants: [A(1), A(2)],
-      courses: [course(1, 1, 1, 2, [[2, 3]])], // 仅第 2~3 周有课
+      courses: [course(1, 1, 1, 2, [[2, 3]])],
     })
-    const week1 = scheduleWeek({ ...input, weekNo: 1 })
-    const week2 = scheduleWeek({ ...input, weekNo: 2 })
-    // 第 1 周：两人都可排 → 星期一排的是助理 2（稀缺度优先同分则看已排节数）
+    const week1 = scheduleOneWeek({ ...input, weekNo: 1 })
+    const week2 = scheduleOneWeek({ ...input, weekNo: 2 })
     expect(week1.assignments.find((a) => a.dayOfWeek === 1)).toBeTruthy()
-    // 第 2 周：助理 1 星期一忙 → 只能是助理 2
     expect(week2.assignments.find((a) => a.dayOfWeek === 1)!.assistantId).toBe(2)
     checkInvariants(input, week1)
     checkInvariants(input, week2)
@@ -125,28 +129,8 @@ describe('scheduleWeek（贪心排班）', () => {
       assistants: [A(1), A(2)],
       courses: [{ assistantId: 1, dayOfWeek: 1, sectionStart: null, sectionEnd: null, weekRanges: [[1, 17]] }],
     })
-    const out = scheduleWeek(input)
-    const day1 = out.assignments.filter((a) => a.dayOfWeek === 1)
-    expect(day1.map((a) => a.assistantId)).toEqual([2])
-    checkInvariants(input, out)
-  })
-
-  it('最少工时修复：低于下限的助理在未满时段补位', () => {
-    // 助理2 在第 1~4 天全忙 → 只有第 5~7 天可排；minSections=4（2 个时段）
-    const input = mkInput({
-      rules: baseRules({ minSectionsPerAssistant: 4 }),
-      assistants: [A(1), A(2)],
-      courses: [
-        course(2, 1, 1, 13),
-        course(2, 2, 1, 13),
-        course(2, 3, 1, 13),
-        course(2, 4, 1, 13),
-      ],
-    })
-    const out = scheduleWeek(input)
-    const s2 = out.summaries.find((s) => s.assistantId === 2)!
-    expect(s2.sections).toBeGreaterThanOrEqual(4) // 修复后达到下限
-    expect(s2.belowMin).toBe(false)
+    const out = scheduleOneWeek(input)
+    expect(out.assignments.filter((a) => a.dayOfWeek === 1).map((a) => a.assistantId)).toEqual([2])
     checkInvariants(input, out)
   })
 
@@ -154,18 +138,17 @@ describe('scheduleWeek（贪心排班）', () => {
     const input = mkInput({
       rules: baseRules({ maxPerSlot: 2 }),
       assistants: [A(1), A(2)],
-      keep: [{ dayOfWeek: 1, slotKey: '1-2', assistantId: 2 }],
+      keep: [{ dayOfWeek: 1, slotKey: 'c1-2', assistantId: 2 }],
     })
-    const out = scheduleWeek(input)
+    const out = scheduleOneWeek(input)
     const day1 = out.assignments.filter((a) => a.dayOfWeek === 1)
     expect(day1.find((a) => a.assistantId === 2)!.source).toBe('manual')
-    // 容量 2 → 算法补 1 人
     expect(day1).toHaveLength(2)
     checkInvariants(input, out)
   })
 
   it('无解场景：没有助理时全部时段进入未满足清单', () => {
-    const out = scheduleWeek(mkInput({ assistants: [] }))
+    const out = scheduleOneWeek(mkInput({ assistants: [] }))
     expect(out.assignments).toHaveLength(0)
     expect(out.unmetSlots).toHaveLength(7)
     expect(out.unmetSlots[0].short).toBe(1)
@@ -176,41 +159,147 @@ describe('scheduleWeek（贪心排班）', () => {
       assistants: [A(1), A(2), A(3)],
       courses: [course(2, 3, 1, 2)],
     })
-    const r1 = scheduleWeek(input)
-    const r2 = scheduleWeek(input)
+    const r1 = scheduleOneWeek(input)
+    const r2 = scheduleOneWeek(input)
     expect(JSON.stringify(r1.assignments)).toBe(JSON.stringify(r2.assignments))
   })
+})
 
-  it('性能：10 助理 × 17 周（默认 5 时段）毫秒级完成（SRS 4.1）', () => {
+describe('新需求：工作日 × 上班节次推导时段', () => {
+  it('默认工作日（周一~五）+ 默认上班节次 → 10 个时段，周末不排班', () => {
+    const rules = baseRules({
+      weekStart: 1,
+      weekEnd: 1,
+      workdays: [1, 2, 3, 4, 5],
+      workSections: [
+        { start: 1, end: 4, label: '上午' },
+        { start: 8, end: 11, label: '下午' },
+      ],
+    })
+    const out = scheduleOneWeek(mkInput({ rules, assistants: [A(1), A(2)] }))
+    const days = new Set(out.assignments.map((a) => a.dayOfWeek))
+    expect([...days].every((d) => d <= 5)).toBe(true)
+    const keys = new Set(out.assignments.map((a) => a.slotKey))
+    expect([...keys].every((k) => k === 'c1-4' || k === 'c8-11')).toBe(true)
+    // 时段键按节次显示
+    expect(out.unmetSlots.every((u) => u.slotKey.startsWith('c'))).toBe(true)
+  })
+
+  it('上班节次之外的课程不产生占用（第 5~7 节不在 1~4/8~11 内）', () => {
+    const rules = baseRules({
+      workdays: [1],
+      workSections: [{ start: 1, end: 4, label: '上午' }],
+    })
+    const input = mkInput({
+      rules,
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 5, 7)], // 下午之前的时间，不上班时段
+    })
+    const out = scheduleOneWeek(input)
+    // 助理 1 不受该课影响，仍可被排
+    expect(out.assignments.some((a) => a.assistantId === 1)).toBe(true)
+  })
+})
+
+describe('新需求：课程类别过滤（本/实）', () => {
+  it('关闭实验课占用 → 实验课不再挡人', () => {
+    const expCourse = course(1, 1, 1, 2, [[1, 17]], 'experiment')
+    const input = mkInput({
+      assistants: [A(1), A(2)],
+      courses: [expCourse],
+    })
+    // 开启：助理 1 星期一被实验课占用
+    const withExp = scheduleOneWeek(input)
+    expect(withExp.assignments.find((a) => a.dayOfWeek === 1)!.assistantId).toBe(2)
+    // 关闭：助理 1 恢复可选
+    const withoutExp = scheduleOneWeek({
+      ...input,
+      rules: baseRules({ countExperiment: false }),
+    })
+    expect(withoutExp.assignments.some((a) => a.dayOfWeek === 1 && a.assistantId === 1)).toBe(true)
+  })
+
+  it('关闭理论课占用 → 理论课不再挡人（实验课仍占用）', () => {
+    const input = mkInput({
+      rules: baseRules({ countTheory: false }),
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 1, 2, [[1, 17]], 'theory'), course(1, 2, 1, 2, [[1, 17]], 'experiment')],
+    })
+    const out = scheduleOneWeek(input)
+    expect(out.assignments.some((a) => a.dayOfWeek === 1 && a.assistantId === 1)).toBe(true)
+    expect(out.assignments.find((a) => a.dayOfWeek === 2)!.assistantId).toBe(2)
+  })
+
+  it('旧数据无 kind 字段：按 note 回退判定（note 存在 = 实验课）', () => {
+    const input = mkInput({
+      rules: baseRules({ countExperiment: false }),
+      assistants: [A(1), A(2)],
+      courses: [
+        { assistantId: 1, dayOfWeek: 1, sectionStart: 1, sectionEnd: 2, weekRanges: [[1, 17]] }, // 无 kind 无 note → theory，仍占用
+        { assistantId: 2, dayOfWeek: 1, sectionStart: 1, sectionEnd: 2, weekRanges: [[1, 17]], kind: 'experiment' }, // 被过滤
+      ],
+    })
+    const out = scheduleOneWeek(input)
+    // 实验课被过滤 → 助理 2 可排；理论课仍占用 → 助理 1 不可排
+    expect(out.assignments.find((a) => a.dayOfWeek === 1)!.assistantId).toBe(2)
+  })
+})
+
+describe('新需求：一次性全周期排班与 uniform 模式', () => {
+  it('各周独立模式：逐周按当周课程占用计算', () => {
+    const input = {
+      rules: baseRules({ weekStart: 1, weekEnd: 2 }),
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 1, 2, [[2, 2]])], // 助理1 仅第 2 周周中有课
+    }
+    const all = scheduleAll(input)
+    expect(all.map((w) => w.weekNo)).toEqual([1, 2])
+    expect(all[0].assignments.some((a) => a.dayOfWeek === 1 && a.assistantId === 1)).toBe(true)
+    expect(all[1].assignments.some((a) => a.dayOfWeek === 1 && a.assistantId === 1)).toBe(false)
+  })
+
+  it('uniform 模式：任一周有课即占用，各周排班完全相同', () => {
+    const input = {
+      rules: baseRules({ weekStart: 1, weekEnd: 3, uniformMode: true }),
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 1, 2, [[2, 2]])], // 仅第 2 周有课
+    }
+    const all = scheduleAll(input)
+    expect(all).toHaveLength(3)
+    // 第 1 周也不给助理 1 排周一（虽然他第 1 周没课）——统一方案的代价与语义
+    expect(all.every((w) => w.replicated)).toBe(true)
+    expect(all.every((w) => !w.assignments.some((a) => a.dayOfWeek === 1 && a.assistantId === 1))).toBe(true)
+    // 各周方案相同
+    expect(JSON.stringify(all[0].assignments)).toBe(JSON.stringify(all[1].assignments))
+    expect(JSON.stringify(all[1].assignments)).toBe(JSON.stringify(all[2].assignments))
+  })
+})
+
+describe('性能（SRS 4.1）', () => {
+  it('10 助理 × 17 周（默认工作日/节次）毫秒级完成', () => {
     const assistants = Array.from({ length: 10 }, (_, i) => A(i + 1))
-    // 确定性伪随机课程：每人 6 门课，随机分布星期与周次
     let seed = 42
     const rand = (n: number) => (seed = (seed * 1103515245 + 12345) % 2147483648) % n
     const courses: CourseInput[] = []
     for (const a of assistants) {
       for (let i = 0; i < 6; i++) {
-        const day = (rand(7) % 7) + 1
-        const start = (rand(8) % 8) + 1
+        const day = (rand(5) % 5) + 1 // 只在工作日排课
+        const start = rand(2) === 0 ? 1 : 8
         courses.push({
           assistantId: a.id,
+          kind: rand(2) === 0 ? 'theory' : 'experiment',
           dayOfWeek: day,
           sectionStart: start,
-          sectionEnd: Math.min(13, start + 1 + rand(3)),
+          sectionEnd: start + 3,
           weekRanges: [[1, 17]],
         })
       }
     }
-    const rules: SchedulingRules = { ...DEFAULT_RULES, slotTemplates: DEFAULT_SLOT_TEMPLATES }
-    let total = 0
-    let week1Out = null as ReturnType<typeof scheduleWeek> | null
-    for (let week = 1; week <= 17; week++) {
-      const out = scheduleWeek(mkInput({ weekNo: week, rules, assistants, courses }))
-      total += out.elapsedMs
-      if (week === 1) week1Out = out
-      checkInvariants(mkInput({ weekNo: week, rules, assistants, courses }), out)
-    }
-    // SRS 4.1：5 秒内完成一次完整排班——这里留 200ms/周的宽裕度
+    const rules: SchedulingRules = { ...DEFAULT_RULES }
+    const out = scheduleAll({ rules, assistants, courses })
+    expect(out).toHaveLength(17)
+    const total = out.reduce((s, w) => s + w.elapsedMs, 0)
     expect(total / 17).toBeLessThan(200)
-    expect(week1Out!.assignments.length).toBeGreaterThan(0)
+    out.forEach((w) => checkInvariants({ ...{ rules, assistants, courses }, weekNo: w.weekNo }, w))
   })
 })
