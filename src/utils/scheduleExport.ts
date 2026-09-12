@@ -27,6 +27,11 @@ export interface ExportInput {
   contactsById: Map<number, ExportContact>
   /** 生成时间文案，缺省为当前时间 */
   generatedAt?: string
+  /**
+   * 是否包含助理个人信息（学号/电话/QQ）。
+   * true = "排班表" + "值班明细"（含联系方式）双表；false = 仅"排班表"网格。
+   */
+  includePersonalInfo: boolean
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -34,7 +39,7 @@ const DAY_LABELS: Record<number, string> = {
 }
 
 export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
-  const { weekNo, rules, rows, nameById, contactsById } = input
+  const { weekNo, rules, rows, nameById, contactsById, includePersonalInfo } = input
   const generatedAt = input.generatedAt ?? new Date().toLocaleString('zh-CN')
 
   // ----- 网格数据：行 = 节次（升序），列 = 工作日 -----
@@ -75,35 +80,38 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
   ]
   ws1['!cols'] = [{ wch: 16 }, ...workdays.map(() => ({ wch: 14 }))]
 
-  // ----- Sheet2：值班明细（含联系方式） -----
-  const detailAoa: (string | number)[][] = [
-    ['周次', '星期', '节次', '姓名', '学号', '电话', 'QQ'],
-  ]
-  const sorted = [...rows].sort(
-    (x, y) =>
-      x.dayOfWeek - y.dayOfWeek ||
-      Number(x.timeSlot.slice(1)) - Number(y.timeSlot.slice(1)) ||
-      x.assistantId - y.assistantId,
-  )
-  for (const r of sorted) {
-    const sec = Number(r.timeSlot.slice(1))
-    const contact = contactsById.get(r.assistantId)
-    detailAoa.push([
-      weekNo,
-      DAY_LABELS[r.dayOfWeek] ?? String(r.dayOfWeek),
-      `第${sec}节`,
-      nameById.get(r.assistantId) ?? `#${r.assistantId}`,
-      contact?.studentNo ?? '',
-      contact?.phone ?? '',
-      contact?.qq ?? '',
-    ])
-  }
-  const ws2 = XLSX.utils.aoa_to_sheet(detailAoa)
-  ws2['!cols'] = [{ wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }]
-
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws1, '排班表')
-  XLSX.utils.book_append_sheet(wb, ws2, '值班明细')
+
+  // ----- Sheet2：值班明细（含联系方式；仅在包含个人信息时导出） -----
+  if (includePersonalInfo) {
+    const detailAoa: (string | number)[][] = [
+      ['周次', '星期', '节次', '姓名', '学号', '电话', 'QQ'],
+    ]
+    const sorted = [...rows].sort(
+      (x, y) =>
+        x.dayOfWeek - y.dayOfWeek ||
+        Number(x.timeSlot.slice(1)) - Number(y.timeSlot.slice(1)) ||
+        x.assistantId - y.assistantId,
+    )
+    for (const r of sorted) {
+      const sec = Number(r.timeSlot.slice(1))
+      const contact = contactsById.get(r.assistantId)
+      detailAoa.push([
+        weekNo,
+        DAY_LABELS[r.dayOfWeek] ?? String(r.dayOfWeek),
+        `第${sec}节`,
+        nameById.get(r.assistantId) ?? `#${r.assistantId}`,
+        contact?.studentNo ?? '',
+        contact?.phone ?? '',
+        contact?.qq ?? '',
+      ])
+    }
+    const ws2 = XLSX.utils.aoa_to_sheet(detailAoa)
+    ws2['!cols'] = [{ wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }]
+    XLSX.utils.book_append_sheet(wb, ws2, '值班明细')
+  }
+
   return wb
 }
 
