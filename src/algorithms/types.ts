@@ -2,19 +2,22 @@
  * 排班算法的类型定义——刻意与数据层（Dexie）解耦：
  * 算法只吃纯数据（Plain Object），不 import 数据库也不 import Vue，
  * 因此可以在 Node 里用穷举的固定用例做单元测试（ADR-002 第三节的决策）。
+ *
+ * 2026-09-11 修订（见 ADR-002 第七节）：
+ * - 时段不再用固定模板，由 工作日 × 上班节次 推导；
+ * - 新增排班模式（各周独立 / 各周相同）；
+ * - 新增课程占用过滤（理论课（本）/ 实验课（实））。
  */
-import type { Identity } from '../db/schema'
+import type { Identity, CourseKind } from '../db/schema'
 
-/** 时段模板：行政办开放值班的时段定义（不含中课/晚课——非数字节次无法映射课时） */
-export interface SlotTemplate {
-  /** 稳定标识，如 "1-2"，写入 duty_schedule.timeSlot */
-  key: string
+/** 上班节次区间：如 { start: 1, end: 4, label: '上午' } */
+export interface WorkSection {
+  start: number
+  end: number
   label: string
-  sectionStart: number
-  sectionEnd: number
 }
 
-/** 排班规则（SRS F03），持久化于 config 表 key='rules' */
+/** 排班规则（SRS F03，2026-09-11 修订版），持久化于 config 表 key='rules' */
 export interface SchedulingRules {
   /** 排班周期（周次范围） */
   weekStart: number
@@ -25,16 +28,22 @@ export interface SchedulingRules {
   /** 同时段人数下限/上限 */
   minPerSlot: number
   maxPerSlot: number
-  /** 启用的时段模板（子集） */
-  slotTemplates: SlotTemplate[]
+  /** 工作日（1=周一 … 7=周日），默认周一~周五 */
+  workdays: number[]
+  /** 上班节次区间（默认上午 1~4 节、下午 8~11 节） */
+  workSections: WorkSection[]
+  /** 排班模式：true = 各周排班相同（任一周有课即占用，生成一份复制到全部周） */
+  uniformMode: boolean
+  /** 理论课（（本）/（研））是否计入值班占用 */
+  countTheory: boolean
+  /** 实验课（（实））是否计入值班占用 */
+  countExperiment: boolean
 }
 
-export const DEFAULT_SLOT_TEMPLATES: SlotTemplate[] = [
-  { key: '1-2', label: '第一节-第二节', sectionStart: 1, sectionEnd: 2 },
-  { key: '3-5', label: '第三节-第五节', sectionStart: 3, sectionEnd: 5 },
-  { key: '6-8', label: '第六节-第八节', sectionStart: 6, sectionEnd: 8 },
-  { key: '9-10', label: '第九节-第十节', sectionStart: 9, sectionEnd: 10 },
-  { key: '11-13', label: '第十一节-第十三节', sectionStart: 11, sectionEnd: 13 },
+export const DEFAULT_WORKDAYS: number[] = [1, 2, 3, 4, 5]
+export const DEFAULT_WORK_SECTIONS: WorkSection[] = [
+  { start: 1, end: 4, label: '上午' },
+  { start: 8, end: 11, label: '下午' },
 ]
 
 export const DEFAULT_RULES: SchedulingRules = {
@@ -44,7 +53,60 @@ export const DEFAULT_RULES: SchedulingRules = {
   maxSectionsPerAssistant: 12,
   minPerSlot: 1,
   maxPerSlot: 2,
-  slotTemplates: DEFAULT_SLOT_TEMPLATES,
+  workdays: [...DEFAULT_WORKDAYS],
+  workSections: JSON.parse(JSON.stringify(DEFAULT_WORK_SECTIONS)),
+  uniformMode: false,
+  countTheory: true,
+  countExperiment: true,
+}
+
+/**
+ * 由 工作日 × 上班节次 推导排班时段。
+ * key = `c{start}-{end}`（如 c1-4），即 duty_schedule.timeSlot 存的键——
+ * 排班表按节次显示的依据。
+ */
+export interface Slot {
+  dayOfWeek: number
+  key: string
+  label: string
+  sectionStart: number
+  sectionEnd: number
+}
+
+export function buildSlots(rules: SchedulingRules): Slot[] {
+  const slots: Slot[] = []
+  for (const day of [...rules.workdays].sort((a, b) => a - b)) {
+    for (const sec of rules.workSections) {
+      slots.push({
+        dayOfWeek: day,
+        key: `c${sec.start}-${sec.end}`,
+        label: `${sec.label} 第${sec.start}~${sec.end}节`,
+        sectionStart: sec.start,
+        sectionEnd: sec.end,
+      })
+    }
+  }
+  return slots
+}
+
+/**
+ * 兼容旧版配置：合并默认值并丢弃已废弃字段（旧版 slotTemplates）。
+ * 用户升级后首次读取 config 时调用。
+ */
+export function normalizeRules(saved: Partial<SchedulingRules> | null | undefined): SchedulingRules {
+  const r = { ...DEFAULT_RULES, ...(saved ?? {}) } as SchedulingRules
+  delete (r as unknown as Record<string, unknown>).slotTemplates
+  if (!Array.isArray(r.workdays) || r.workdays.length === 0) r.workdays = [...DEFAULT_WORKDAYS]
+  if (!Array.isArray(r.workSections) || r.workSections.length === 0)
+    r.workSections = JSON.parse(JSON.stringify(DEFAULT_WORK_SECTIONS))
+  if (typeof r.uniformMode !== 'boolean') r.uniformMode = false
+  if (typeof r.countTheory !== 'boolean') r.countTheory = true
+  if (typeof r.countExperiment !== 'boolean') r.countExperiment = true
+  if (typeof r.weekStart !== 'number' || typeof r.weekEnd !== 'number') {
+    r.weekStart = DEFAULT_RULES.weekStart
+    r.weekEnd = DEFAULT_RULES.weekEnd
+  }
+  return r
 }
 
 /** 算法输入：助理（只带算法需要的字段） */
@@ -57,6 +119,7 @@ export interface AssistantInput {
 /** 算法输入：课程（判定占用的最小字段集） */
 export interface CourseInput {
   assistantId: number
+  kind?: CourseKind
   dayOfWeek: number
   /** 数字节次；null = 非数字标签（中课/晚课），按"全天占用"保守处理 */
   sectionStart: number | null
@@ -71,12 +134,15 @@ export interface KeepEntry {
   assistantId: number
 }
 
-export interface ScheduleInput {
-  weekNo: number
+export interface BaseScheduleInput {
   rules: SchedulingRules
   assistants: AssistantInput[]
   courses: CourseInput[]
   keep?: KeepEntry[]
+}
+
+export interface ScheduleInput extends BaseScheduleInput {
+  weekNo: number
 }
 
 /** 一条分配结果（尚未落库，落库时由 UI 补 weekNo/status/source） */
@@ -109,10 +175,17 @@ export interface AssistantSummary {
   atMax: boolean
 }
 
+/** 单周排班结果 */
 export interface ScheduleOutput {
   assignments: Assignment[]
   unmetSlots: UnmetSlot[]
   summaries: AssistantSummary[]
   /** 算法耗时（毫秒，用于 SRS 4.1 性能验证） */
   elapsedMs: number
+}
+
+export interface WeeklySchedule extends ScheduleOutput {
+  weekNo: number
+  /** uniform 模式下为 true：本周方案是复制的统一方案 */
+  replicated?: boolean
 }
