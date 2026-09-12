@@ -17,6 +17,8 @@ import {
   type SchedulingRules,
   type WeeklySchedule,
 } from '../algorithms/types'
+import { exportScheduleFile, scheduleFileName } from '../utils/scheduleExport'
+import { diffWeekSchedule } from '../utils/scheduleDiff'
 
 const rules = ref<SchedulingRules>(JSON.parse(JSON.stringify(normalizeRules(null))))
 const weekNo = ref(1)
@@ -26,9 +28,13 @@ const previews = ref<WeeklySchedule[]>([])
 const previewWeek = ref<number>()
 const writing = ref(false)
 const generating = ref(false)
+const exporting = ref(false)
 /** 当前查看周已落库的排班 */
 const storedRows = ref<DutySchedule[]>([])
 const nameById = ref<Map<number, string>>(new Map())
+const contactsById = ref<Map<number, { studentNo: string; phone?: string; qq?: string }>>(new Map())
+/** 生成方案那一刻的"重排前"数据（按周快照，供 F08 差异对比） */
+const beforeRowsMap = ref<Map<number, DutySchedule[]>>(new Map())
 
 const weekOptions = computed(() => {
   const arr: number[] = []
@@ -51,6 +57,12 @@ onMounted(async () => {
   weekNo.value = rules.value.weekStart
   const assistants = await assistantRepo.list()
   nameById.value = new Map(assistants.map((a) => [a.id!, a.name]))
+  contactsById.value = new Map(
+    assistants.map((a) => [
+      a.id!,
+      { studentNo: a.studentNo, phone: a.phone, qq: a.qq },
+    ]),
+  )
   await loadWeek()
 })
 
@@ -84,6 +96,11 @@ async function generate() {
       sectionEnd: c.sectionEnd,
       weekRanges: c.weekRanges.map(([s, e]) => [s, e] as [number, number]),
     }))
+    // F08：快照"重排前"数据（逐周读库），供差异对比
+    beforeRowsMap.value = new Map()
+    for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
+      beforeRowsMap.value.set(w, await dutyScheduleRepo.listByWeek(w))
+    }
     // F08：手动调整记录作为 keep 保留（仅对各自周次生效）
     const keep = storedRows.value
       .filter((r) => r.source === 'manual')
@@ -92,6 +109,66 @@ async function generate() {
     previewWeek.value = previews.value[0]?.weekNo
   } finally {
     generating.value = false
+  }
+}
+
+/** F08：重排前后差异（当前预览周）。Assignment.slotKey → DiffRow.timeSlot 映射 */
+const weekDiff = computed(() => {
+  const w = currentPreview.value
+  if (!w) return null
+  const toDiffRow = (a: { dayOfWeek: number; slotKey: string; assistantId: number }) => ({
+    dayOfWeek: a.dayOfWeek,
+    timeSlot: a.slotKey,
+    assistantId: a.assistantId,
+  })
+  return diffWeekSchedule(
+    (beforeRowsMap.value.get(w.weekNo) ?? []).map((r) => ({
+      dayOfWeek: r.dayOfWeek,
+      timeSlot: r.timeSlot,
+      assistantId: r.assistantId,
+    })),
+    w.assignments.map(toDiffRow),
+  )
+})
+
+function weekChangeLabel(w: WeeklySchedule): string {
+  const before = beforeRowsMap.value.get(w.weekNo) ?? []
+  const d = diffWeekSchedule(
+    before.map((r) => ({ dayOfWeek: r.dayOfWeek, timeSlot: r.timeSlot, assistantId: r.assistantId })),
+    w.assignments.map((a) => ({ dayOfWeek: a.dayOfWeek, timeSlot: a.slotKey, assistantId: a.assistantId })),
+  )
+  if (d.added.length === 0 && d.removed.length === 0) return '不变'
+  return `+${d.added.length} / -${d.removed.length}`
+}
+
+/** 导出当前查看周的排班表 */
+function doExport() {
+  if (storedRows.value.length === 0) {
+    ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
+    return
+  }
+  exporting.value = true
+  try {
+    const fileName = scheduleFileName(weekNo.value)
+    exportScheduleFile(
+      {
+        weekNo: weekNo.value,
+        rules: JSON.parse(JSON.stringify(rules.value)),
+        rows: storedRows.value.map((r) => ({
+          dayOfWeek: r.dayOfWeek,
+          timeSlot: r.timeSlot,
+          assistantId: r.assistantId,
+        })),
+        nameById: nameById.value,
+        contactsById: contactsById.value,
+      },
+      fileName,
+    )
+    ElMessage.success(`已生成 ${fileName}（浏览器下载）`)
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '导出失败')
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -199,7 +276,9 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
         写入全部周排班（共 {{ previews.reduce((s, w) => s + w.assignments.length, 0) }} 条）
       </el-button>
       <el-tag v-if="rules.uniformMode" type="info">模式：各周排班相同</el-tag>
-      <el-tag v-else type="info">模式：各周独立</el-tag>
+      <el-tag v-if="!rules.uniformMode" type="info">模式：各周独立</el-tag>
+      <el-divider direction="vertical" />
+      <el-button :loading="exporting" @click="doExport">导出第 {{ weekNo }} 周排班</el-button>
     </div>
   </el-card>
 
@@ -219,6 +298,16 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
           <template #default="{ row }">
             <el-tag :type="row.unmetSlots.length ? 'warning' : 'success'" size="small">
               {{ row.unmetSlots.length }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="重排变动" width="110">
+          <template #default="{ row }">
+            <el-tag
+              :type="weekChangeLabel(row) === '不变' ? 'info' : 'warning'"
+              size="small"
+            >
+              {{ weekChangeLabel(row) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -251,6 +340,37 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
           min-width="110"
         >
           <template #default="{ row }">{{ row.cells[Object.keys(row.cells)[i]] || '—' }}</template>
+        </el-table-column>
+      </el-table>
+
+      <h4 class="block">重排变动明细（第 {{ currentPreview?.weekNo }} 周）</h4>
+      <el-empty
+        v-if="weekDiff && weekDiff.added.length === 0 && weekDiff.removed.length === 0"
+        description="与重排前完全一致"
+        :image-size="48"
+      />
+      <el-table
+        v-else
+        :data="[...(weekDiff?.added ?? []), ...(weekDiff?.removed ?? [])]"
+        border
+        size="small"
+        max-height="220"
+      >
+        <el-table-column label="变动" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.type === 'added' ? 'success' : 'danger'" size="small">
+              {{ row.type === 'added' ? '新增' : '移除' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="星期" width="90">
+          <template #default="{ row }">{{ DAY_LABELS[row.dayOfWeek - 1] }}</template>
+        </el-table-column>
+        <el-table-column label="节次" width="90">
+          <template #default="{ row }">第 {{ row.timeSlot.slice(1) }} 节</template>
+        </el-table-column>
+        <el-table-column label="助理" min-width="120">
+          <template #default="{ row }">{{ nameById.get(row.assistantId) ?? `#${row.assistantId}` }}</template>
         </el-table-column>
       </el-table>
 
