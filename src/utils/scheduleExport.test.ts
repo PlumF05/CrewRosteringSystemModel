@@ -38,6 +38,7 @@ const input = {
     [2, { studentNo: '1002', phone: '13800000002', qq: '222' }],
   ]),
   generatedAt: '2026/09/11 16:00:00',
+  includePersonalInfo: true,
 }
 
 function readBack(): XLSX.WorkBook {
@@ -98,6 +99,13 @@ describe('buildScheduleWorkbook（导出并读回校验）', () => {
 
   it('exportScheduleFile 不抛错（真实写出路径）', () => {
     expect(() => exportScheduleFile(input, 'test-export.xlsx')).not.toThrow()
+  })
+
+  it('不包含个人信息：仅导出排班表网格，无值班明细 Sheet', () => {
+    const wb = buildScheduleWorkbook({ ...input, includePersonalInfo: false })
+    expect(wb.SheetNames).toEqual(['排班表'])
+    // 网格中的值班人姓名仍然可见
+    expect(wb.Sheets['排班表'][XLSX.utils.encode_cell({ r: 3, c: 1 })].v).toBe('张三')
   })
 })
 

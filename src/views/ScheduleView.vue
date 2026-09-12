@@ -141,8 +141,19 @@ function weekChangeLabel(w: WeeklySchedule): string {
   return `+${d.added.length} / -${d.removed.length}`
 }
 
+/** 导出选项对话框（2026-09-11 新增：可选是否包含助理个人信息） */
+const exportDlg = ref({ visible: false, includeInfo: true })
+
+function openExport() {
+  if (storedRows.value.length === 0) {
+    ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
+    return
+  }
+  exportDlg.value = { visible: true, includeInfo: true }
+}
+
 /** 导出当前查看周的排班表 */
-function doExport() {
+function doExport(includePersonalInfo: boolean) {
   if (storedRows.value.length === 0) {
     ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
     return
@@ -161,10 +172,15 @@ function doExport() {
         })),
         nameById: nameById.value,
         contactsById: contactsById.value,
+        includePersonalInfo,
       },
       fileName,
     )
-    ElMessage.success(`已生成 ${fileName}（浏览器下载）`)
+    ElMessage.success(
+      includePersonalInfo
+        ? `已生成 ${fileName}（含值班明细与联系方式）`
+        : `已生成 ${fileName}（不含个人信息）`,
+    )
   } catch (err) {
     ElMessage.error(err instanceof Error ? err.message : '导出失败')
   } finally {
@@ -278,7 +294,7 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
       <el-tag v-if="rules.uniformMode" type="info">模式：各周排班相同</el-tag>
       <el-tag v-if="!rules.uniformMode" type="info">模式：各周独立</el-tag>
       <el-divider direction="vertical" />
-      <el-button :loading="exporting" @click="doExport">导出第 {{ weekNo }} 周排班</el-button>
+      <el-button :loading="exporting" @click="openExport">导出第 {{ weekNo }} 周排班</el-button>
     </div>
   </el-card>
 
@@ -400,6 +416,21 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
       </el-table-column>
     </el-table>
   </el-card>
+
+  <!-- 导出选项对话框 -->
+  <el-dialog v-model="exportDlg.visible" title="导出排班表" width="400px" :close-on-click-modal="false">
+    <el-checkbox v-model="exportDlg.includeInfo">包含助理个人信息（学号 / 电话 / QQ）</el-checkbox>
+    <div class="hint">
+      勾选：导出"排班表" + "值班明细"（含联系方式）两个工作表；<br />
+      不勾选：仅导出"排班表"网格，联系方式不写入文件。
+    </div>
+    <template #footer>
+      <el-button @click="exportDlg.visible = false">取消</el-button>
+      <el-button type="primary" :loading="exporting" @click="doExport(exportDlg.includeInfo)">
+        确认导出
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
