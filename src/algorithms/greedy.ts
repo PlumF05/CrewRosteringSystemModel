@@ -155,14 +155,14 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     const key = slotKeyOf(s.dayOfWeek, s.key)
     if (keptKeys.has(key) && slotCount.get(key)! >= rules.maxPerSlot) continue
     let candidates = candidatesFor(s)
-    // 稀缺者优先，平手按已排节数升序，再按 id 保证确定性
+    // 负载均衡优先（已排节数少者先），平手按稀缺度（可选时段少者优先），再按 id 保证确定性
     candidates = candidates.sort((x, y) => {
-      const fx = freeSlotCount.get(x.id)!
-      const fy = freeSlotCount.get(y.id)!
-      if (fx !== fy) return fx - fy
       const hx = hours.get(x.id)!
       const hy = hours.get(y.id)!
       if (hx !== hy) return hx - hy
+      const fx = freeSlotCount.get(x.id)!
+      const fy = freeSlotCount.get(y.id)!
+      if (fx !== fy) return fx - fy
       return x.id - y.id
     })
     for (const a of candidates) {

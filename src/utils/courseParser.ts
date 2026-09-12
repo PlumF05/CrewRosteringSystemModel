@@ -20,6 +20,8 @@ export interface ParsedCourse {
   courseName: string
   /** theory=（本）/（研），experiment=（实） */
   kind: CourseKind
+  /** 条目标记推导的学生身份：（本）→ undergrad，（研）→ graduate，（实）→ 无 */
+  identity?: 'undergrad' | 'graduate'
   className?: string
   note?: string
   weekRanges: WeekRange[]
@@ -84,7 +86,7 @@ const TAG_RE = /^[（(](.+?)[)）](.+)$/
 function parseInfoLine(
   text: string,
   source: string,
-): Omit<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'className' | 'note' | 'sourceText'> {
+): Omit<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'identity' | 'className' | 'note' | 'sourceText'> {
   const parts = text.replace(/，/g, ',').split(',').map((s) => s.trim()).filter((s) => s.length > 0)
   const dayIdx = parts.findIndex((p) => DAY_RE.test(p))
   if (dayIdx < 0) throw new Error(`缺少星期信息：${source}`)
@@ -103,7 +105,9 @@ function parseInfoLine(
 }
 
 /** 解析条目首行：（本）课程号-课程名[班次] / （实）批次号-课程名-实验项目-第N批次 */
-function parseTitleLine(line: string): Pick<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'className' | 'note'> {
+function parseTitleLine(
+  line: string,
+): Pick<ParsedCourse, 'courseNo' | 'courseName' | 'kind' | 'identity' | 'className' | 'note'> {
   const m = line.match(TAG_RE)
   if (!m) throw new Error(`课程条目格式不正确（缺少（本/研/实）前缀）：${line}`)
   const tag = m[1]
@@ -119,7 +123,8 @@ function parseTitleLine(line: string): Pick<ParsedCourse, 'courseNo' | 'courseNa
   // （本|研）10125121047-软件工程[02]
   const m2 = rest.match(/^(\d+)-(.+?)(?:\[(.+)\])?$/)
   if (!m2) throw new Error(`课程条目格式不正确：${line}`)
-  return { courseNo: m2[1], courseName: m2[2], kind: 'theory', className: m2[3] }
+  const identity = tag === '研' ? 'graduate' : 'undergrad'
+  return { courseNo: m2[1], courseName: m2[2], kind: 'theory', identity, className: m2[3] }
 }
 
 function isTitleLine(line: string): boolean {
