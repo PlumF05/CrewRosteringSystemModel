@@ -38,6 +38,8 @@ export interface SchedulingRules {
   countTheory: boolean
   /** 实验课（（实））是否计入值班占用 */
   countExperiment: boolean
+  /** 最少连续值班节数（2026-09-11 增补）：>1 时孤立单节值班不被安排，默认 1 = 不限制 */
+  minConsecutiveSections: number
 }
 
 export const DEFAULT_WORKDAYS: number[] = [1, 2, 3, 4, 5]
@@ -58,6 +60,7 @@ export const DEFAULT_RULES: SchedulingRules = {
   uniformMode: false,
   countTheory: true,
   countExperiment: true,
+  minConsecutiveSections: 1,
 }
 
 /**
@@ -104,6 +107,8 @@ export function normalizeRules(saved: Partial<SchedulingRules> | null | undefine
   if (typeof r.uniformMode !== 'boolean') r.uniformMode = false
   if (typeof r.countTheory !== 'boolean') r.countTheory = true
   if (typeof r.countExperiment !== 'boolean') r.countExperiment = true
+  if (typeof r.minConsecutiveSections !== 'number' || r.minConsecutiveSections < 1)
+    r.minConsecutiveSections = 1
   if (typeof r.weekStart !== 'number' || typeof r.weekEnd !== 'number') {
     r.weekStart = DEFAULT_RULES.weekStart
     r.weekEnd = DEFAULT_RULES.weekEnd

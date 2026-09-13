@@ -141,6 +141,14 @@ function removeSection(idx: number) {
         <el-checkbox v-model="form.countExperiment">实验课（（实））计入占用</el-checkbox>
       </el-form-item>
 
+      <el-form-item label="最少连续值班节数">
+        <el-input-number v-model="form.minConsecutiveSections" :min="1" :max="8" /> 节
+        <div class="hint">
+          大于 1 时，孤立的单节值班不会被安排。例：某助理第 9~10 节有课、最少连续 2 节时，
+          第 11 节（其可值班连续段仅剩 1 节）不会排给他
+        </div>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" :loading="saving" @click="save">保存规则</el-button>
         <el-button @click="resetDefaults">恢复默认</el-button>
