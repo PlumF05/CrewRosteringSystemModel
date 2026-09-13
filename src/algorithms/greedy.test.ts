@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { scheduleAll, scheduleOneWeek } from './greedy'
 import {
   DEFAULT_RULES,
@@ -389,5 +392,45 @@ describe('性能（SRS 4.1）', () => {
     const total = out.reduce((s, w) => s + w.elapsedMs, 0)
     expect(total / 17).toBeLessThan(200)
     out.forEach((w) => checkInvariants({ ...{ rules, assistants, courses }, weekNo: w.weekNo }, w))
+  })
+})
+
+describe('回归：三助理真实数据（缺陷案例——撤销孤立块后未再补位）', () => {
+  // 夹具来自用户实测数据：3 人、min=6/max=6、最少连续 2 节、131 条课程。
+  // 缺陷现象：庞士豪被撤销孤立块后停在 4 节（低于下限 6）且不再补位。
+  const fixture = JSON.parse(
+    readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '__fixtures__/regression-3assistants.json'), 'utf-8'),
+  )
+
+  it('撤销孤立块后应继续补位，庞士豪达到下限 6 节', () => {
+    const out = scheduleAll({
+      rules: fixture.rules,
+      assistants: fixture.assistants,
+      courses: fixture.courses,
+    })
+    const w1 = out.find((w) => w.weekNo === 1)!
+    const psh = w1.summaries.find((s) => s.name === '庞士豪')!
+    expect(psh.belowMin).toBe(false)
+    expect(psh.sections).toBe(6)
+
+    // 全体助理每天的连续块都必须 ≥ 2（手动项不存在于此数据）
+    const byAD = new Map<string, number[]>()
+    for (const a of w1.assignments) {
+      const k = `${a.assistantId}|${a.dayOfWeek}`
+      byAD.set(k, [...(byAD.get(k) ?? []), Number(a.slotKey.slice(1))])
+    }
+    for (const [, secs] of byAD) {
+      const sorted = secs.sort((x, y) => x - y)
+      let len = 1
+      const check = () => expect(len).toBeGreaterThanOrEqual(2)
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === sorted[i - 1] + 1) len++
+        else {
+          check()
+          len = 1
+        }
+      }
+      check()
+    }
   })
 })

@@ -215,31 +215,40 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     }
   }
 
-  // ---------- 6. 第二遍：最少工时修复 ----------
-  const belowMinAssistants = assistants.filter((a) => (hours.get(a.id) ?? 0) < rules.minSectionsPerAssistant)
-  for (const a of belowMinAssistants) {
-    const order = [...slots].sort((x, y) => {
-      const cx = slotCount.get(slotKeyOf(x.dayOfWeek, x.key))!
-      const cy = slotCount.get(slotKeyOf(y.dayOfWeek, y.key))!
-      if (cx !== cy) return cx - cy
-      return slotKeyOf(x.dayOfWeek, x.key).localeCompare(slotKeyOf(y.dayOfWeek, y.key))
-    })
-    for (const s of order) {
-      if ((hours.get(a.id) ?? 0) >= rules.minSectionsPerAssistant) break
-      const key = slotKeyOf(s.dayOfWeek, s.key)
-      if (slotMembers.get(key)!.has(a.id)) continue
-      if (slotCount.get(key)! >= rules.maxPerSlot) continue
-      if (!freeAt(a, s)) continue
-      if (!freeRunOk(a, s.dayOfWeek, s.sectionStart)) continue
-      if ((hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) > rules.maxSectionsPerAssistant) continue
-      assign(a, s, 'auto')
+  // ---------- 6. 最少工时修复（可重复执行：撤销孤立块释放容量后需要再次补位） ----------
+  function repairPass(): boolean {
+    let made = false
+    const belowMinAssistants = assistants.filter(
+      (a) => (hours.get(a.id) ?? 0) < rules.minSectionsPerAssistant,
+    )
+    for (const a of belowMinAssistants) {
+      const order = [...slots].sort((x, y) => {
+        const cx = slotCount.get(slotKeyOf(x.dayOfWeek, x.key))!
+        const cy = slotCount.get(slotKeyOf(y.dayOfWeek, y.key))!
+        if (cx !== cy) return cx - cy
+        return slotKeyOf(x.dayOfWeek, x.key).localeCompare(slotKeyOf(y.dayOfWeek, y.key))
+      })
+      for (const s of order) {
+        if ((hours.get(a.id) ?? 0) >= rules.minSectionsPerAssistant) break
+        const key = slotKeyOf(s.dayOfWeek, s.key)
+        if (slotMembers.get(key)!.has(a.id)) continue
+        if (slotCount.get(key)! >= rules.maxPerSlot) continue
+        if (!freeAt(a, s)) continue
+        if (!freeRunOk(a, s.dayOfWeek, s.sectionStart)) continue
+        if ((hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) > rules.maxSectionsPerAssistant)
+          continue
+        assign(a, s, 'auto')
+        made = true
+      }
     }
+    return made
   }
 
   // ---------- 6.5 最少连续节次约束：撤销孤立值班（仅 auto，手动保留项不动） ----------
   // 分配阶段的守卫基于"可值班连续段"长度，仍可能出现段内只排了 1 节的情况
   //（如段 {8,9,10} 因容量/负载只落到第 8 节）——在此统一撤销，保证输出满足连续性。
-  if (rules.minConsecutiveSections > 1) {
+  function removalPass(): boolean {
+    if (rules.minConsecutiveSections <= 1) return false
     const byAssistantDay = new Map<string, Map<number, Assignment>>() // "aId|day" -> secNum -> assignment
     for (const a of assignments.filter((x) => x.source === 'auto')) {
       const k = `${a.assistantId}|${a.dayOfWeek}`
@@ -277,6 +286,17 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
       busy.get(a.assistantId)?.delete(key)
       assignments.splice(assignments.indexOf(a), 1)
     }
+    return toRemove.length > 0
+  }
+
+  // 修复 → 撤销 → 再修复 迭代：撤销孤立块释放的容量可能允许新的合法补位
+  //（缺陷案例：修复达标后撤销又使人低于下限，但撤销后不再补位 → 永远缺节）
+  repairPass()
+  let iter = 0
+  while (iter++ < 4) {
+    const removed = removalPass()
+    const added = repairPass()
+    if (!removed && !added) break
   }
 
   // ---------- 7. 汇总 ----------
