@@ -20,7 +20,7 @@ const route = useRoute()
       </el-menu>
     </el-aside>
     <el-main class="main">
-      <el-page-header :content="route.meta.title as string" class="page-head" v-if="route.path !== '/'" />
+      <div class="page-title" v-if="route.path !== '/'">{{ route.meta.title }}</div>
       <router-view />
     </el-main>
   </el-container>
@@ -35,5 +35,9 @@ const route = useRoute()
 }
 .menu { border-right: none; }
 .main { background: var(--el-fill-color-lighter); }
-.page-head { margin-bottom: 14px; }
+.page-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
 </style>
