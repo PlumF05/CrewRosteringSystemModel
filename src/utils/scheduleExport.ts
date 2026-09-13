@@ -197,7 +197,13 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
   return wb
 }
 
-/** 生成并触发浏览器下载（Tauri 阶段将替换为保存对话框路径） */
+/** 生成 xlsx 二进制（Tauri 桌面端：配合 saveXlsx 写入用户选择的路径；浏览器端请用 exportScheduleFile） */
+export function buildScheduleFileBuffer(input: ExportInput): Uint8Array {
+  const wb = buildScheduleWorkbook(input)
+  return new Uint8Array(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer)
+}
+
+/** 生成并触发浏览器下载（浏览器环境回退；Tauri 环境请改走 fileAccess.saveXlsx） */
 export function exportScheduleFile(input: ExportInput, fileName: string): void {
   const wb = buildScheduleWorkbook(input)
   XLSX.writeFile(wb, fileName)

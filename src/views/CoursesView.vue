@@ -39,6 +39,7 @@ import {
   type ParsedCourse,
 } from "../utils/courseParser";
 import { formatWeekRanges } from "../utils/weekParser";
+import { isTauri, openXlsx } from "../utils/fileAccess";
 import { IDENTITY_LABEL } from "../utils/dict";
 
 const router = useRouter();
@@ -125,11 +126,24 @@ async function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
+  // 浏览器环境回退入口；Tauri 桌面端走 pickAndImport（系统文件对话框）
+  await handleBuffer(await file.arrayBuffer());
+  input.value = ""; // 允许重复选择同一文件
+}
+
+/** Tauri 桌面端：弹出系统「打开」对话框选 xlsx，读取后进入与浏览器一致的解析导入流程 */
+async function pickAndImport() {
+  const picked = await openXlsx();
+  if (!picked) return; // 用户取消
+  await handleBuffer(picked.data.buffer as ArrayBuffer);
+}
+
+/** 解析 + 自动归档 + 冲突检测的公共主体（浏览器与 Tauri 两种取文件方式收口于此） */
+async function handleBuffer(buf: ArrayBuffer) {
   importing.value = true;
   lastImport.value = null;
   conflicts.value = [];
   try {
-    const buf = await file.arrayBuffer();
     const result = parseTimetableWorkbook(new Uint8Array(buf));
 
     if (result.courses.length === 0) {
@@ -203,7 +217,6 @@ async function onFileChange(e: Event) {
     ElMessage.error(err instanceof Error ? err.message : "导入失败");
   } finally {
     importing.value = false;
-    input.value = ""; // 允许重复选择同一文件
   }
 }
 </script>
@@ -219,7 +232,11 @@ async function onFileChange(e: Event) {
       class="hidden-input"
       @change="onFileChange"
     />
-    <el-button type="primary" :loading="importing" @click="fileInput?.click()">
+    <el-button
+      type="primary"
+      :loading="importing"
+      @click="isTauri ? pickAndImport() : fileInput?.click()"
+    >
       {{ importing ? "正在解析并导入…" : "选择课程表文件" }}
     </el-button>
     <div class="hint">

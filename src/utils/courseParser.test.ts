@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseTimetableWorkbook } from './courseParser'
@@ -7,12 +7,21 @@ import { parseTimetableWorkbook } from './courseParser'
 /**
  * 用真实样例文件做集成测试（仓库根目录 timeTableForStu12.xlsx）。
  * 这是对 SRS 附录 A 格式定义的回归锚点：样例变了一点点，测试立刻报警。
+ *
+ * 2026-09-13：样例含真实学生个人信息，已从仓库移除（见 Git 历史）。样例缺失时
+ * 本组用例**整体跳过**而非报错——把文件放回根目录即可恢复完整的集成覆盖；
+ * 其余解析行为由构造数据用例（本目录其他断言与夹具级测试）继续守护。
  */
 const here = dirname(fileURLToPath(import.meta.url))
-const file = readFileSync(resolve(here, '../../timeTableForStu12.xlsx'))
-const result = parseTimetableWorkbook(new Uint8Array(file))
+const sample = resolve(here, '../../timeTableForStu12.xlsx')
+const hasSample = existsSync(sample)
+const result = hasSample
+  ? parseTimetableWorkbook(new Uint8Array(readFileSync(sample)))
+  : (null as unknown as ReturnType<typeof parseTimetableWorkbook>)
 
-describe('parseTimetableWorkbook（真实样例集成测试）', () => {
+const describeRealSample = hasSample ? describe : describe.skip
+
+describeRealSample('parseTimetableWorkbook（真实样例集成测试）', () => {
   it('解析出学生与学期信息', () => {
     expect(result.studentName).toBe('庞士豪')
     expect(result.studentNo).toBe('1024005228')
