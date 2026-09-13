@@ -19,6 +19,12 @@ import {
 } from '../algorithms/types'
 import { exportScheduleFile, scheduleFileName } from '../utils/scheduleExport'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
+import {
+  collectGridDays,
+  collectGridKeys,
+  DAY_LABELS as GRID_DAY_LABELS,
+  type GridKey,
+} from '../utils/scheduleGrid'
 
 const rules = ref<SchedulingRules>(JSON.parse(JSON.stringify(normalizeRules(null))))
 const weekNo = ref(1)
@@ -32,7 +38,8 @@ const exporting = ref(false)
 /** 当前查看周已落库的排班 */
 const storedRows = ref<DutySchedule[]>([])
 const nameById = ref<Map<number, string>>(new Map())
-const contactsById = ref<Map<number, { studentNo: string; phone?: string; qq?: string }>>(new Map())
+/** 2026-09-13 修订：导出只携带"电话"这一项个人信息，故只维护电话映射 */
+const phoneById = ref<Map<number, string>>(new Map())
 /** 生成方案那一刻的"重排前"数据（按周快照，供 F08 差异对比） */
 const beforeRowsMap = ref<Map<number, DutySchedule[]>>(new Map())
 
@@ -41,10 +48,7 @@ const weekOptions = computed(() => {
   for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) arr.push(w)
   return arr
 })
-const DAY_LABELS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
-const workdayLabels = computed(() =>
-  [...rules.value.workdays].sort((a, b) => a - b).map((d) => DAY_LABELS[d - 1]),
-)
+
 
 /** 当前预览选中的周方案 */
 const currentPreview = computed(() =>
@@ -57,12 +61,7 @@ onMounted(async () => {
   weekNo.value = rules.value.weekStart
   const assistants = await assistantRepo.list()
   nameById.value = new Map(assistants.map((a) => [a.id!, a.name]))
-  contactsById.value = new Map(
-    assistants.map((a) => [
-      a.id!,
-      { studentNo: a.studentNo, phone: a.phone, qq: a.qq },
-    ]),
-  )
+  phoneById.value = new Map(assistants.map((a) => [a.id!, a.phone ?? '']))
   await loadWeek()
 })
 
@@ -92,8 +91,8 @@ async function generate() {
       assistantId: c.assistantId,
       kind: c.kind ?? (c.note ? 'experiment' : 'theory'),
       dayOfWeek: c.dayOfWeek,
-      sectionStart: c.sectionStart,
-      sectionEnd: c.sectionEnd,
+      // 传节次原文：算法据此换算"节次序号"判占用，避免与排班表编号错配（2026-09-13）
+      sectionText: c.sectionText,
       weekRanges: c.weekRanges.map(([s, e]) => [s, e] as [number, number]),
     }))
     // F08：快照"重排前"数据（逐周读库），供差异对比
@@ -107,6 +106,9 @@ async function generate() {
       .map((r) => ({ dayOfWeek: r.dayOfWeek, slotKey: r.timeSlot, assistantId: r.assistantId }))
     previews.value = scheduleAll({ rules: JSON.parse(JSON.stringify(rules.value)), assistants, courses, keep })
     previewWeek.value = previews.value[0]?.weekNo
+  } catch (err) {
+    // 规则不合法等确定性错误直接可见（validateRules 已在算法入口把关）
+    ElMessage.error(err instanceof Error ? err.message : '生成排班失败')
   } finally {
     generating.value = false
   }
@@ -141,19 +143,14 @@ function weekChangeLabel(w: WeeklySchedule): string {
   return `+${d.added.length} / -${d.removed.length}`
 }
 
-/** 导出选项对话框（2026-09-11 新增：可选是否包含助理个人信息） */
-const exportDlg = ref({ visible: false, includeInfo: true })
+/**
+ * 导出时是否自动填入联系电话（2026-09-13 修订）。
+ * 默认 true —— 导出即刻完成，不需要二次确认；且**只含"电话"这一项个人信息**。
+ */
+const exportIncludePhone = ref(true)
 
-function openExport() {
-  if (storedRows.value.length === 0) {
-    ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
-    return
-  }
-  exportDlg.value = { visible: true, includeInfo: true }
-}
-
-/** 导出当前查看周的排班表 */
-function doExport(includePersonalInfo: boolean) {
+/** 导出当前查看周的排班表（联系电话默认自动填充） */
+function doExport() {
   if (storedRows.value.length === 0) {
     ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
     return
@@ -171,15 +168,15 @@ function doExport(includePersonalInfo: boolean) {
           assistantId: r.assistantId,
         })),
         nameById: nameById.value,
-        contactsById: contactsById.value,
-        includePersonalInfo,
+        phoneById: phoneById.value,
+        includePhone: exportIncludePhone.value,
       },
       fileName,
     )
     ElMessage.success(
-      includePersonalInfo
-        ? `已生成 ${fileName}（含值班明细与联系方式）`
-        : `已生成 ${fileName}（不含个人信息）`,
+      exportIncludePhone.value
+        ? `已生成 ${fileName}（排班表已填入值班人联系电话，不含学号/QQ）`
+        : `已生成 ${fileName}（不含联系电话）`,
     )
   } catch (err) {
     ElMessage.error(err instanceof Error ? err.message : '导出失败')
@@ -232,7 +229,15 @@ interface GridRow {
   cells: Record<number, string>
 }
 
-function buildGrid(rows: Array<{ dayOfWeek: number; timeSlot: string; assistantId: number }>): GridRow[] {
+/**
+ * 网格行 = 节次（含上课时间）、列 = 工作日，骨架取「当前规则 ∪ 数据」并集：
+ * 只按当前规则推导时，管理员改完上班节次再看旧排班/导出，数据会整体"隐身"。
+ */
+function buildGrid(
+  keys: GridKey[],
+  days: number[],
+  rows: Array<{ dayOfWeek: number; timeSlot: string; assistantId: number }>,
+): GridRow[] {
   const map = new Map<string, string[]>()
   for (const r of rows) {
     const key = `${r.dayOfWeek}|${r.timeSlot}`
@@ -240,36 +245,27 @@ function buildGrid(rows: Array<{ dayOfWeek: number; timeSlot: string; assistantI
     list.push(nameById.value.get(r.assistantId) ?? `#${r.assistantId}`)
     map.set(key, list)
   }
-  const gridRows: GridRow[] = []
-  for (const sec of rules.value.workSections) {
-    for (let s = sec.start; s <= sec.end; s++) {
-      gridRows.push({
-        label: `${sec.label} 第${s}节`,
-        cells: Object.fromEntries(
-          [...rules.value.workdays].sort((a, b) => a - b).map((day) => [
-            day,
-            (map.get(`${day}|c${s}`) ?? []).join('、'),
-          ]),
-        ),
-      })
-    }
-  }
-  return gridRows
+  return keys.map((g) => ({
+    key: g.key,
+    label: g.label,
+    cells: Object.fromEntries(days.map((d) => [d, (map.get(`${d}|${g.key}`) ?? []).join('、')])),
+  }))
 }
 
-const previewGrid = computed(() =>
-  currentPreview.value
-    ? buildGrid(
-        currentPreview.value.assignments.map((a) => ({
-          dayOfWeek: a.dayOfWeek,
-          timeSlot: a.slotKey,
-          assistantId: a.assistantId,
-        })),
-      )
-    : [],
+const previewRows = computed(() =>
+  (currentPreview.value?.assignments ?? []).map((a) => ({
+    dayOfWeek: a.dayOfWeek,
+    timeSlot: a.slotKey,
+    assistantId: a.assistantId,
+  })),
 )
+const previewGridKeys = computed(() => collectGridKeys(rules.value, previewRows.value))
+const previewGridDays = computed(() => collectGridDays(rules.value, previewRows.value))
+const previewGrid = computed(() => buildGrid(previewGridKeys.value, previewGridDays.value, previewRows.value))
 
-const storedGrid = computed(() => buildGrid(storedRows.value))
+const storedGridKeys = computed(() => collectGridKeys(rules.value, storedRows.value))
+const storedGridDays = computed(() => collectGridDays(rules.value, storedRows.value))
+const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays.value, storedRows.value))
 </script>
 
 <template>
@@ -294,7 +290,13 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
       <el-tag v-if="rules.uniformMode" type="info">模式：各周排班相同</el-tag>
       <el-tag v-if="!rules.uniformMode" type="info">模式：各周独立</el-tag>
       <el-divider direction="vertical" />
-      <el-button :loading="exporting" @click="openExport">导出第 {{ weekNo }} 周排班</el-button>
+      <el-tooltip
+        content="导出时自动把值班人的联系电话填入排班表；只含电话这一项个人信息，不含学号 / QQ"
+        placement="top"
+      >
+        <el-switch v-model="exportIncludePhone" active-text="含电话" />
+      </el-tooltip>
+      <el-button :loading="exporting" @click="doExport">导出第 {{ weekNo }} 周排班</el-button>
     </div>
   </el-card>
 
@@ -349,13 +351,8 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
       />
       <el-table :data="previewGrid" border size="small">
         <el-table-column prop="label" label="时段（按节次）" width="180" fixed="left" />
-        <el-table-column
-          v-for="(d, i) in workdayLabels"
-          :key="d"
-          :label="d"
-          min-width="110"
-        >
-          <template #default="{ row }">{{ row.cells[Object.keys(row.cells)[i]] || '—' }}</template>
+        <el-table-column v-for="d in previewGridDays" :key="d" :label="GRID_DAY_LABELS[d]" min-width="110">
+          <template #default="{ row }">{{ row.cells[d] || '—' }}</template>
         </el-table-column>
       </el-table>
 
@@ -380,7 +377,7 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
           </template>
         </el-table-column>
         <el-table-column label="星期" width="90">
-          <template #default="{ row }">{{ DAY_LABELS[row.dayOfWeek - 1] }}</template>
+          <template #default="{ row }">{{ GRID_DAY_LABELS[row.dayOfWeek] }}</template>
         </el-table-column>
         <el-table-column label="节次" width="90">
           <template #default="{ row }">第 {{ row.timeSlot.slice(1) }} 节</template>
@@ -411,26 +408,11 @@ const storedGrid = computed(() => buildGrid(storedRows.value))
     <el-empty v-if="storedRows.length === 0" description="本周暂无排班记录" :image-size="60" />
     <el-table v-else :data="storedGrid" border size="small">
       <el-table-column prop="label" label="时段（按节次）" width="180" fixed="left" />
-      <el-table-column v-for="(d, i) in workdayLabels" :key="d" :label="d" min-width="110">
-        <template #default="{ row }">{{ row.cells[Object.keys(row.cells)[i]] || '—' }}</template>
+      <el-table-column v-for="d in storedGridDays" :key="d" :label="GRID_DAY_LABELS[d]" min-width="110">
+        <template #default="{ row }">{{ row.cells[d] || '—' }}</template>
       </el-table-column>
     </el-table>
   </el-card>
-
-  <!-- 导出选项对话框 -->
-  <el-dialog v-model="exportDlg.visible" title="导出排班表" width="400px" :close-on-click-modal="false">
-    <el-checkbox v-model="exportDlg.includeInfo">包含助理个人信息（学号 / 电话 / QQ）</el-checkbox>
-    <div class="hint">
-      勾选：导出"排班表" + "值班明细"（含联系方式）两个工作表；<br />
-      不勾选：仅导出"排班表"网格，联系方式不写入文件。
-    </div>
-    <template #footer>
-      <el-button @click="exportDlg.visible = false">取消</el-button>
-      <el-button type="primary" :loading="exporting" @click="doExport(exportDlg.includeInfo)">
-        确认导出
-      </el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <style scoped>

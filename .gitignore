@@ -26,6 +26,9 @@ Desktop.ini
 *.log
 *.tmp
 
+# ==== AI 助手本地记忆（工作会话数据，非项目源码） ====
+.workbuddy/
+
 # ==== Office 临时锁文件 ====
 ~$*
 

@@ -59,9 +59,12 @@ export const assistantRepo = {
   },
 
   async remove(id: number): Promise<void> {
-    await db.transaction('rw', db.assistant, db.course, async () => {
-      // 级联清理：助理删除后其课程表失去归属，一并删除（一致性约束）
+    await db.transaction('rw', db.assistant, db.course, db.duty_schedule, async () => {
+      // 级联清理（2026-09-13 补齐）：助理删除后，其课程表与排班记录都失去归属，
+      // 一并删除。此前只清理了 course，留下引用已删除助理的"孤儿排班"，
+      // 会在排班表与导出文件中显示为 "#id" 而非姓名，破坏数据完整性。
       await db.course.where('assistantId').equals(id).delete()
+      await db.duty_schedule.where('assistantId').equals(id).delete()
       await db.assistant.delete(id)
     })
   },
@@ -136,6 +139,12 @@ export const dutyScheduleRepo = {
 
   async remove(id: number): Promise<void> {
     await db.duty_schedule.delete(id)
+  },
+
+  /** 批量删除（2026-09-13 增补：供"导入课程表后清除冲突排班"使用） */
+  async removeMany(ids: number[]): Promise<void> {
+    if (ids.length === 0) return
+    await db.duty_schedule.bulkDelete(ids)
   },
 
   /** 某周完整排班（周视图渲染的数据源） */

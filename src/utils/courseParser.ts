@@ -2,6 +2,9 @@
  * 课程表解析器：把学院标准课程表 xlsx（见 SRS 附录 A 的实测格式定义）
  * 翻译为结构化的 ParsedCourse 列表。
  *
+ * 依赖说明（2026-09-13）：与导出模块统一使用 `xlsx-js-style`（SheetJS 0.18.5 直系分支，
+ * 读写 API 完全兼容），全项目只保留一个 Excel 库，避免重复打包。
+ *
  * 解析策略（对照真实样例 timeTableForStu12.xlsx 归纳）：
  * 1. 定位表头行（含 "节次/星期"），从表头行识别 7 个星期列（星期1~星期7/日）；
  * 2. 表头以下，按 A 列的时段标签（如 "第一节-第二节"）划分时段块；
@@ -11,8 +14,9 @@
  *      第 2 行：周次列表,星期N,节次范围,地点,
  * 5. "上课时间暂未确定的课程" 区与无法解析的单元格 → 进入 problems，不静默丢弃。
  */
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
 import type { CourseKind } from '../db/schema'
+import { sectionNumber } from './sectionOrder'
 import { parseWeekList, WeekParseError, type WeekRange } from './weekParser'
 
 export interface ParsedCourse {
@@ -53,26 +57,14 @@ export interface TimetableParseResult {
 
 export class TimetableParseError extends Error {}
 
-/** 中文节数字映射（第一节=1 … 第十三节=13，覆盖样例即可） */
-const CN_NUM: Record<string, number> = {
-  一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10,
-}
-
-function cnSectionToNumber(token: string): number | null {
-  if (/^\d+$/.test(token)) return Number(token)
-  if (CN_NUM[token]) return CN_NUM[token]
-  if (token === '十') return 10
-  const m = token.match(/^十(.)$/)
-  if (m && CN_NUM[m[1]]) return 10 + CN_NUM[m[1]]
-  const m2 = token.match(/^(.)十$/)
-  if (m2 && CN_NUM[m2[1]]) return CN_NUM[m2[1]] * 10
-  return null // 中课 / 晚课 等非数字标签
-}
-
-/** "第三节-中课2" → { sectionStart: 3, sectionEnd: null }；"中课1-中课2" → 两侧均 null */
+/**
+ * "第三节-中课2" → { sectionStart: 3, sectionEnd: null }；"中课1-中课2" → 两侧均 null
+ * 节号换算统一走 utils/sectionOrder（与排班算法的"节次序号轴"同一来源），
+ * 此处只提取课表原文里的数字节号用于展示。
+ */
 function parseSectionText(text: string): { sectionStart: number | null; sectionEnd: number | null } {
-  const parts = text.split('-').map((s) => s.replace(/^第/, '').replace(/节$/, '').trim())
-  return { sectionStart: cnSectionToNumber(parts[0] ?? ''), sectionEnd: cnSectionToNumber(parts[1] ?? '') }
+  const parts = text.split('-').map((s) => s.trim())
+  return { sectionStart: sectionNumber(parts[0] ?? ''), sectionEnd: sectionNumber(parts[1] ?? '') }
 }
 
 const DAY_RE = /^星期([一二三四五六七日1-7])$/
