@@ -54,6 +54,9 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
   })
 
   // ---------- 3. 可用性矩阵 ----------
+  // courseBusy = 课程占用（不可改变的硬约束）；busy = courseBusy + 已排值班（随分配增长）
+  const courseBusy = new Map<number, Set<string>>()
+  for (const a of assistants) courseBusy.set(a.id, new Set())
   const busy = new Map<number, Set<string>>()
   for (const a of assistants) busy.set(a.id, new Set())
 
@@ -72,7 +75,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
 
   for (const c of effectiveCourses) {
     if (!isCourseActive(c)) continue
-    const set = busy.get(c.assistantId)
+    const set = courseBusy.get(c.assistantId)
     if (!set) continue
     for (const s of slots) {
       if (s.dayOfWeek !== c.dayOfWeek) continue
@@ -81,6 +84,31 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
         set.add(slotKeyOf(s.dayOfWeek, s.key))
       }
     }
+  }
+  for (const a of assistants) busy.set(a.id, new Set(courseBusy.get(a.id) ?? []))
+
+  // 每天处于上班时段内的节号集合（最少连续节次约束的边界）
+  const dayWorkSections = new Map<number, Set<number>>()
+  for (const s of slots) {
+    if (!dayWorkSections.has(s.dayOfWeek)) dayWorkSections.set(s.dayOfWeek, new Set())
+    dayWorkSections.get(s.dayOfWeek)!.add(s.sectionStart)
+  }
+
+  /**
+   * 最少连续节次守卫：候选节所在"可值班连续段"（上班节次内、且未被课程占用）
+   * 的长度必须 ≥ minConsecutiveSections。
+   * 例：第 9~10 节有课、min=2 时，第 11 节所在连续段仅剩 {11} → 不可排。
+   */
+  const freeRunOk = (a: AssistantInput, day: number, sec: number): boolean => {
+    if (rules.minConsecutiveSections <= 1) return true
+    const ws = dayWorkSections.get(day)
+    const cb = courseBusy.get(a.id)
+    if (!ws?.has(sec)) return false
+    if (cb?.has(`${day}|c${sec}`)) return false
+    let len = 1
+    for (let x = sec - 1; ws.has(x) && !cb?.has(`${day}|c${x}`); x--) len++
+    for (let x = sec + 1; ws.has(x) && !cb?.has(`${day}|c${x}`); x++) len++
+    return len >= rules.minConsecutiveSections
   }
 
   // ---------- 4. 槽位容量与 keep 预占（F08 手动保留） ----------
@@ -128,6 +156,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     return assistants.filter(
       (a) =>
         freeAt(a, s) &&
+        freeRunOk(a, s.dayOfWeek, s.sectionStart) &&
         (hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) <= rules.maxSectionsPerAssistant,
     )
   }
@@ -151,12 +180,26 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     return slotKeyOf(x.dayOfWeek, x.key).localeCompare(slotKeyOf(y.dayOfWeek, y.key))
   })
 
+  // min>1 时：优先让候选"延续自己已有的相邻值班"（避免把连续块拆散）
+  const extendsOwnBlock = (a: AssistantInput, s: Slot): boolean => {
+    if (rules.minConsecutiveSections <= 1) return false
+    const day = s.dayOfWeek
+    const sec = s.sectionStart
+    return (
+      busy.get(a.id)!.has(`${day}|c${sec - 1}`) ||
+      busy.get(a.id)!.has(`${day}|c${sec + 1}`)
+    )
+  }
+
   for (const s of byTightness) {
     const key = slotKeyOf(s.dayOfWeek, s.key)
     if (keptKeys.has(key) && slotCount.get(key)! >= rules.maxPerSlot) continue
     let candidates = candidatesFor(s)
-    // 负载均衡优先（已排节数少者先），平手按稀缺度（可选时段少者优先），再按 id 保证确定性
+    // 排序：延续已有连续块者优先 → 负载均衡（已排节数少者先）→ 稀缺度 → id（确定性）
     candidates = candidates.sort((x, y) => {
+      const ex = extendsOwnBlock(x, s) ? 0 : 1
+      const ey = extendsOwnBlock(y, s) ? 0 : 1
+      if (ex !== ey) return ex - ey
       const hx = hours.get(x.id)!
       const hy = hours.get(y.id)!
       if (hx !== hy) return hx - hy
@@ -187,8 +230,52 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
       if (slotMembers.get(key)!.has(a.id)) continue
       if (slotCount.get(key)! >= rules.maxPerSlot) continue
       if (!freeAt(a, s)) continue
+      if (!freeRunOk(a, s.dayOfWeek, s.sectionStart)) continue
       if ((hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) > rules.maxSectionsPerAssistant) continue
       assign(a, s, 'auto')
+    }
+  }
+
+  // ---------- 6.5 最少连续节次约束：撤销孤立值班（仅 auto，手动保留项不动） ----------
+  // 分配阶段的守卫基于"可值班连续段"长度，仍可能出现段内只排了 1 节的情况
+  //（如段 {8,9,10} 因容量/负载只落到第 8 节）——在此统一撤销，保证输出满足连续性。
+  if (rules.minConsecutiveSections > 1) {
+    const byAssistantDay = new Map<string, Map<number, Assignment>>() // "aId|day" -> secNum -> assignment
+    for (const a of assignments.filter((x) => x.source === 'auto')) {
+      const k = `${a.assistantId}|${a.dayOfWeek}`
+      if (!byAssistantDay.has(k)) byAssistantDay.set(k, new Map())
+      byAssistantDay.get(k)!.set(Number(a.slotKey.slice(1)), a)
+    }
+    const toRemove: Assignment[] = []
+    for (const secMap of byAssistantDay.values()) {
+      const sorted = [...secMap.keys()].sort((x, y) => x - y)
+      let start = sorted[0]
+      let len = 1
+      const flush = (runStart: number, runLen: number) => {
+        if (runLen >= rules.minConsecutiveSections) return
+        for (let s = runStart; s < runStart + runLen; s++) {
+          const a = secMap.get(s)
+          if (a) toRemove.push(a)
+        }
+      }
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === sorted[i - 1] + 1) len++
+        else {
+          flush(start, len)
+          start = sorted[i]
+          len = 1
+        }
+      }
+      flush(start, len)
+    }
+    for (const a of toRemove) {
+      const key = slotKeyOf(a.dayOfWeek, a.slotKey)
+      slotCount.set(key, Math.max(0, (slotCount.get(key) ?? 1) - 1))
+      slotMembers.get(key)?.delete(a.assistantId)
+      hours.set(a.assistantId, Math.max(0, (hours.get(a.assistantId) ?? 1) - slotHoursOf(a.dayOfWeek, a.slotKey)))
+      freeSlotCount.set(a.assistantId, (freeSlotCount.get(a.assistantId) ?? 0) + 1)
+      busy.get(a.assistantId)?.delete(key)
+      assignments.splice(assignments.indexOf(a), 1)
     }
   }
 
