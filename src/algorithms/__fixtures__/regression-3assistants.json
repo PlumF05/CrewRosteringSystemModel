@@ -23,6 +23,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 2,
+   "sectionText": "第二节-第四节",
    "weekRanges": [
     [
      11,
@@ -36,6 +37,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 2,
+   "sectionText": "第二节-第四节",
    "weekRanges": [
     [
      12,
@@ -49,6 +51,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 2,
+   "sectionText": "第二节-第四节",
    "weekRanges": [
     [
      13,
@@ -62,6 +65,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      10,
@@ -75,6 +79,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      10,
@@ -88,6 +93,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      11,
@@ -101,6 +107,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      12,
@@ -114,6 +121,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      13,
@@ -127,6 +135,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      14,
@@ -140,6 +149,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      15,
@@ -153,6 +163,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      16,
@@ -166,6 +177,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      17,
@@ -179,6 +191,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      6,
@@ -192,6 +205,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -205,6 +219,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      10,
@@ -218,6 +233,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -235,6 +251,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -248,6 +265,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      5,
@@ -261,6 +279,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      14,
@@ -274,6 +293,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -291,6 +311,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      2,
@@ -304,6 +325,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课1-中课2",
    "weekRanges": [
     [
      5,
@@ -317,6 +339,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课1-中课2",
    "weekRanges": [
     [
      7,
@@ -330,6 +353,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课1-中课2",
    "weekRanges": [
     [
      8,
@@ -343,6 +367,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课2-中课2",
    "weekRanges": [
     [
      8,
@@ -356,6 +381,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课1-中课2",
    "weekRanges": [
     [
      9,
@@ -369,6 +395,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": null,
+   "sectionText": "中课2-中课2",
    "weekRanges": [
     [
      9,
@@ -382,6 +409,7 @@
    "kind": "experiment",
    "sectionEnd": 7,
    "sectionStart": null,
+   "sectionText": "中课1-第七节",
    "weekRanges": [
     [
      14,
@@ -395,6 +423,7 @@
    "kind": "experiment",
    "sectionEnd": 7,
    "sectionStart": null,
+   "sectionText": "中课1-第七节",
    "weekRanges": [
     [
      16,
@@ -408,6 +437,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      1,
@@ -425,6 +455,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      1,
@@ -438,6 +469,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      5,
@@ -451,6 +483,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      5,
@@ -464,6 +497,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      2,
@@ -477,6 +511,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      1,
@@ -490,6 +525,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      6,
@@ -503,6 +539,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      1,
@@ -516,6 +553,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      6,
@@ -529,6 +567,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": 9,
+   "sectionText": "第九节-晚课",
    "weekRanges": [
     [
      14,
@@ -542,6 +581,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      10,
@@ -555,6 +595,7 @@
    "kind": "experiment",
    "sectionEnd": 13,
    "sectionStart": null,
+   "sectionText": "晚课-第十三节",
    "weekRanges": [
     [
      14,
@@ -568,6 +609,7 @@
    "kind": "experiment",
    "sectionEnd": 13,
    "sectionStart": null,
+   "sectionText": "晚课-第十三节",
    "weekRanges": [
     [
      15,
@@ -581,6 +623,7 @@
    "kind": "experiment",
    "sectionEnd": 13,
    "sectionStart": null,
+   "sectionText": "晚课-第十三节",
    "weekRanges": [
     [
      7,
@@ -594,6 +637,7 @@
    "kind": "experiment",
    "sectionEnd": 13,
    "sectionStart": null,
+   "sectionText": "晚课-第十三节",
    "weekRanges": [
     [
      10,
@@ -607,6 +651,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      6,
@@ -620,6 +665,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      1,
@@ -633,6 +679,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      5,
@@ -646,6 +693,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      1,
@@ -659,6 +707,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      6,
@@ -672,6 +721,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -685,6 +735,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -702,6 +753,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      5,
@@ -715,6 +767,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -728,6 +781,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      5,
@@ -741,6 +795,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -754,6 +809,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      5,
@@ -767,6 +823,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      2,
@@ -780,6 +837,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      6,
@@ -793,6 +851,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      1,
@@ -806,6 +865,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      1,
@@ -819,6 +879,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      6,
@@ -832,6 +893,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      1,
@@ -849,6 +911,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      1,
@@ -862,6 +925,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      5,
@@ -875,6 +939,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -888,6 +953,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      5,
@@ -901,6 +967,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      5,
@@ -914,6 +981,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      15,
@@ -927,6 +995,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -944,6 +1013,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      2,
@@ -957,6 +1027,7 @@
    "kind": "theory",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      1,
@@ -970,6 +1041,7 @@
    "kind": "theory",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      6,
@@ -983,6 +1055,7 @@
    "kind": "theory",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      6,
@@ -996,6 +1069,7 @@
    "kind": "theory",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      1,
@@ -1009,6 +1083,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      2,
@@ -1022,6 +1097,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      1,
@@ -1035,6 +1111,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      4,
@@ -1048,6 +1125,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      3,
@@ -1061,6 +1139,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      7,
@@ -1074,6 +1153,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      6,
@@ -1087,6 +1167,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      9,
@@ -1100,6 +1181,7 @@
    "kind": "experiment",
    "sectionEnd": 9,
    "sectionStart": 6,
+   "sectionText": "第六节-第九节",
    "weekRanges": [
     [
      8,
@@ -1113,6 +1195,7 @@
    "kind": "theory",
    "sectionEnd": 7,
    "sectionStart": 6,
+   "sectionText": "第六节-第七节",
    "weekRanges": [
     [
      13,
@@ -1126,6 +1209,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      1,
@@ -1143,6 +1227,7 @@
    "kind": "theory",
    "sectionEnd": 7,
    "sectionStart": 6,
+   "sectionText": "第六节-第七节",
    "weekRanges": [
     [
      14,
@@ -1156,6 +1241,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      1,
@@ -1173,6 +1259,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      5,
@@ -1186,6 +1273,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      2,
@@ -1199,6 +1287,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      5,
@@ -1212,6 +1301,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -1225,6 +1315,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      6,
@@ -1238,6 +1329,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -1251,6 +1343,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      6,
@@ -1264,6 +1357,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      10,
@@ -1277,6 +1371,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      10,
@@ -1290,6 +1385,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      11,
@@ -1303,6 +1399,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      12,
@@ -1316,6 +1413,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      13,
@@ -1329,6 +1427,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      14,
@@ -1342,6 +1441,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      15,
@@ -1355,6 +1455,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      16,
@@ -1368,6 +1469,7 @@
    "kind": "experiment",
    "sectionEnd": 4,
    "sectionStart": 1,
+   "sectionText": "第一节-第四节",
    "weekRanges": [
     [
      17,
@@ -1381,6 +1483,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      5,
@@ -1394,6 +1497,7 @@
    "kind": "theory",
    "sectionEnd": 2,
    "sectionStart": 1,
+   "sectionText": "第一节-第二节",
    "weekRanges": [
     [
      1,
@@ -1407,6 +1511,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      6,
@@ -1420,6 +1525,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -1433,6 +1539,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      10,
@@ -1446,6 +1553,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -1463,6 +1571,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      1,
@@ -1480,6 +1589,7 @@
    "kind": "experiment",
    "sectionEnd": null,
    "sectionStart": 3,
+   "sectionText": "第三节-中课2",
    "weekRanges": [
     [
      9,
@@ -1493,6 +1603,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      14,
@@ -1506,6 +1617,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      1,
@@ -1523,6 +1635,7 @@
    "kind": "theory",
    "sectionEnd": 4,
    "sectionStart": 3,
+   "sectionText": "第三节-第四节",
    "weekRanges": [
     [
      5,
@@ -1536,6 +1649,7 @@
    "kind": "theory",
    "sectionEnd": 5,
    "sectionStart": 3,
+   "sectionText": "第三节-第五节",
    "weekRanges": [
     [
      2,
@@ -1549,6 +1663,7 @@
    "kind": "experiment",
    "sectionEnd": 7,
    "sectionStart": null,
+   "sectionText": "中课1-第七节",
    "weekRanges": [
     [
      14,
@@ -1562,6 +1677,7 @@
    "kind": "experiment",
    "sectionEnd": 7,
    "sectionStart": null,
+   "sectionText": "中课1-第七节",
    "weekRanges": [
     [
      16,
@@ -1575,6 +1691,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      1,
@@ -1592,6 +1709,7 @@
    "kind": "theory",
    "sectionEnd": 7,
    "sectionStart": 6,
+   "sectionText": "第六节-第七节",
    "weekRanges": [
     [
      10,
@@ -1605,6 +1723,7 @@
    "kind": "theory",
    "sectionEnd": 8,
    "sectionStart": 6,
+   "sectionText": "第六节-第八节",
    "weekRanges": [
     [
      5,
@@ -1618,6 +1737,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      1,
@@ -1631,6 +1751,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      6,
@@ -1644,6 +1765,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      1,
@@ -1657,6 +1779,7 @@
    "kind": "theory",
    "sectionEnd": 10,
    "sectionStart": 9,
+   "sectionText": "第九节-第十节",
    "weekRanges": [
     [
      6,
@@ -1670,6 +1793,7 @@
    "kind": "experiment",
    "sectionEnd": 11,
    "sectionStart": 9,
+   "sectionText": "第九节-第十一节",
    "weekRanges": [
     [
      10,
@@ -1683,6 +1807,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      12,
@@ -1696,6 +1821,7 @@
    "kind": "theory",
    "sectionEnd": 13,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
    "weekRanges": [
     [
      1,
@@ -1713,6 +1839,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      11,
@@ -1726,6 +1853,7 @@
    "kind": "theory",
    "sectionEnd": 13,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
    "weekRanges": [
     [
      1,
@@ -1743,6 +1871,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      5,
@@ -1756,6 +1885,7 @@
    "kind": "theory",
    "sectionEnd": 12,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
    "weekRanges": [
     [
      1,
@@ -1769,6 +1899,7 @@
    "kind": "theory",
    "sectionEnd": 13,
    "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
    "weekRanges": [
     [
      5,
@@ -1795,9 +1926,9 @@
     "start": 1
    },
    {
-    "end": 11,
+    "end": 9,
     "label": "下午",
-    "start": 8
+    "start": 6
    }
   ],
   "workdays": [
@@ -1807,77 +1938,5 @@
    4,
    5
   ]
- },
- "week1": [
-  {
-   "a": 8,
-   "day": 1,
-   "slot": "c10"
-  },
-  {
-   "a": 8,
-   "day": 1,
-   "slot": "c11"
-  },
-  {
-   "a": 7,
-   "day": 2,
-   "slot": "c1"
-  },
-  {
-   "a": 8,
-   "day": 2,
-   "slot": "c10"
-  },
-  {
-   "a": 8,
-   "day": 2,
-   "slot": "c11"
-  },
-  {
-   "a": 7,
-   "day": 2,
-   "slot": "c2"
-  },
-  {
-   "a": 9,
-   "day": 3,
-   "slot": "c1"
-  },
-  {
-   "a": 9,
-   "day": 3,
-   "slot": "c2"
-  },
-  {
-   "a": 7,
-   "day": 3,
-   "slot": "c3"
-  },
-  {
-   "a": 7,
-   "day": 3,
-   "slot": "c4"
-  },
-  {
-   "a": 7,
-   "day": 4,
-   "slot": "c1"
-  },
-  {
-   "a": 7,
-   "day": 4,
-   "slot": "c2"
-  },
-  {
-   "a": 9,
-   "day": 4,
-   "slot": "c3"
-  },
-  {
-   "a": 9,
-   "day": 4,
-   "slot": "c4"
-  }
- ]
+ }
 }

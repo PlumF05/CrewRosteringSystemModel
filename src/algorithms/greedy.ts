@@ -4,11 +4,15 @@
  * 流程：
  *   1. 时段由规则推导（工作日 × 上班节次，key=c{start}-{end}）；
  *   2. 计算可用性矩阵：助理 × 时段，课程占用的格子标记忙
- *      （课程按规则过滤：理论课/实验课是否计入；uniform 模式下任一周有课即占用）；
+ *      （课程按规则过滤：理论课/实验课是否计入；uniform 模式下任一周有课即占用；
+ *      节次经 utils/sectionOrder 换算到"当日先后序号"再判重叠——课程表的节次是
+ *      数字与命名（中课/晚课）混排，排班表编号已与课程表对齐）；
  *   3. 时段按"约束紧度"排序——可用候选人少的时段优先分配（先难后易）；
  *   4. 时段内候选人按"稀缺度"排序——可选时段最少的人优先，平手按已排节数（负载均衡）；
  *   5. 第二遍修复：低于最少工时的助理在未满时段补位；
- *   6. 输出未满足时段清单交由手动调整兜底（F04）。
+ *   6. 每日均衡（balanceDaily，2026-09-13 增补）：在收敛结果之上做保守再平衡——
+ *      补齐"整天无人"的工作日，并收敛各天人数差，全程不违反课程/人数上限/最少连续节数；
+ *   7. 输出未满足时段清单交由手动调整兜底（F04）。
  *
  * scheduleAll：按排班模式产出全部周——
  *   各周独立：逐周计算可用性；
@@ -18,7 +22,8 @@
  * 复杂度 O(周数 × A×S)，50 人 × 35 时段 × 17 周仍为毫秒级。
  */
 import { weekInRanges } from '../utils/weekParser'
-import { buildSlots } from './types'
+import { sectionOrdinal, sectionOrdinalRange } from '../utils/sectionOrder'
+import { assertRulesValid, buildSlots } from './types'
 import type {
   Assignment,
   AssistantInput,
@@ -40,6 +45,8 @@ const slotKeyOf = (day: number, key: string) => `${day}|${key}`
 function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): ScheduleOutput {
   const t0 = performance.now()
   const { weekNo, rules, assistants, courses, keep } = input
+  // 入口把关：非法规则直接抛错，避免静默产出空结果（详见 validateRules 的说明）
+  assertRulesValid(rules)
 
   // ---------- 1. 时段槽位 ----------
   const slots: Slot[] = buildSlots(rules)
@@ -67,22 +74,27 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     }
     return weekInRanges(weekNo, c.weekRanges)
   }
-  const overlaps = (c: (typeof effectiveCourses)[number], s: Slot) =>
-    c.sectionStart !== null &&
-    c.sectionEnd !== null &&
-    c.sectionStart <= s.sectionEnd &&
-    c.sectionEnd >= s.sectionStart
+
+  // 节次序号轴：课程与排班时段都必须先换算到"当日先后序号"再比较。
+  // 课程表节次是"数字节次 + 命名节次（中课/晚课）"混排，排班表的下午编号已与
+  // 课程表对齐（第6节 = 下午第一节），故按序号区间判重叠——既不漏判（在课上排班），
+  // 也不会把中课/晚课误当成整天占用而白丢一天的可排时间。
+  const slotOrdinalMap = new Map<string, number | null>()
+  for (const s of slots) slotOrdinalMap.set(s.key, sectionOrdinal(String(s.sectionStart)))
+  const courseRangeCache = new Map<(typeof effectiveCourses)[number], { start: number; end: number } | null>()
+  for (const c of effectiveCourses) courseRangeCache.set(c, sectionOrdinalRange(c.sectionText))
 
   for (const c of effectiveCourses) {
     if (!isCourseActive(c)) continue
     const set = courseBusy.get(c.assistantId)
     if (!set) continue
+    const range = courseRangeCache.get(c) ?? null
     for (const s of slots) {
       if (s.dayOfWeek !== c.dayOfWeek) continue
-      // 数字节次按区间重叠判定；非数字节次（中课/晚课）保守按全天占用
-      if (c.sectionStart === null || c.sectionEnd === null || overlaps(c, s)) {
-        set.add(slotKeyOf(s.dayOfWeek, s.key))
-      }
+      const ord = slotOrdinalMap.get(s.key) ?? null
+      // 节次无法识别（异常原文）→ 保守按"该日整天占用"：宁可少排，不可在课上排班
+      const busy = range === null || ord === null ? true : range.start <= ord && range.end >= ord
+      if (busy) set.add(slotKeyOf(s.dayOfWeek, s.key))
     }
   }
   for (const a of assistants) busy.set(a.id, new Set(courseBusy.get(a.id) ?? []))
@@ -299,6 +311,276 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     if (!removed && !added) break
   }
 
+  // ---------- 6.6 每日均衡（2026-09-13 增补，规则 balanceDaily） ----------
+  // 目标：在"不违反其他约束"的前提下尽量平均每日排班，避免出现某天无人值班。
+  //
+  // 动机：主分配是按"时段紧度先难后易"逐时段填人的，容量会优先消耗在排序靠前的
+  // 日子上，可能出现"周一~周四已排妥、周五一个人都没有"的不均衡。于是本阶段在
+  // 收敛结果之上，对"整天无人"的工作日做补救，只使用两种**保守**原子操作：
+  //   ① 新建块：某助理在该天空闲、剩余额度够 → 排一个满足最少连续节数的连续块；
+  //   ② 整块搬移：把某助理在别天的**整个连续块**搬到该天的空闲连续段上。逐个移除
+  //      再逐个指派、块节数不变 ⇒ 该助理工时净变化为 0，不破坏课程占用、人数上限
+  //      与最少连续节数；且**仅当源时段移出后仍满足人数下限**才允许搬（即只动用
+  //      "冗余"值班）——因此绝不会把"某天无人"的问题转移到另一天。
+  //
+  // 范围界定（两档策略，以及为什么不做更激进的"人数差最小化"）：
+  //   A 档 · 零损伤：只用 ① 新建块、② 冗余值班整块搬移，绝不新增"未满足时段"。
+  //   B 档 · 兜底让位：仅当某天"一个人都没有"且 A 档无解时启用（典型场景是工时上限
+  //      已用尽：3 人 × 上限 6 节 = 18 人节，却要覆盖 40 个时段）。允许搬走整个连续块、
+  //      把源时段的覆盖让出来以保证"每天都有人"，但**硬性要求源日让出后仍有人**，
+  //      绝不把空白天转移给别的日期。此时"每时段都有人"数学上不可达（18 < 40），
+  //      "每天有人"与"每时段有人"不可兼得，取舍是显式的，而非静默破坏约束。
+  //   不做"人数差最小化"：各工作日的上班节次相同 ⇒ 每日时段数相同，主分配本就会把每个
+  //      时段填到人数上限，真正的失衡形态就是"某天归零"；而搬移粒度受最少连续节数约束、
+  //      无法细分到单节微调人数差，强行迭代会在两个状态间来回搬运、永不收敛。
+  const workdaysSorted = [...new Set(rules.workdays)].sort((a, b) => a - b)
+
+  /** 某助理当前已在多少个工作日值班（为空白天挑人时，优先挑天数最少的人以分散排班） */
+  const coveredDaysOf = (aId: number): number =>
+    new Set(assignments.filter((x) => x.assistantId === aId).map((x) => x.dayOfWeek)).size
+
+  /** 某助理在某天的空闲连续段（上班节次内 ∪ 未被课程占用），单位=节 */
+  const freeSegmentsOf = (a: AssistantInput, day: number): Array<{ start: number; len: number }> => {
+    const ws = dayWorkSections.get(day)
+    if (!ws) return []
+    const cb = courseBusy.get(a.id)
+    const secs = [...ws].sort((x, y) => x - y)
+    const runs: Array<{ start: number; len: number }> = []
+    let cur: { start: number; len: number } | null = null
+    for (const s of secs) {
+      if (cb?.has(`${day}|c${s}`)) {
+        cur = null
+        continue
+      }
+      if (cur && cur.start + cur.len === s) cur.len++
+      else {
+        cur = { start: s, len: 1 }
+        runs.push(cur)
+      }
+    }
+    return runs
+  }
+
+  /** 该助理在该天的"已分配连续块"列表 */
+  const blocksOf = (aId: number, day: number): Assignment[][] => {
+    const bySec = new Map<number, Assignment>()
+    for (const x of assignments) {
+      if (x.assistantId === aId && x.dayOfWeek === day) bySec.set(Number(x.slotKey.slice(1)), x)
+    }
+    const secs = [...bySec.keys()].sort((x, y) => x - y)
+    const blocks: Assignment[][] = []
+    let cur: Assignment[] = []
+    for (let i = 0; i < secs.length; i++) {
+      const item = bySec.get(secs[i])!
+      if (i > 0 && secs[i] === secs[i - 1] + 1) cur.push(item)
+      else {
+        if (cur.length) blocks.push(cur)
+        cur = [item]
+      }
+    }
+    if (cur.length) blocks.push(cur)
+    return blocks
+  }
+
+  /** 能否把 a 的连续 len 节落在 (day, start) 上：时段在上班表内、无课、未排本人、未超人数上限 */
+  const canPlaceBlock = (a: AssistantInput, day: number, start: number, len: number): boolean => {
+    const ws = dayWorkSections.get(day)
+    const cb = courseBusy.get(a.id)
+    for (let s = start; s < start + len; s++) {
+      if (!ws?.has(s)) return false
+      if (cb?.has(`${day}|c${s}`)) return false
+      const key = slotKeyOf(day, `c${s}`)
+      if (slotMembers.get(key)?.has(a.id)) return false
+      if ((slotCount.get(key) ?? 0) >= rules.maxPerSlot) return false
+    }
+    return true
+  }
+
+  /** 低层原子操作：按 (天, 节号) 指派 / 撤销（保持各累加量一致） */
+  function assignAt(a: AssistantInput, day: number, sec: number, source: 'auto' | 'manual'): void {
+    const key = slotKeyOf(day, `c${sec}`)
+    slotCount.set(key, (slotCount.get(key) ?? 0) + 1)
+    slotMembers.get(key)!.add(a.id)
+    hours.set(a.id, (hours.get(a.id) ?? 0) + 1)
+    busy.get(a.id)!.add(key)
+    freeSlotCount.set(a.id, Math.max(0, (freeSlotCount.get(a.id) ?? 1) - 1))
+    assignments.push({ dayOfWeek: day, slotKey: `c${sec}`, assistantId: a.id, source })
+  }
+
+  function removeAssignment(x: Assignment): void {
+    const key = slotKeyOf(x.dayOfWeek, x.slotKey)
+    slotCount.set(key, Math.max(0, (slotCount.get(key) ?? 1) - 1))
+    slotMembers.get(key)?.delete(x.assistantId)
+    hours.set(x.assistantId, Math.max(0, (hours.get(x.assistantId) ?? 1) - 1))
+    freeSlotCount.set(x.assistantId, (freeSlotCount.get(x.assistantId) ?? 0) + 1)
+    busy.get(x.assistantId)?.delete(key)
+    const i = assignments.indexOf(x)
+    if (i >= 0) assignments.splice(i, 1)
+  }
+
+  /** 策略①：为指定天新建一个连续块（优先已值班天数少者，使排班分散到更多天） */
+  function fillDayByNewBlock(day: number): boolean {
+    const minLen = Math.max(1, rules.minConsecutiveSections)
+    const cands = assistants
+      .map((a) => ({ a, remain: rules.maxSectionsPerAssistant - (hours.get(a.id) ?? 0) }))
+      .filter((c) => c.remain >= minLen)
+      .sort(
+        (x, y) =>
+          coveredDaysOf(x.a.id) - coveredDaysOf(y.a.id) ||
+          y.remain - x.remain ||
+          x.a.id - y.a.id,
+      )
+    for (const { a, remain } of cands) {
+      for (const seg of freeSegmentsOf(a, day)) {
+        // 从段首起取不超过剩余额度与段长的子块；取不满最少连续节数就换下一个候选
+        for (let take = Math.min(seg.len, remain); take >= minLen; take--) {
+          if (!canPlaceBlock(a, day, seg.start, take)) continue
+          for (let s = seg.start; s < seg.start + take; s++) assignAt(a, day, s, 'auto')
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  /**
+   * 策略②：把某助理在别的天的**整个连续块**搬到 toDay 的空闲连续段上。
+   * 仅动用冗余值班：源时段移出后仍须 ≥ minPerSlot，否则放弃该候选。
+   * 择优选块：该助理已值班天数少者优先（把值班分散到更多天），再按块短者优先
+   * （对人数分布扰动最小），最后按助理 id 保证输出确定性。
+   */
+  function moveBlockInto(toDay: number): boolean {
+    const minLen = Math.max(1, rules.minConsecutiveSections)
+    const chunks: Array<{ a: AssistantInput; block: Assignment[] }> = []
+    for (const a of assistants) {
+      for (const d of workdaysSorted) {
+        if (d === toDay) continue
+        for (const block of blocksOf(a.id, d)) {
+          if (block.length >= minLen) chunks.push({ a, block })
+        }
+      }
+    }
+    chunks.sort(
+      (x, y) =>
+        coveredDaysOf(x.a.id) - coveredDaysOf(y.a.id) ||
+        x.block.length - y.block.length ||
+        x.a.id - y.a.id,
+    )
+    for (const { a, block } of chunks) {
+      const len = block.length
+      const sourceRedundant = block.every(
+        (b) => (slotCount.get(slotKeyOf(b.dayOfWeek, b.slotKey)) ?? 0) - 1 >= rules.minPerSlot,
+      )
+      if (!sourceRedundant) continue
+      for (const seg of freeSegmentsOf(a, toDay)) {
+        for (let start = seg.start; start + len <= seg.start + seg.len; start++) {
+          if (!canPlaceBlock(a, toDay, start, len)) continue
+          for (const b of block) removeAssignment(b)
+          for (let s = start; s < start + len; s++) assignAt(a, toDay, s, 'auto')
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  /**
+   * 兜底策略③：让位式搬移（仅用于"某天一个人都没有"的情形）。
+   *
+   * 背景：当工时上限已被用尽（例如 3 人 × 上限 6 节 = 18 人节，却要覆盖 40 个时段），
+   * 既没有空闲额度可新建块、也没有任何"冗余"值班可搬（每个已排时段恰好 1 人）。
+   * 此时"每个时段都有人"在数学上不可达，但"每天都有人"仍可达——策略②的零损伤
+   * 闸门相当于禁止一切搬移，会导致空白天永远无法消除。故此处有意放开该闸门。
+   *
+   * 代价与边界（重要）：
+   * - 被让出的源时段会从"已排"变为"未满足"，进入未满足时段清单交由手动调整兜底；
+   *   这是"每天有人"与"每个时段都有人"不可兼得时的显式取舍，非约束被静默破坏。
+   * - 硬闸门：源日让出后**必须仍有至少 1 条排班**，绝不把"空白天"转移到另一天。
+   * - 课程占用、人数上限、最少连续节数、每人工时上限一律不得违反。
+   * - 择优顺序：损伤最小（源时段跌出人数下限的个数）→ 块最短 → 源日值班最多
+   *   （从最拥挤的天让出，最接近"平均"）→ 助理 id（保证确定性）。
+   */
+  function moveBlockIntoForce(toDay: number): boolean {
+    const minLen = Math.max(1, rules.minConsecutiveSections)
+    const cands: Array<{ a: AssistantInput; block: Assignment[]; damage: number; srcCount: number }> = []
+    for (const a of assistants) {
+      for (const d of workdaysSorted) {
+        if (d === toDay) continue
+        const srcCount = assignments.filter((x) => x.dayOfWeek === d).length
+        for (const block of blocksOf(a.id, d)) {
+          if (block.length < minLen) continue
+          // 硬闸门：源日让出整块后不能变成"空白天"
+          if (srcCount - block.length < 1) continue
+          const damage = block.filter(
+            (b) => (slotCount.get(slotKeyOf(b.dayOfWeek, b.slotKey)) ?? 0) - 1 < rules.minPerSlot,
+          ).length
+          cands.push({ a, block, damage, srcCount })
+        }
+      }
+    }
+    cands.sort(
+      (x, y) =>
+        x.damage - y.damage ||
+        x.block.length - y.block.length ||
+        y.srcCount - x.srcCount ||
+        x.a.id - y.a.id,
+    )
+    for (const c of cands) {
+      const len = c.block.length
+      for (const seg of freeSegmentsOf(c.a, toDay)) {
+        for (let start = seg.start; start + len <= seg.start + seg.len; start++) {
+          if (!canPlaceBlock(c.a, toDay, start, len)) continue
+          for (const b of c.block) removeAssignment(b)
+          for (let s = start; s < start + len; s++) assignAt(c.a, toDay, s, 'auto')
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  /**
+   * 某天的上班时段是否已"符合要求"：每个节次时段都达到人数下限。
+   * 下限取 max(1, minPerSlot)——规则的本意是"避免某天无人值班"，
+   * 即使把同时段下限配成 0，"某天一个人都没有"仍应被视为不达标。
+   */
+  const dayTarget = Math.max(1, rules.minPerSlot)
+  const dayMeetsTarget = (day: number): boolean =>
+    slots
+      .filter((s) => s.dayOfWeek === day)
+      .every((s) => (slotCount.get(slotKeyOf(day, s.key)) ?? 0) >= dayTarget)
+
+  /**
+   * 每日均衡一趟：
+   *   A 档（零损伤）——逐日补足到人数下限：新建连续块 → 冗余值班整块搬移；
+   *   B 档（兜底让位）——仍有"整天无人"的工作日时，允许以个别源时段为代价整块搬入。
+   */
+  function balanceDailyPass(): boolean {
+    let changed = false
+    for (const day of workdaysSorted) {
+      const daySlots = slots.filter((s) => s.dayOfWeek === day).length
+      for (let guard = 0; guard < Math.max(1, daySlots); guard++) {
+        if (dayMeetsTarget(day)) break
+        if (fillDayByNewBlock(day) || moveBlockInto(day)) changed = true
+        else break
+      }
+    }
+    // B 档：A 档无法解决的空白天（例如工时上限已用尽、无冗余值班可搬）
+    for (const day of workdaysSorted) {
+      if (assignments.some((x) => x.dayOfWeek === day)) continue
+      if (moveBlockIntoForce(day)) changed = true
+    }
+    return changed
+  }
+
+  if (rules.balanceDaily) {
+    // 每趟至少补齐一个时段，最多趟数 = 工作日数 + 2（兜底上限，确保必然终止）
+    const maxRounds = workdaysSorted.length + 2
+    for (let round = 0; round < maxRounds; round++) {
+      if (!balanceDailyPass()) break
+    }
+  }
+
   // ---------- 7. 汇总 ----------
   const unmetSlots: UnmetSlot[] = []
   for (const s of slots) {
@@ -326,7 +608,9 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
         sections: secs,
         slots: slotsN,
         belowMin: secs < rules.minSectionsPerAssistant,
-        atMax: secs + rules.minPerSlot > rules.maxSectionsPerAssistant,
+        // 2026-09-13 修正：排班时段已单节化，"差一节到上限"即为不可再排；
+        // 旧判据误用 minPerSlot 作单位，minPerSlot≥2 时会虚报"已达上限"
+        atMax: secs + 1 > rules.maxSectionsPerAssistant,
       }
     })
     .sort((x, y) => x.assistantId - y.assistantId)
@@ -349,6 +633,8 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
  */
 export function scheduleAll(input: BaseScheduleInput): WeeklySchedule[] {
   const { rules } = input
+  // 入口把关：非法规则（如 weekStart > weekEnd）会让周列表为空、静默产出 0 周结果
+  assertRulesValid(rules)
   const weeks: number[] = []
   for (let w = rules.weekStart; w <= rules.weekEnd; w++) weeks.push(w)
 

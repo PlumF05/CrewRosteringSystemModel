@@ -72,6 +72,24 @@ describe('assistantRepo', () => {
     expect(await assistantRepo.get(id)).toBeUndefined()
     expect(await courseRepo.count()).toBe(0)
   })
+
+  it('删除助理时级联删除其排班记录（不留孤儿行）', async () => {
+    // 2026-09-13 修复：此前只级联删除课程，排班记录残留导致界面/导出出现 "#id"
+    const id = await assistantRepo.add({ ...baseAssistant })
+    await db.duty_schedule.bulkAdd([
+      { weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: id, status: 'normal', source: 'auto', createdAt: 'x', updatedAt: 'x' },
+      { weekNo: 2, dayOfWeek: 3, timeSlot: 'c7', assistantId: id, status: 'normal', source: 'auto', createdAt: 'x', updatedAt: 'x' },
+    ])
+    const other = await assistantRepo.add({ ...baseAssistant, studentNo: 'S2', name: '乙' })
+    await dutyScheduleRepo.add({ weekNo: 1, dayOfWeek: 2, timeSlot: 'c1', assistantId: other })
+
+    await assistantRepo.remove(id)
+
+    // 该助理的排班全部清除，他人的排班保留
+    const rest = await dutyScheduleRepo.all()
+    expect(rest).toHaveLength(1)
+    expect(rest[0].assistantId).toBe(other)
+  })
 })
 
 describe('courseRepo', () => {

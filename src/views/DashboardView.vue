@@ -16,6 +16,11 @@ const ACTION_LABEL: Record<string, string> = {
   'assistant.add': '新增助理',
   'assistant.update': '修改助理',
   'assistant.remove': '删除助理',
+  'course.import': '导入课程表',
+  'rules.update': '修改排班规则',
+  'schedule.write': '写入排班',
+  'schedule.migrate': '排班数据迁移',
+  'duty.remove.conflict': '清除冲突排班',
 }
 </script>
 

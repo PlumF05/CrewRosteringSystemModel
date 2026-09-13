@@ -8,7 +8,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { configRepo, operationLogRepo } from '../db/repositories'
-import { DEFAULT_RULES, normalizeRules, type SchedulingRules } from '../algorithms/types'
+import { DEFAULT_RULES, normalizeRules, validateRules, type SchedulingRules } from '../algorithms/types'
 
 const form = reactive<SchedulingRules>(JSON.parse(JSON.stringify(DEFAULT_RULES)))
 const saving = ref(false)
@@ -28,21 +28,14 @@ onMounted(async () => {
   Object.assign(form, normalizeRules(saved))
 })
 
-function validate(): string | null {
-  if (form.weekStart < 1 || form.weekEnd < form.weekStart) return '排班周期不合法（起 ≤ 止，且从第 1 周起）'
-  if (form.minSectionsPerAssistant > form.maxSectionsPerAssistant) return '每人最少工时不能大于最多工时'
-  if (form.minPerSlot > form.maxPerSlot) return '同时段最少人数不能大于最多人数'
-  if (form.workdays.length === 0) return '至少选择一个工作日'
-  if (form.workSections.length === 0) return '至少设置一个上班节次区间'
-  for (const s of form.workSections) {
-    if (s.start < 1 || s.end > 13 || s.end < s.start) return `节次区间不合法：第 ${s.start}~${s.end} 节`
-  }
-  return null
+function validateIssues() {
+  return validateRules(form)
 }
 
 async function save() {
-  const err = validate()
-  if (err) return ElMessage.error(err)
+  // 校验口径与算法入口共用同一函数（algorithms/types.validateRules），避免两处不一致
+  const issues = validateIssues()
+  if (issues.length > 0) return ElMessage.error(issues[0].message)
   saving.value = true
   try {
     const rules: SchedulingRules = JSON.parse(
@@ -124,7 +117,7 @@ function removeSection(idx: number) {
             </el-button>
           </div>
           <el-button link type="primary" @click="addSection">+ 添加节次区间</el-button>
-          <div class="hint">排班只发生在工作日的这些节次内；默认上午 1~4 节、下午 8~11 节</div>
+          <div class="hint">排班只发生在工作日的这些节次内；默认上午 1~4 节、下午 6~9 节（与课程表编号一致）</div>
         </div>
       </el-form-item>
 
@@ -146,6 +139,17 @@ function removeSection(idx: number) {
         <div class="hint">
           大于 1 时，孤立的单节值班不会被安排。例：某助理第 9~10 节有课、最少连续 2 节时，
           第 11 节（其可值班连续段仅剩 1 节）不会排给他
+        </div>
+      </el-form-item>
+
+      <el-form-item label="每日均衡排班">
+        <el-switch v-model="form.balanceDaily" />
+        <div class="hint">
+          开启后尽量平均每日排班，避免出现某天无人值班。例：周一至周四已排妥而周五无人，
+          则在"不违反课程/工时/人数/连续性约束"的前提下调整，使周五也有人值班。<br />
+          优先使用零损伤手段（新建连续块、搬移冗余值班）；若工时上限已用尽导致无法避免，
+          则会从值班最多的那天让出一段，以保证每天都有人——被让出的时段会进入下方排班表的
+          "未满足时段"清单，可手动兜底
         </div>
       </el-form-item>
 
