@@ -55,7 +55,21 @@ export const assistantRepo = {
         .count()
       if (clash > 0) throw new DuplicateStudentNoError(patch.studentNo)
     }
-    return db.assistant.update(id, { ...patch, updatedAt: now() })
+    // 2026-09-13：改为"读取-合并-写回"。原因：Dexie 的 update() 不会因字段值为
+    // undefined 而删除已有字段，导致"关闭个性化值班节数"后旧覆盖值残留、
+    // 界面上看似关闭实际仍生效。此实现下 patch 中值为 undefined 的字段会被**删除**。
+    return db.transaction('rw', db.assistant, async () => {
+      const rec = await db.assistant.get(id)
+      if (!rec) return 0
+      const next = { ...rec } as Record<string, unknown>
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k]
+        else next[k] = v
+      }
+      next.updatedAt = now()
+      await db.assistant.put(next as unknown as Assistant)
+      return id
+    })
   },
 
   async remove(id: number): Promise<void> {
