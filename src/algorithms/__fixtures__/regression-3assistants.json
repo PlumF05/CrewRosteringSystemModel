@@ -1,0 +1,1883 @@
+{
+ "assistants": [
+  {
+   "id": 7,
+   "identity": "undergrad",
+   "name": "王五"
+  },
+  {
+   "id": 8,
+   "identity": "undergrad",
+   "name": "赵四"
+  },
+  {
+   "id": 9,
+   "identity": "undergrad",
+   "name": "庞士豪"
+  }
+ ],
+ "courses": [
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     10,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     17,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     10,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     5,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     5,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     5,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     7,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     4,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     3,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     6,
+     6
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     13,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     5,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     10,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     17,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     5,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     10,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "experiment",
+   "sectionEnd": 11,
+   "sectionStart": 9,
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  }
+ ],
+ "rules": {
+  "countExperiment": true,
+  "countTheory": true,
+  "maxPerSlot": 2,
+  "maxSectionsPerAssistant": 6,
+  "minConsecutiveSections": 2,
+  "minPerSlot": 1,
+  "minSectionsPerAssistant": 6,
+  "uniformMode": false,
+  "weekEnd": 17,
+  "weekStart": 1,
+  "workSections": [
+   {
+    "end": 4,
+    "label": "上午",
+    "start": 1
+   },
+   {
+    "end": 11,
+    "label": "下午",
+    "start": 8
+   }
+  ],
+  "workdays": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ },
+ "week1": [
+  {
+   "a": 8,
+   "day": 1,
+   "slot": "c10"
+  },
+  {
+   "a": 8,
+   "day": 1,
+   "slot": "c11"
+  },
+  {
+   "a": 7,
+   "day": 2,
+   "slot": "c1"
+  },
+  {
+   "a": 8,
+   "day": 2,
+   "slot": "c10"
+  },
+  {
+   "a": 8,
+   "day": 2,
+   "slot": "c11"
+  },
+  {
+   "a": 7,
+   "day": 2,
+   "slot": "c2"
+  },
+  {
+   "a": 9,
+   "day": 3,
+   "slot": "c1"
+  },
+  {
+   "a": 9,
+   "day": 3,
+   "slot": "c2"
+  },
+  {
+   "a": 7,
+   "day": 3,
+   "slot": "c3"
+  },
+  {
+   "a": 7,
+   "day": 3,
+   "slot": "c4"
+  },
+  {
+   "a": 7,
+   "day": 4,
+   "slot": "c1"
+  },
+  {
+   "a": 7,
+   "day": 4,
+   "slot": "c2"
+  },
+  {
+   "a": 9,
+   "day": 4,
+   "slot": "c3"
+  },
+  {
+   "a": 9,
+   "day": 4,
+   "slot": "c4"
+  }
+ ]
+}
