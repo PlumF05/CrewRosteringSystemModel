@@ -17,7 +17,8 @@ import {
   type SchedulingRules,
   type WeeklySchedule,
 } from '../algorithms/types'
-import { exportScheduleFile, scheduleFileName } from '../utils/scheduleExport'
+import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
+import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
 import {
   collectGridDays,
@@ -152,8 +153,9 @@ function weekChangeLabel(w: WeeklySchedule): string {
  */
 const exportIncludePhone = ref(true)
 
-/** 导出当前查看周的排班表（联系电话默认自动填充） */
-function doExport() {
+/** 导出当前查看周的排班表（联系电话默认自动填充）。
+ *  Tauri 桌面端：弹系统「另存为」对话框写入所选路径；浏览器：回退为直接下载。 */
+async function doExport() {
   if (storedRows.value.length === 0) {
     ElMessage.error(`第 ${weekNo.value} 周暂无排班记录，无法导出`)
     return
@@ -161,21 +163,31 @@ function doExport() {
   exporting.value = true
   try {
     const fileName = scheduleFileName(weekNo.value)
-    exportScheduleFile(
-      {
-        weekNo: weekNo.value,
-        rules: JSON.parse(JSON.stringify(rules.value)),
-        rows: storedRows.value.map((r) => ({
-          dayOfWeek: r.dayOfWeek,
-          timeSlot: r.timeSlot,
-          assistantId: r.assistantId,
-        })),
-        nameById: nameById.value,
-        phoneById: phoneById.value,
-        includePhone: exportIncludePhone.value,
-      },
-      fileName,
-    )
+    const input: ExportInput = {
+      weekNo: weekNo.value,
+      rules: JSON.parse(JSON.stringify(rules.value)),
+      rows: storedRows.value.map((r) => ({
+        dayOfWeek: r.dayOfWeek,
+        timeSlot: r.timeSlot,
+        assistantId: r.assistantId,
+      })),
+      nameById: nameById.value,
+      phoneById: phoneById.value,
+      includePhone: exportIncludePhone.value,
+    }
+    // Tauri：系统"另存为"对话框；用户取消（false）时静默结束
+    const saved = await saveXlsx(fileName, buildScheduleFileBuffer(input))
+    if (saved) {
+      ElMessage.success(
+        exportIncludePhone.value
+          ? `已保存 ${fileName}（排班表已填入值班人联系电话，不含学号/QQ）`
+          : `已保存 ${fileName}（不含联系电话）`,
+      )
+      return
+    }
+    if (isTauri) return
+    // 浏览器回退：直接触发下载
+    exportScheduleFile(input, fileName)
     ElMessage.success(
       exportIncludePhone.value
         ? `已生成 ${fileName}（排班表已填入值班人联系电话，不含学号/QQ）`
