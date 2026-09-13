@@ -274,6 +274,95 @@ describe('新需求：一次性全周期排班与 uniform 模式', () => {
   })
 })
 
+describe('新需求：最少连续排班节次', () => {
+  const rulesMin2 = baseRules({
+    workdays: [1],
+    workSections: [{ start: 8, end: 11, label: '下午' }],
+    minSectionsPerAssistant: 2,
+    maxSectionsPerAssistant: 8,
+    minPerSlot: 1,
+    maxPerSlot: 2,
+    minConsecutiveSections: 2,
+  })
+
+  it('用户场景：第9~10节有课 + min=2 → 第8节和第11节都不排给他（孤立单节）', () => {
+    const input = mkInput({
+      rules: rulesMin2,
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 9, 10)],
+    })
+    const out = scheduleOneWeek(input)
+    // 助理 1 的可值班连续段只有 {8} 和 {11}，都短于 2 → 全天不可排
+    expect(out.assignments.some((a) => a.assistantId === 1)).toBe(false)
+    // 第 11 节由助理 2 值班（不会被孤立地排给助理 1）
+    expect(out.assignments.filter((a) => a.slotKey === 'c11').every((a) => a.assistantId === 2)).toBe(true)
+    checkInvariants(input, out)
+  })
+
+  it('只缺第10节 + min=2 → 第8~9节可连排，第11节不可排', () => {
+    const input = mkInput({
+      rules: rulesMin2,
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 10, 10)],
+    })
+    const out = scheduleOneWeek(input)
+    const a1Slots = out.assignments.filter((a) => a.assistantId === 1).map((a) => a.slotKey)
+    expect(a1Slots).not.toContain('c11')
+    expect(a1Slots.some((k) => k === 'c8' || k === 'c9')).toBe(true)
+    checkInvariants(input, out)
+  })
+
+  it('min=3 + 两人竞争：连续块不足 3 节的孤立安排被自动撤销', () => {
+    const input = mkInput({
+      rules: baseRules({
+        workdays: [1],
+        workSections: [{ start: 8, end: 11, label: '下午' }],
+        minSectionsPerAssistant: 2,
+        maxPerSlot: 1,
+        minConsecutiveSections: 3,
+      }),
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 10, 10)], // 助理1 第10节有课 → 其可用段 {8,9} 与 {11}
+    })
+    const out = scheduleOneWeek(input)
+    // 助理1 拿到 {8,9}（连续 2 节仍 <3？不：其可值班段 {8,9} 长度 2 < 3 → 也应被守卫拒绝）
+    const a1Slots = out.assignments.filter((a) => a.assistantId === 1).map((a) => a.slotKey)
+    expect(a1Slots).not.toContain('c11')
+    // 任何助理都不应有长度 <3 的连续块
+    const byAD = new Map<string, number[]>()
+    for (const a of out.assignments) {
+      const k = `${a.assistantId}|${a.dayOfWeek}`
+      byAD.set(k, [...(byAD.get(k) ?? []), Number(a.slotKey.slice(1))])
+    }
+    for (const [, secs] of byAD) {
+      const sorted = secs.sort((x, y) => x - y)
+      let len = 1
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === sorted[i - 1] + 1) len++
+        else {
+          expect(len).toBeGreaterThanOrEqual(3)
+          len = 1
+        }
+      }
+      expect(len).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it('min=1（默认）→ 无连续性限制，第 11 节可正常排', () => {
+    const input = mkInput({
+      rules: baseRules({
+        workdays: [1],
+        workSections: [{ start: 8, end: 11, label: '下午' }],
+        maxPerSlot: 2,
+      }),
+      assistants: [A(1), A(2)],
+      courses: [course(1, 1, 9, 10)],
+    })
+    const out = scheduleOneWeek(input)
+    expect(out.assignments.some((a) => a.assistantId === 1 && a.slotKey === 'c11')).toBe(true)
+  })
+})
+
 describe('性能（SRS 4.1）', () => {
   it('10 助理 × 17 周（默认工作日/节次）毫秒级完成', () => {
     const assistants = Array.from({ length: 10 }, (_, i) => A(i + 1))
