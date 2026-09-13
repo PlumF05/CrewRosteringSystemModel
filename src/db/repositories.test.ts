@@ -73,6 +73,24 @@ describe('assistantRepo', () => {
     expect(await courseRepo.count()).toBe(0)
   })
 
+  it('个性化值班节数：保存后可读取；关闭后字段被删除（不残留生效）', async () => {
+    const id = await assistantRepo.add({
+      ...baseAssistant,
+      customMinSections: 2,
+      customMaxSections: 6,
+    })
+    const got = await assistantRepo.get(id)
+    expect(got?.customMinSections).toBe(2)
+    expect(got?.customMaxSections).toBe(6)
+
+    // 关闭：patch 传 undefined → 仓储层删除字段（而非残留继续生效）
+    await assistantRepo.update(id, { customMinSections: undefined, customMaxSections: undefined })
+    const after = await assistantRepo.get(id)
+    expect(after?.customMinSections).toBeUndefined()
+    expect(after?.customMaxSections).toBeUndefined()
+    expect(after?.name).toBe(baseAssistant.name) // 其他字段不受影响
+  })
+
   it('删除助理时级联删除其排班记录（不留孤儿行）', async () => {
     // 2026-09-13 修复：此前只级联删除课程，排班记录残留导致界面/导出出现 "#id"
     const id = await assistantRepo.add({ ...baseAssistant })

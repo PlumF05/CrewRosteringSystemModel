@@ -27,6 +27,13 @@ export interface Assistant {
   phone?: string
   qq?: string
   className?: string
+  /**
+   * 个性化值班节数下限（2026-09-13 增补）。缺省（undefined）= 跟随全局规则
+   * 的 minSectionsPerAssistant。非索引字段，无需数据库版本升级。
+   */
+  customMinSections?: number
+  /** 个性化值班节数上限；缺省（undefined）= 跟随全局规则的 maxSectionsPerAssistant */
+  customMaxSections?: number
   createdAt: string
   updatedAt: string
 }

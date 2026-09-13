@@ -201,6 +201,38 @@ export function assertRulesValid(rules: SchedulingRules): void {
 }
 
 /**
+ * 校验助理的个性化值班节数（2026-09-13 增补）：
+ * 非负、上限至少为 1、最少不得大于最多；未单独设置的助理不校验（跟随全局）。
+ */
+export function validateAssistantOverrides(
+  assistants: Array<Pick<AssistantInput, 'id' | 'name' | 'minSections' | 'maxSections'>>,
+): RuleIssue[] {
+  const issues: RuleIssue[] = []
+  for (const a of assistants) {
+    const label = a.name ? `助理「${a.name}」` : `助理 #${a.id}`
+    const hasMin = typeof a.minSections === 'number'
+    const hasMax = typeof a.maxSections === 'number'
+    if (hasMin && (a.minSections as number) < 0)
+      issues.push({ field: 'assistant', message: `${label}的自定义最少值班节数不能为负` })
+    if (hasMax && (a.maxSections as number) < 1)
+      issues.push({ field: 'assistant', message: `${label}的自定义最多值班节数至少为 1` })
+    if (hasMin && hasMax && (a.minSections as number) > (a.maxSections as number))
+      issues.push({ field: 'assistant', message: `${label}的最少值班节数不能大于最多值班节数` })
+  }
+  return issues
+}
+
+/** 供算法入口把关：个性化覆盖不合法时抛出可直接展示的错误 */
+export function assertAssistantOverridesValid(
+  assistants: Array<Pick<AssistantInput, 'id' | 'name' | 'minSections' | 'maxSections'>>,
+): void {
+  const issues = validateAssistantOverrides(assistants)
+  if (issues.length > 0) {
+    throw new Error(`排班规则不合法：${issues.map((i) => i.message).join('；')}`)
+  }
+}
+
+/**
  * 兼容旧版配置：合并默认值并丢弃已废弃字段（旧版 slotTemplates）。
  * 用户升级后首次读取 config 时调用。
  */
@@ -234,6 +266,13 @@ export interface AssistantInput {
   id: number
   name: string
   identity: Identity
+  /**
+   * 个性化值班节数下限（2026-09-13 增补），缺省跟随全局 rules.minSectionsPerAssistant。
+   * 来自助理档案的 customMinSections。
+   */
+  minSections?: number
+  /** 个性化值班节数上限，缺省跟随全局 rules.maxSectionsPerAssistant */
+  maxSections?: number
 }
 
 /** 算法输入：课程（判定占用的最小字段集） */
@@ -301,6 +340,10 @@ export interface AssistantSummary {
   sections: number
   /** 排到的时段个数 */
   slots: number
+  /** 生效的值班节数下限（含个性化覆盖），供展示"目标区间" */
+  minSections: number
+  /** 生效的值班节数上限（含个性化覆盖） */
+  maxSections: number
   belowMin: boolean
   atMax: boolean
 }

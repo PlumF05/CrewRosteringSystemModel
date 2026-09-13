@@ -23,7 +23,7 @@
  */
 import { weekInRanges } from '../utils/weekParser'
 import { sectionOrdinal, sectionOrdinalRange } from '../utils/sectionOrder'
-import { assertRulesValid, buildSlots } from './types'
+import { assertAssistantOverridesValid, assertRulesValid, buildSlots } from './types'
 import type {
   Assignment,
   AssistantInput,
@@ -47,6 +47,16 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
   const { weekNo, rules, assistants, courses, keep } = input
   // 入口把关：非法规则直接抛错，避免静默产出空结果（详见 validateRules 的说明）
   assertRulesValid(rules)
+  // 个性化值班节数同样要过校验（最少 ≤ 最多、非负），2026-09-13 增补
+  assertAssistantOverridesValid(assistants)
+
+  // ---------- 0. 个性化值班节数（2026-09-13 增补） ----------
+  // 助理可单独覆盖全局的节数上下限：未设置（undefined）→ 跟随全局规则
+  const minSectionsOf = (a: AssistantInput): number =>
+    a.minSections ?? rules.minSectionsPerAssistant
+  const maxSectionsOf = (a: AssistantInput): number =>
+    a.maxSections ?? rules.maxSectionsPerAssistant
+  const assistantById = new Map<number, AssistantInput>(assistants.map((a) => [a.id, a]))
 
   // ---------- 1. 时段槽位 ----------
   const slots: Slot[] = buildSlots(rules)
@@ -140,7 +150,8 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     if (!slotCount.has(key)) continue
     if (slotMembers.get(key)!.has(k.assistantId)) continue
     const h = slotHoursOf(k.dayOfWeek, k.slotKey)
-    if ((hours.get(k.assistantId) ?? 0) + h > rules.maxSectionsPerAssistant) continue
+    const ka = assistantById.get(k.assistantId)
+    if (!ka || (hours.get(k.assistantId) ?? 0) + h > maxSectionsOf(ka)) continue
     slotCount.set(key, slotCount.get(key)! + 1)
     slotMembers.get(key)!.add(k.assistantId)
     hours.set(k.assistantId, (hours.get(k.assistantId) ?? 0) + h)
@@ -169,7 +180,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
       (a) =>
         freeAt(a, s) &&
         freeRunOk(a, s.dayOfWeek, s.sectionStart) &&
-        (hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) <= rules.maxSectionsPerAssistant,
+        (hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) <= maxSectionsOf(a),
     )
   }
 
@@ -231,7 +242,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
   function repairPass(): boolean {
     let made = false
     const belowMinAssistants = assistants.filter(
-      (a) => (hours.get(a.id) ?? 0) < rules.minSectionsPerAssistant,
+      (a) => (hours.get(a.id) ?? 0) < minSectionsOf(a),
     )
     for (const a of belowMinAssistants) {
       const order = [...slots].sort((x, y) => {
@@ -241,13 +252,13 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
         return slotKeyOf(x.dayOfWeek, x.key).localeCompare(slotKeyOf(y.dayOfWeek, y.key))
       })
       for (const s of order) {
-        if ((hours.get(a.id) ?? 0) >= rules.minSectionsPerAssistant) break
+        if ((hours.get(a.id) ?? 0) >= minSectionsOf(a)) break
         const key = slotKeyOf(s.dayOfWeek, s.key)
         if (slotMembers.get(key)!.has(a.id)) continue
         if (slotCount.get(key)! >= rules.maxPerSlot) continue
         if (!freeAt(a, s)) continue
         if (!freeRunOk(a, s.dayOfWeek, s.sectionStart)) continue
-        if ((hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) > rules.maxSectionsPerAssistant)
+        if ((hours.get(a.id) ?? 0) + slotHoursOf(s.dayOfWeek, s.key) > maxSectionsOf(a))
           continue
         assign(a, s, 'auto')
         made = true
@@ -607,10 +618,13 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
         name: a.name,
         sections: secs,
         slots: slotsN,
-        belowMin: secs < rules.minSectionsPerAssistant,
+        // 生效上下限（含个性化覆盖），供界面展示每位助理各自的目标区间
+        minSections: minSectionsOf(a),
+        maxSections: maxSectionsOf(a),
+        belowMin: secs < minSectionsOf(a),
         // 2026-09-13 修正：排班时段已单节化，"差一节到上限"即为不可再排；
         // 旧判据误用 minPerSlot 作单位，minPerSlot≥2 时会虚报"已达上限"
-        atMax: secs + 1 > rules.maxSectionsPerAssistant,
+        atMax: secs + 1 > maxSectionsOf(a),
       }
     })
     .sort((x, y) => x.assistantId - y.assistantId)

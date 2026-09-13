@@ -420,52 +420,52 @@ describe('回归：三助理真实数据（缺陷案例——撤销孤立块后�
   )
 
   it('撤销孤立块后应继续补位，庞士豪达到下限 6 节', () => {
-    const out = scheduleAll({
-      rules: fixture.rules,
-      assistants: fixture.assistants,
-      courses: fixture.courses,
-    })
-    const w1 = out.find((w) => w.weekNo === 1)!
-    const psh = w1.summaries.find((s) => s.name === '庞士豪')!
-    expect(psh.belowMin).toBe(false)
-    expect(psh.sections).toBe(6)
-
-    // 全体助理每天的连续块都必须 ≥ 2（手动项不存在于此数据）
-    const byAD = new Map<string, number[]>()
-    for (const a of w1.assignments) {
-      const k = `${a.assistantId}|${a.dayOfWeek}`
-      byAD.set(k, [...(byAD.get(k) ?? []), Number(a.slotKey.slice(1))])
-    }
-    for (const [, secs] of byAD) {
-      const sorted = secs.sort((x, y) => x - y)
-      let len = 1
-      const check = () => expect(len).toBeGreaterThanOrEqual(2)
-      for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i] === sorted[i - 1] + 1) len++
-        else {
-          check()
-          len = 1
-        }
-      }
-      check()
-    }
+    const out = scheduleAll({
+      rules: fixture.rules,
+      assistants: fixture.assistants,
+      courses: fixture.courses,
+    })
+    const w1 = out.find((w) => w.weekNo === 1)!
+    const psh = w1.summaries.find((s) => s.name === '庞士豪')!
+    expect(psh.belowMin).toBe(false)
+    expect(psh.sections).toBe(6)
+
+    // 全体助理每天的连续块都必须 ≥ 2（手动项不存在于此数据）
+    const byAD = new Map<string, number[]>()
+    for (const a of w1.assignments) {
+      const k = `${a.assistantId}|${a.dayOfWeek}`
+      byAD.set(k, [...(byAD.get(k) ?? []), Number(a.slotKey.slice(1))])
+    }
+    for (const [, secs] of byAD) {
+      const sorted = secs.sort((x, y) => x - y)
+      let len = 1
+      const check = () => expect(len).toBeGreaterThanOrEqual(2)
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === sorted[i - 1] + 1) len++
+        else {
+          check()
+          len = 1
+        }
+      }
+      check()
+    }
   
   })
 
   // 该项直接对应缺陷投诉"在有课时仍然排班"：使用真实课程表数据（131 条，含中课/晚课），
   // 逐周校验每一条排班都不得落在该助理有课的节次上（含节次序号换算与命名节次）。
   it('全周期真实数据：任何一周都不得把助理排在其有课的节次上', () => {
-    const input = {
-      rules: { ...fixture.rules, balanceDaily: true },
-      assistants: fixture.assistants,
-      courses: fixture.courses,
-    }
-    const out = scheduleAll(input)
-    expect(out).toHaveLength(17)
-    for (const w of out) {
-      expect(w.assignments.length).toBeGreaterThan(0)
-      checkInvariants({ ...input, weekNo: w.weekNo }, w)
-    }
+    const input = {
+      rules: { ...fixture.rules, balanceDaily: true },
+      assistants: fixture.assistants,
+      courses: fixture.courses,
+    }
+    const out = scheduleAll(input)
+    expect(out).toHaveLength(17)
+    for (const w of out) {
+      expect(w.assignments.length).toBeGreaterThan(0)
+      checkInvariants({ ...input, weekNo: w.weekNo }, w)
+    }
   })
 
   /**
@@ -475,38 +475,38 @@ describe('回归：三助理真实数据（缺陷案例——撤销孤立块后�
    * 已知边界：本夹具 3 人 × 上限 6 节 = 18 人节却要覆盖 40 个时段，"每时段都有人"不可达。
    */
   it('编号修正后每周均有人值班；每日均衡进一步减少"整天无人"且不增加未满足时段', () => {
-    const base = { assistants: fixture.assistants, courses: fixture.courses }
-    const off = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: false } })
-    const on = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: true } })
-    const w1off = off.find((w) => w.weekNo === 1)!
-    const w1on = on.find((w) => w.weekNo === 1)!
-
-    /** 全周期"整天无人"的工作日计数 */
-    const emptyDayCount = (out: typeof off): number => {
-      let n = 0
-      for (const w of out) {
-        for (const d of [1, 2, 3, 4, 5]) if (!w.assignments.some((x) => x.dayOfWeek === d)) n++
-      }
-      return n
-    }
-
-    // 第 1 周：周一~周五都有人（无需均衡介入）
-    for (const d of [1, 2, 3, 4, 5]) {
-      expect(w1off.assignments.some((x) => x.dayOfWeek === d)).toBe(true)
-    }
-    // 每日均衡不劣化：空白天次与未满足时段均不增加（实测 13→3、401→378）
-    expect(emptyDayCount(on)).toBeLessThanOrEqual(emptyDayCount(off))
-    expect(on.reduce((s, w) => s + w.unmetSlots.length, 0)).toBeLessThanOrEqual(
-      off.reduce((s, w) => s + w.unmetSlots.length, 0),
-    )
-    // 只是搬移：排班总量与每人工时守恒
-    expect(w1on.assignments.length).toBe(w1off.assignments.length)
-    expect(w1on.summaries.map((s) => s.sections)).toEqual(w1off.summaries.map((s) => s.sections))
-
-    checkInvariants({ weekNo: 1, rules: { ...fixture.rules, balanceDaily: true }, ...base }, w1on)
-
-    // 确定性：全部排序都有 id 级 tie-break，无随机与时间依赖
-    const on2 = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: true } })
+    const base = { assistants: fixture.assistants, courses: fixture.courses }
+    const off = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: false } })
+    const on = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: true } })
+    const w1off = off.find((w) => w.weekNo === 1)!
+    const w1on = on.find((w) => w.weekNo === 1)!
+
+    /** 全周期"整天无人"的工作日计数 */
+    const emptyDayCount = (out: typeof off): number => {
+      let n = 0
+      for (const w of out) {
+        for (const d of [1, 2, 3, 4, 5]) if (!w.assignments.some((x) => x.dayOfWeek === d)) n++
+      }
+      return n
+    }
+
+    // 第 1 周：周一~周五都有人（无需均衡介入）
+    for (const d of [1, 2, 3, 4, 5]) {
+      expect(w1off.assignments.some((x) => x.dayOfWeek === d)).toBe(true)
+    }
+    // 每日均衡不劣化：空白天次与未满足时段均不增加（实测 13→3、401→378）
+    expect(emptyDayCount(on)).toBeLessThanOrEqual(emptyDayCount(off))
+    expect(on.reduce((s, w) => s + w.unmetSlots.length, 0)).toBeLessThanOrEqual(
+      off.reduce((s, w) => s + w.unmetSlots.length, 0),
+    )
+    // 只是搬移：排班总量与每人工时守恒
+    expect(w1on.assignments.length).toBe(w1off.assignments.length)
+    expect(w1on.summaries.map((s) => s.sections)).toEqual(w1off.summaries.map((s) => s.sections))
+
+    checkInvariants({ weekNo: 1, rules: { ...fixture.rules, balanceDaily: true }, ...base }, w1on)
+
+    // 确定性：全部排序都有 id 级 tie-break，无随机与时间依赖
+    const on2 = scheduleAll({ ...base, rules: { ...fixture.rules, balanceDaily: true } })
     expect(JSON.stringify(on2.map((w) => w.assignments))).toBe(JSON.stringify(on.map((w) => w.assignments)))
   })
 })
@@ -874,5 +874,82 @@ describe('汇总字段 AssistantSummary（2026-09-13 修正 atMax 判据）', ()
     const out3 = scheduleOneWeek(mkInput({ rules: rules3, assistants: [A(1)] }))
     expect(out3.summaries[0].sections).toBe(2)
     expect(out3.summaries[0].atMax).toBe(false)
+  })
+})
+
+describe('个性化值班节数（2026-09-13 增补）', () => {
+  it('覆盖上限：某助理最多 1 节，其余时段由他人接管', () => {
+    const rules = baseRules({
+      workdays: [1],
+      workSections: [{ start: 1, end: 2, label: '上午' }],
+      minSectionsPerAssistant: 0,
+      maxSectionsPerAssistant: 8,
+      minPerSlot: 1,
+      maxPerSlot: 1,
+    })
+    const input = mkInput({
+      rules,
+      assistants: [{ ...A(1), minSections: 0, maxSections: 1 }, A(2)],
+    })
+    const out = scheduleOneWeek(input)
+    const byA = (id: number) => out.assignments.filter((x) => x.assistantId === id).length
+    expect(byA(1)).toBe(1) // 个性化上限生效（全局上限是 8）
+    expect(byA(2)).toBe(1) // 剩余时段由他人接管
+    const s1 = out.summaries.find((s) => s.assistantId === 1)!
+    expect(s1.maxSections).toBe(1)
+    expect(s1.atMax).toBe(true)
+    checkInvariants(input, out)
+  })
+
+  it('覆盖下限：全局下限 0 时，某助理仍被要求至少 2 节', () => {
+    const rules = baseRules({
+      workdays: [1],
+      workSections: [{ start: 1, end: 2, label: '上午' }],
+      minSectionsPerAssistant: 0,
+      maxSectionsPerAssistant: 8,
+      minPerSlot: 1,
+      maxPerSlot: 2, // 容量放宽为 2，使 a1 有机会补足到其个性化下限
+    })
+    const input = mkInput({
+      rules,
+      assistants: [{ ...A(1), minSections: 2 }, A(2)],
+    })
+    const out = scheduleOneWeek(input)
+    const s1 = out.summaries.find((s) => s.assistantId === 1)!
+    expect(s1.sections).toBe(2) // 下限覆盖生效
+    expect(s1.minSections).toBe(2)
+    expect(s1.belowMin).toBe(false)
+    const s2 = out.summaries.find((s) => s.assistantId === 2)!
+    expect(s2.minSections).toBe(0) // 未设置者跟随全局
+    expect(s2.belowMin).toBe(false)
+    checkInvariants(input, out)
+  })
+
+  it('个性化覆盖不合法（最少 > 最多）→ 抛出明确错误', () => {
+    expect(() =>
+      scheduleOneWeek(
+        mkInput({ assistants: [{ ...A(1), minSections: 5, maxSections: 2 }] }),
+      ),
+    ).toThrow(/排班规则不合法/)
+  })
+
+  it('两名助理分别设置不同上下限，互不影响', () => {
+    const rules = baseRules({
+      workdays: [1],
+      workSections: [{ start: 1, end: 4, label: '上午' }],
+      minSectionsPerAssistant: 0,
+      maxSectionsPerAssistant: 8,
+      minPerSlot: 1,
+      maxPerSlot: 1,
+    })
+    const input = mkInput({
+      rules,
+      assistants: [{ ...A(1), minSections: 1, maxSections: 1 }, { ...A(2), minSections: 3, maxSections: 3 }],
+    })
+    const out = scheduleOneWeek(input)
+    const secs = (id: number) => out.summaries.find((s) => s.assistantId === id)!.sections
+    expect(secs(1)).toBe(1)
+    expect(secs(2)).toBe(3)
+    checkInvariants(input, out)
   })
 })

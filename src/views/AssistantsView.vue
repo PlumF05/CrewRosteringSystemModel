@@ -96,6 +96,18 @@ async function handleRemoveConfirmed() {
     <el-table-column prop="phone" label="联系电话" width="140" />
     <el-table-column prop="qq" label="QQ" width="130" />
     <el-table-column prop="className" label="班级" min-width="120" />
+    <el-table-column label="值班节数" width="120">
+      <template #default="{ row }">
+        <el-tag
+          v-if="row.customMinSections !== undefined || row.customMaxSections !== undefined"
+          size="small"
+          type="warning"
+        >
+          {{ row.customMinSections ?? '全' }}~{{ row.customMaxSections ?? '全' }}
+        </el-tag>
+        <span v-else class="muted">跟随全局</span>
+      </template>
+    </el-table-column>
     <el-table-column label="操作" width="150" fixed="right">
       <template #default="{ row }">
         <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -126,4 +138,5 @@ async function handleRemoveConfirmed() {
   gap: 12px;
 }
 .search { max-width: 320px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 </style>

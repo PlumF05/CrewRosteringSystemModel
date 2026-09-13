@@ -82,6 +82,9 @@ async function generate() {
       id: a.id!,
       name: a.name,
       identity: a.identity,
+      // 个性化值班节数（2026-09-13 增补）：未设置的助理在算法内跟随全局默认
+      minSections: a.customMinSections,
+      maxSections: a.customMaxSections,
     }))
     if (assistants.length === 0) {
       ElMessage.error('请先在"助理管理"中添加助理')
@@ -391,6 +394,18 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
       <el-table :data="currentPreview?.summaries ?? []" border size="small" max-height="220">
         <el-table-column prop="name" label="助理" width="120" />
         <el-table-column prop="sections" label="值班节数" width="100" />
+        <el-table-column label="目标区间" width="150">
+          <template #default="{ row }">
+            {{ row.minSections }} ~ {{ row.maxSections }}
+            <el-tag
+              v-if="row.minSections !== rules.minSectionsPerAssistant || row.maxSections !== rules.maxSectionsPerAssistant"
+              size="small"
+              type="warning"
+            >
+              个性化
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="slots" label="时段数" width="90" />
         <el-table-column label="状态" width="140">
           <template #default="{ row }">
