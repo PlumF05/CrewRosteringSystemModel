@@ -1,54 +1,164 @@
 # 学院行政办助理排班系统（CRSM）
 
-> 版本 **v1.0** ｜ 作者 **PlumF** ｜ GitHub：
+> 版本 **v0.1** ｜ 作者 **PlumF** ｜ 仓库 [PlumF05/CrewRosteringSystemModel](https://github.com/PlumF05/CrewRosteringSystemModel) ｜ [变更记录](CHANGELOG.md)
 
-面向学院行政办的学生助理排班工具：导入学生课程表，按规则自动排班，支持手动调整与 Excel 导出。单机桌面应用（Windows），数据保存在本机，无后端服务器。
+面向学院行政办的学生助理排班工具：导入学生课程表 → 按规则自动排班 → 一键导出排班表。
+Windows 单机桌面应用（Tauri），**数据全部保存在本机，无后端、无网络传输**。
 
 ## 功能特性
 
-- 课程表批量导入（解析学院标准课程表 xlsx 格式）
-- 自动排班（贪心启发式，支持最短/最长工时、同时段人数等约束）
-- 手动调整 + 冲突校验 + 撤销/重做（未完成）
-- 重新排班（保留手动调整项，支持前后差异对比）
-- 排班表导出（.xlsx，兼容 Excel / WPS）
-- 助理信息管理、排班规则配置、数据备份
+**已实现**
+
+| 模块 | 能力 |
+|---|---|
+| 助理管理 | 增删改查、学号唯一约束、身份类型（本科/研究生）、联系方式；**可为个别助理单独设置值班节数**（覆盖全局默认，未设置者跟随全局） |
+| 课程表导入 | 解析学院标准课程表 xlsx（含合并单元格、多行课程单元格、单/双周与多段周次）；**全自动归档**——学号已存在则更新其姓名/身份（保留电话、QQ、班级），不存在则直接建档；导入后自动检测与既有排班的冲突并提供处理动作 |
+| 排班规则配置 | 排班周期（周次范围）、每人工时上下限、同时段人数上下限、工作日、上班节次区间、排班模式（uniform）、课程类别过滤（理论课/实验课是否计入占用）、最少连续值班节数、**每日均衡**；规则一致性校验（区间重叠、上下限颠倒等非法配置会被拦截并明确报错） |
+| 自动排班 | 贪心启发式：时段按候选人数先难后易、候选按「延续连续块 → 负载均衡 → 稀缺度 → id」排序；**工时修复 ⇄ 孤立块撤销**迭代收敛；**每日均衡**两档策略消除「某天无人」；输出确定性可重放 |
+| 排班表 | 逐周预览与写入（写入全部周）、每人工时汇总（含各自目标区间）、未满足时段清单（附原因与上课时间） |
+| 导出 | xlsx（兼容 Excel / WPS），带版式（标题、底色、网格线、自动换行）；值班格子「姓名 + 电话」上下两行；节次行标注上课时间；支持「含电话」开关 |
+| 界面 | 使用帮助面板（快速上手 / 各模块操作 / FAQ）、关于系统（版本与作者）、操作日志与仪表盘 |
+
+**尚未实现（路线图）**
+
+- **F04 手动调整 + 冲突校验 + 撤销/重做**（`pinia` 与 `scheduleSnapshotRepo` 已就位，UI 未开发）
+- **F07 导出模板管理**（表头与格式目前硬编码）
+- 数据备份 / 恢复；多文件批量导入；多周合并导出
 
 ## 技术栈
 
 | 层级 | 技术 |
-|------|------|
-| 前端框架 | Vue 3 + TypeScript + Vite |
-| UI 组件库 | Element Plus |
-| 本地存储 | IndexedDB（Dexie.js） |
-| Excel 读写 | SheetJS（xlsx.js） |
-| 排班算法 | 贪心启发式 |
-| 桌面打包 | Tauri v2（Rust + WebView2） |
+|---|---|
+| 前端框架 | Vue 3 + TypeScript + Vite（Rolldown） |
+| UI 组件库 | Element Plus + @element-plus/icons-vue |
+| 状态与路由 | Pinia（已装，暂未使用）· Vue Router（hash 模式） |
+| 本地存储 | IndexedDB（Dexie 4，schema version 3） |
+| Excel 读写 | **xlsx-js-style**（SheetJS 0.18.5 直系分支，支持写入单元格样式；社区版 `xlsx` 无法写入任何样式，已弃用） |
+| 排班算法 | 自研贪心启发式（纯函数，可在 Node 下穷举单测） |
+| 桌面打包 | Tauri v2（Rust + 系统 WebView2） |
+| 测试 | Vitest（160 项，含真实课表夹具集成测试） |
 
 ## 快速开始
 
-环境要求：Node.js 18+、Rust 工具链、Windows 10+（系统自带 WebView2）。
+**环境要求**：Node.js 18+；Rust 工具链（MSVC）；Windows 10+（系统自带 WebView2）。
+打包 Rust 部分需安装 **Visual Studio Build Tools** 并勾选「使用 C++ 的桌面开发」工作负载（提供 `link.exe` 与 Windows SDK）。
 
 ```bash
 npm install
-npm run tauri dev    # 开发运行
-npm run tauri build  # 打包 .exe 安装包
-npm test             # 单元测试（Vitest）
+
+npm run dev          # 浏览器开发（http://localhost:1420）
+npm test             # 单元测试（Vitest run）
+npm run build        # 类型检查 + 生产构建（产出 dist/）
+
+npm run tauri dev    # 桌面窗口开发运行
+npm run tauri build  # 打包安装包
 ```
+
+打包产物：
+
+- 可执行文件：`src-tauri/target/release/crsm.exe`
+- 安装包：`src-tauri/target/release/bundle/nsis/CRSM_1.0.0_x64-setup.exe`
+
+> 首次 Rust 编译约 5~15 分钟属正常。若打包卡在**下载 WiX / NSIS 打包工具**（GitHub 源较慢）：
+> ① 在 `src-tauri/tauri.conf.json` 把 `bundle.targets` 由 `"all"` 改为 `["nsis"]`（跳过需要 WiX 的 MSI）；
+> ② 仍卡住时，手动下载 `https://github.com/tauri-apps/binary-releases/releases/download/nsis-3/nsis-3.zip`（可用 `https://ghfast.top/` 前缀加速），解压到 `%LOCALAPPDATA%\tauri\NSIS`，确保该目录下直接存在 `makensis.exe`。
+
+## 目录结构
+
+```
+CRSM/
+├─ src/                       前端源码（Vue 3 + TS）
+│  ├─ algorithms/             排班算法层（纯函数，不依赖 Vue / Dexie）
+│  │  ├─ types.ts             规则、时段、输入输出契约 + 节次时间表 + 规则校验
+│  │  ├─ greedy.ts            排班主算法（含每日均衡阶段）
+│  │  ├─ dutyConflict.ts      已写入排班 vs 课程表的冲突检测
+│  │  └─ __fixtures__/        真实课表回归夹具（三助理 131 条课程）
+│  ├─ db/                     数据层（UI 访问数据的唯一入口）
+│  │  ├─ schema.ts            表结构与领域模型类型
+│  │  ├─ database.ts          Dexie 实例与版本迁移（v1→v3）
+│  │  ├─ repositories.ts      六组仓储（助理/课程/排班/快照/配置/日志）
+│  │  └─ importService.ts     课程表导入的归档编排（两条分支收口）
+│  ├─ utils/                  纯工具层
+│  │  ├─ sectionOrder.ts      节次序号轴（单一数据源）
+│  │  ├─ weekParser.ts        周次解析（区间 / 单双周 / 多段）
+│  │  ├─ courseParser.ts      课程表 xlsx 解析
+│  │  ├─ scheduleExport.ts    排班表 xlsx 导出（含版式）
+│  │  ├─ scheduleGrid.ts      网格行列骨架（当前规则 ∪ 已写入数据）
+│  │  ├─ scheduleDiff.ts      重排前后差异对比
+│  │  ├─ fileAccess.ts        文件对话框封装（Tauri / 浏览器双环境）
+│  │  └─ dict.ts              枚举 → 中文文案
+│  ├─ views/                  五个页面（仪表盘/助理/课程表/配置/排班表）
+│  ├─ components/             AssistantForm · HelpDrawer
+│  ├─ layouts/MainLayout.vue  侧栏 + 顶栏 + 帮助入口
+│  ├─ router/index.ts         路由表（hash 模式）
+│  ├─ meta.ts                 应用元信息（版本/作者/仓库，单一数据源）
+│  ├─ App.vue / main.ts       根组件与入口
+│  └─ assets/                 静态资源
+├─ src-tauri/                 Tauri 桌面壳（Rust）
+│  ├─ src/lib.rs              应用构建入口（注册 dialog / fs / opener 插件）
+│  ├─ src/main.rs             二进制入口
+│  ├─ capabilities/default.json  窗口权限（含文件读写范围）
+│  ├─ tauri.conf.json         窗口、构建命令、打包目标与版本
+│  └─ icons/                  应用图标（含 NSIS/Store 各尺寸）
+├─ samples/                   **脱敏**课程表样例（解析器集成测试夹具）
+├─ docs/                      工程文档（见下方文档索引）
+└─ public/                    静态资源
+```
+
+## 核心设计要点
+
+**1. 分层与依赖方向**：`algorithms/` 与 `utils/` 为纯函数层，**禁止 import Vue / Dexie**，因而可在 Node 下穷举单测；UI 只能通过 `db/repositories.ts` 访问数据。这条纪律是 160 项测试能覆盖核心逻辑的前提。
+
+**2. 节次序号轴（易错点）**：学院课程表的节次是「数字 + 命名」**混排**的连续序列——
+`1,2,3,4,5,中课1,中课2,6,7,8,9,10,晚课,11,12,13`。
+排班表的上班节次编号**与课程表保持一致**（默认上午 1~4、下午 6~9），且课程占用判定统一换算到「节次序号」再比较。历史上曾因两表编号相差 2 导致**在学生上课时间排班**（详见 docs/troubleshooting.md T-009）。
+
+**3. 排班流水线**：入口校验 → 时段推导 → 课程过滤与可用性矩阵 → keep 预占 → 主分配 → 修复 ⇄ 撤销迭代 → 每日均衡 → 汇总。全流程确定性（所有排序以 id 作最终平手裁决），同输入必同输出。
+
+**4. 数据持久化**：IndexedDB（Dexie）。历史上出现过「版本升级中平移带唯一索引的键」导致整库不可用的故障，现策略为**归档 + 清空**（详见 T-010）。
+
+**5. 实测性能**（本机 Node 22 / Vitest，SRS 4.1 要求排班 ≤5s、解析 ≤3s）：
+
+| 场景 | 实测 | 上限 |
+|---|---|---|
+| 排班：50 助理 × 17 周（最坏情况） | **83 ms** | 5 s |
+| 排班：3 助理 × 17 周（真实夹具） | **12.8 ms** | 5 s |
+| 课程表解析（单文件，41~48 条课程） | **6.7 ~ 22.9 ms** | 3 s |
+| 导出工作簿构建（50 人满网格） | **8 ms** | — |
+
+## 数据与隐私
+
+- **数据不出本机**：所有数据存于 WebView2 用户目录下的 IndexedDB（`com.crsm.app`），无任何网络请求与后端服务。
+- **导出个人信息口径**：只允许携带**电话号码**一项。学号与 QQ **一律不写入**导出文件，并有全量断言保护（遍历产物所有单元格校验）。「含电话」可在导出前关闭。
+- **仓库内的课程表**：真实课程表**不入库**（`.gitignore` 忽略 `*.xlsx`）。`samples/` 下的三份样例已做**三层脱敏**——表头姓名与学号、`上课教师` 字段、以及文档属性中的制作者元数据，仅保留课程/周次/节次/地点等教学数据，用于解析器集成测试。
 
 ## 文档索引
 
-| 文档 | 路径 | 说明 |
-|------|------|------|
-| 软件需求规格说明书 | [docs/SRS.md](docs/SRS.md) | 功能/非功能需求定义 |
-| 架构决策记录 001 | [docs/ADR-001.md](docs/ADR-001.md) | 数据存储与应用打包选型 |
-| 架构决策记录 002 | [docs/ADR-002.md](docs/ADR-002.md) | 前端框架、排班算法与撤销/重做机制选型 |
+| 文档 | 说明 |
+|---|---|
+| [CHANGELOG.md](CHANGELOG.md) | 变更记录：当前版本 v0.1 的新增 / 修复 / 变更 / 已知限制 |
+| [docs/SRS.md](docs/SRS.md) | 软件需求规格说明书：功能需求（F01~F08）、非功能需求、数据模型、附录 A 课程表格式定义 |
+| [docs/ADR-001.md](docs/ADR-001.md) | 架构决策 001：本地存储选型（IndexedDB vs SQLite）、应用打包方式（Web vs Tauri） |
+| [docs/ADR-002.md](docs/ADR-002.md) | 架构决策 002：前端框架、IndexedDB 封装、排班算法、撤销/重做机制；含逐次修订记录 |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | 排错手册 T-001~T-013：13 个已解决的真实缺陷与设计陷阱（含根因、解决方式与教训） |
+| [docs/LEARNING-GUIDE.md](docs/LEARNING-GUIDE.md) | 工程约定与学习路线：文档先行、分层纪律、提交规范、测试基线 |
+| [docs/code-review-guide.md](docs/code-review-guide.md) | 代码审查指南：审查概念与流程、静态分析原理、本项目工具选型与执行步骤 |
+
+## 开发约定
+
+1. **文档先行**：需求或架构变更先改 `docs/SRS.md` / `docs/ADR-002.md`，再改代码。
+2. **分层纪律**：纯函数层不得依赖框架；UI 不直接操作数据库。
+3. **测试基线**：`npm test` 必须全绿；`npm run build`（含 `vue-tsc` 类型检查）必须通过。
+4. **提交规范**：约定式提交（feat / fix / docs / test / chore）。
 
 ## 项目状态
 
-**功能开发中（核心链路已通）**：课程表导入（全自动归档）、助理管理、排班核心（贪心算法 + 每日均衡 + 节次编号与课程表对齐）、排班表导出（含值班人电话、带版式）已实现，并有 142 项单元测试守护（`npm test`）。
+核心链路已闭环：**数据层 → 助理管理 → 课程表导入 → 自动排班 → 导出**，由 **160 项单元与集成测试**守护。
 
-路线图：① 数据层 ✅ → ② 助理管理与课程表导入 ✅ → ③ 排班核心 ✅ → ④ 导出与重排 ✅ → ⑤ 手动调整与撤销/重做（F04，待开发）→ ⑥ 模板管理、数据备份（待开发）→ ⑦ Tauri 打包交付（待开发）。
+路线图：① 数据层 ✅ → ② 助理管理与课程表导入 ✅ → ③ 排班核心 ✅ → ④ 导出与重排 ✅ → ⑤ 手动调整与撤销/重做（F04，待开发）→ ⑥ 模板管理、数据备份（待开发）→ ⑦ Tauri 打包交付 ✅
 
-## 自定义智能体
+## 作者
 
-本仓库附带自定义编码智能体配置：[.zcode/agents/code-generator.md](.zcode/agents/code-generator.md)（严格的"解释原理 → 方案对比 → 确认 → 出码"工作流）。
+**PlumF** ｜ 版本 v0.1 ｜ 仓库：[PlumF05/CrewRosteringSystemModel](https://github.com/PlumF05/CrewRosteringSystemModel)
+
+> 本仓库当前未指定开源许可证；如需授权条款请补充 `LICENSE` 文件。

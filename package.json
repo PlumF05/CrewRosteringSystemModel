@@ -1,7 +1,7 @@
 {
   "name": "crsm",
   "description": "学院行政办助理排班系统：导入课程表、自动排班、手动调整与 Excel 导出。单机桌面应用（Windows），数据保存在本机。",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "author": "PlumF",
   "keywords": [
