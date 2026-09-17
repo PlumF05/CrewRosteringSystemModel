@@ -1,6 +1,6 @@
 [package]
 name = "crsm"
-version = "1.0.0"
+version = "0.1.0"
 description = "学院行政办助理排班系统"
 authors = ["PlumF"]
 edition = "2021"

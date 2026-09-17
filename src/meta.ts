@@ -2,7 +2,7 @@
  * 应用元信息（2026-09-13 增补）——界面"关于"弹窗与文档展示的单一数据源。
  *
  * ⚠ 同步约定：`package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json`
- * 三处的版本号需与本文件的 version 保持一致（当前 1.0.0，对外展示为 v1.0），
+ * 三处的版本号需与本文件的 version 保持一致（当前 0.1.0，对外展示为 v0.1），
  * 修改版本时请一并更新。
  */
 export const APP_META = {
@@ -11,7 +11,7 @@ export const APP_META = {
   /** 简称（包名 / 仓库名） */
   shortName: "CRSM",
   /** 对外展示的版本号 */
-  version: "v1.0",
+  version: "v0.1",
   /** 作者 */
   author: "PlumF",
   /**
