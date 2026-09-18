@@ -70,10 +70,20 @@ async function loadWeek() {
   storedRows.value = await dutyScheduleRepo.listByWeek(weekNo.value)
 }
 
-function onWeekChange() {
+/**
+ * 切换查看周次：**先清空再加载**。此前是不 await 的浮动 Promise 且无 catch，
+ * 读库失败时 storedRows 会保留上一周的数据、而表头已换成新周次——
+ * 界面把旧周排班当新周展示，属静默数据错配。
+ */
+async function onWeekChange() {
   previews.value = []
   previewWeek.value = undefined
-  loadWeek()
+  storedRows.value = []
+  try {
+    await loadWeek()
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '读取排班失败')
+  }
 }
 
 async function generate() {

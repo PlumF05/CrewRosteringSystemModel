@@ -7,8 +7,80 @@
  * 不影响任何功能。样式沿用 Element Plus 默认风格。
  *
  * 说明内容为静态文案，集中在本组件内便于维护；若后续需要多语言或外链文档，可再抽取。
+ *
+ * 图文步骤（2026-09-18 增补）：「获取课程表文件」分区内嵌三张操作截图，
+ * 素材位于 `src/assets/help/`，通过 ES import 引入（见下方注释的取舍说明）。
+ * 截图替换方式：用同名文件覆盖即可；但 `desc` 文案引用了截图内的标注编号，
+ * 若新截图的红框位置或标注编号有变化，需同步更新对应 `desc`。
  */
 import { ref, watch } from "vue";
+
+/**
+ * 图片素材：从教务系统导出课程表的操作步骤（2026-09-18 增补）。
+ *
+ * 采用 ES import 而非 public/ 静态目录，原因有三：
+ *   ① 构建期校验——文件缺失会直接导致构建失败，不会在运行时静默 404；
+ *   ② 由 Vite 自动追加内容哈希，浏览器与 WebView2 的缓存可精确失效；
+ *   ③ 不依赖 base / 部署路径，浏览器预览与 Tauri 桌面端表现一致。
+ */
+import step01 from "../assets/help/step-01-course-menu.png";
+import step02 from "../assets/help/step-02-timetable-query.png";
+import step03 from "../assets/help/step-03-export-excel.png";
+
+/** 单条图文步骤 */
+interface HelpStep {
+  /** 步骤标题；**不含序号**，序号由 <ol> 自动生成，避免插入 / 重排时静默失配 */
+  title: string;
+  /** 操作说明 */
+  desc: string;
+  /** 步骤要点；用于图注与图片替代文本，不含序号（序号由模板派生） */
+  caption: string;
+  /** 已由 Vite 处理过的图片地址 */
+  src: string;
+}
+
+/**
+ * 「从教务系统获取课程表文件」的三步图文流程。
+ * 数组顺序即操作顺序，同时决定大图预览时的翻页顺序。
+ *
+ * 维护提示：`desc` 引用了截图内的标注编号（"标注 1/2/3"、"红框处"），
+ * 替换截图后若标注位置或编号有变化，须同步更新对应 `desc`。
+ */
+const COURSE_FILE_STEPS: HelpStep[] = [
+  {
+    title: "登录教务系统，打开顶部「课程」菜单",
+    desc: "在教务系统顶部导航栏点击「课程」（图中红框处），进入课程相关功能。",
+    caption: "教务系统顶部导航的「课程」入口",
+    src: step01,
+  },
+  {
+    title: "「课表查询」→「学生课程表」→「打印」",
+    desc: "左侧菜单依次点击「课表查询」（标注 1）与展开后的「学生课程表」（标注 2）；右侧课表显示出来后，点击「打印」按钮（标注 3），打开课表查看页。",
+    caption: "课表查询路径与「打印」入口",
+    src: step02,
+  },
+  {
+    title: "在课表查看页点击「导出 Excel」",
+    desc: "在课表查看页底部工具栏点击「导出 Excel」（图中红框处），即可下载得到 xlsx 文件——该文件正是本系统「课程表管理」需要导入的文件。",
+    caption: "导出 Excel，得到可导入的 xlsx",
+    src: step03,
+  },
+];
+
+/** 大图预览的可翻页地址列表（顺序与步骤一致，可在预览中连续浏览三张图） */
+const COURSE_FILE_SRCS: string[] = COURSE_FILE_STEPS.map((s) => s.src);
+
+/**
+ * 图片预览层的 z-index —— **必须显式设置，请不要删除**。
+ *
+ * 依据（element-plus 2.14.5 实码核对）：
+ *   · `.el-image-viewer__wrapper` 编译后的 CSS 中不含 z-index，且 `ElImageViewer`
+ *     的 `zIndex` prop 没有默认值 ⇒ 不传时预览层为 `z-index: auto`；
+ *   · 而抽屉经 `useDialog` → `nextZIndex()` 拿到了行内 z-index
+ *     （`defaultInitialZIndex = 2000`，每打开一次浮层全局自增）。
+ * 因此不设此值时，预览会被抽屉的遮罩盖住，表现为"点了图片没反应"。
+ */
+const PREVIEW_Z_INDEX = 3000;
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ "update:modelValue": [boolean] }>();
@@ -18,10 +90,30 @@ watch(
   () => props.modelValue,
   (v) => (visible.value = v),
 );
-watch(visible, (v) => emit("update:modelValue", v));
 
-/** 默认展开"快速上手"与"常见问题" */
-const activeNames = ref<string[]>(["quick", "faq"]);
+/**
+ * 图片放大预览是否打开。
+ *
+ * 为什么需要它：Element Plus 的模态管理（`hooks/use-modal`）在**模块加载时**就于 document
+ * 上注册了 keydown 监听，ESC 会关闭"模态栈顶"（此处即本抽屉），而它只调 `stopPropagation()`
+ * ——不能阻止同一元素上的其它监听器；image-viewer 同样在 document 上监听 ESC 关闭自己。
+ * 两者按注册顺序执行 ⇒ 不干预的话，按一次 ESC 会把预览与整个帮助面板一起关掉。
+ * 解法：预览打开期间禁用抽屉的 ESC 关闭，预览关闭后自动恢复。
+ */
+const previewOpen = ref(false);
+
+watch(visible, (v) => {
+  // 抽屉关闭时复位，避免"预览开着 → 抽屉被关 → ESC 永久失效"的状态残留
+  if (!v) previewOpen.value = false;
+  emit("update:modelValue", v);
+});
+
+/**
+ * 默认展开的分区：「快速上手」「获取课程表文件」「常见问题」。
+ * 其余分区（助理管理 / 课程表管理 / 排班配置 / 排班表 / 数据与安全）内容较长，默认折叠。
+ * 说明：图文步骤一并默认展开，是为了让「文件从哪来」这个前置问题打开帮助即可看到。
+ */
+const activeNames = ref<string[]>(["quick", "course-file", "faq"]);
 </script>
 
 <template>
@@ -31,6 +123,7 @@ const activeNames = ref<string[]>(["quick", "faq"]);
     direction="rtl"
     size="580px"
     :append-to-body="true"
+    :close-on-press-escape="!previewOpen"
   >
     <div class="help">
       <el-alert
@@ -53,6 +146,10 @@ const activeNames = ref<string[]>(["quick", "faq"]);
               <b>导入课程表</b>：进入「课程表管理」→ 选择学院标准 xlsx
               文件，系统会按表头
               "学生：姓名(学号)"自动建档或更新，并整体替换该生课程表。
+              <span class="ref"
+                >（该 xlsx
+                需先从教务系统导出，见下方「获取课程表文件」图文步骤）</span
+              >
             </li>
             <li>
               <b>配置规则</b
@@ -85,6 +182,37 @@ const activeNames = ref<string[]>(["quick", "faq"]);
               >：会同时删除该助理的课程表与排班记录（级联清理、不可恢复），请谨慎操作。
             </li>
           </ul>
+        </el-collapse-item>
+
+        <el-collapse-item name="course-file">
+          <template #title><b>获取课程表文件（教务系统图文步骤）</b></template>
+          <p class="lead">
+            本系统导入的 xlsx
+            需要先从教务系统导出，按以下三步操作即可。<b>点击图片可放大查看</b>（预览中可用左右箭头连续浏览，按
+            ESC 或点击空白处返回）。
+          </p>
+          <ol class="steps shots">
+            <li v-for="(s, i) in COURSE_FILE_STEPS" :key="s.src">
+              <b>{{ s.title }}</b>
+              <div class="desc">{{ s.desc }}</div>
+              <el-image
+                class="shot"
+                :src="s.src"
+                :alt="s.caption"
+                :preview-src-list="COURSE_FILE_SRCS"
+                :initial-index="i"
+                :z-index="PREVIEW_Z_INDEX"
+                :preview-teleported="true"
+                @show="previewOpen = true"
+                @close="previewOpen = false"
+              >
+                <template #error>
+                  <div class="shot-err">图片未加载：{{ s.caption }}</div>
+                </template>
+              </el-image>
+              <div class="caption">图 {{ i + 1 }}　{{ s.caption }}</div>
+            </li>
+          </ol>
         </el-collapse-item>
 
         <el-collapse-item name="courses">
@@ -159,7 +287,7 @@ const activeNames = ref<string[]>(["quick", "faq"]);
             <li>
               <b>为什么有人被排在上课时间？</b>
               多半是该课程未导入、周次不覆盖等原因。
-              课程表更新后请<b>重新生成排班</b>；导入时系统也会提示与既有排班的冲突。
+              课程表更新后请重新生成排班；导入时系统也会提示与既有排班的冲突。
             </li>
             <li>
               <b>为什么某天 / 某时段没有人？</b>
@@ -168,7 +296,7 @@ const activeNames = ref<string[]>(["quick", "faq"]);
             </li>
             <li>
               <b>改了排班配置，为什么旧排班看起来变空 / 缺了几行？</b>
-              排班表按<b>当前规则</b>显示，改过上班节次或工作日后，建议重新生成；
+              排班表按当前规则显示，改过上班节次或工作日后，建议重新生成；
               已写入的数据不会丢失，重新生成即可对齐。
             </li>
             <li>
@@ -222,6 +350,53 @@ const activeNames = ref<string[]>(["quick", "faq"]);
 .faq li b {
   display: block;
   margin-bottom: 2px;
+}
+/* ---------- 图文步骤（从教务系统导出课程表） ---------- */
+.lead {
+  margin: 0 0 10px;
+  line-height: 1.7;
+  color: var(--el-text-color-regular);
+}
+.ref {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.shots > li {
+  margin-bottom: 18px;
+}
+.shots .desc {
+  margin: 2px 0 8px;
+  line-height: 1.7;
+}
+/* 图片按容器宽度等比铺满；未约束高度 ⇒ 不会产生 object-fit 效果，故不设 fit 属性 */
+.shot {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  cursor: zoom-in;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--el-fill-color-lighter);
+}
+/* EP 默认给 __inner 的是 width:100%;height:100%；容器高度由内容决定时百分比高度会退化为
+   auto。此处显式写 height:auto，让"按原图比例显示"成为明确意图，而非依赖该隐式退化 */
+.shot :deep(.el-image__inner) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.caption {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.shot-err {
+  padding: 28px 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 code {
   background: var(--el-fill-color-light);

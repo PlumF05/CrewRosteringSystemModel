@@ -58,6 +58,8 @@ async function save() {
       mode: rules.uniformMode ? "uniform" : "perWeek",
     });
     ElMessage.success("排班规则已保存");
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : "保存失败");
   } finally {
     saving.value = false;
   }

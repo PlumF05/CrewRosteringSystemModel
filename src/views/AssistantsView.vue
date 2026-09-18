@@ -63,11 +63,18 @@ function askRemove(row: Assistant) {
 async function handleRemoveConfirmed() {
   const row = confirmTarget.value
   if (!row) return
-  await assistantRepo.remove(row.id!)
-  await operationLogRepo.add('assistant.remove', { studentNo: row.studentNo, name: row.name })
-  ElMessage.success('已删除')
-  confirmVisible.value = false
-  await refresh()
+  try {
+    await assistantRepo.remove(row.id!)
+    await operationLogRepo.add('assistant.remove', { studentNo: row.studentNo, name: row.name })
+    confirmVisible.value = false
+    ElMessage.success('已删除')
+  } catch (err) {
+    // 必须显式提示：否则用户会误以为已删除，而数据其实还在（且对话框不关）
+    ElMessage.error(err instanceof Error ? err.message : '删除失败')
+    return
+  }
+  // 刷新只影响展示，失败不应被报成"删除失败"
+  await refresh().catch(() => ElMessage.warning('列表刷新失败，请手动刷新页面'))
 }
 </script>
 

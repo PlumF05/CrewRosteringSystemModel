@@ -17,5 +17,9 @@
     "**/node_modules/**": true
   },
   // rust-analyzer 保存时检查
-  "rust-analyzer.checkOnSave": true
+  "rust-analyzer.checkOnSave": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "plumf05",
+    "projectKey": "PlumF05_CrewRosteringSystemModel"
+  }
 }

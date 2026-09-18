@@ -18,7 +18,7 @@ export const APP_META = {
    * GitHub 仓库地址（占位符，待仓库建立后填写，如 https://github.com/PlumF/CRSM）。
    * 为空字符串时界面显示"待填写"。
    */
-  repository: "",
+  repository: "https://github.com/PlumF05/CrewRosteringSystemModel",
   /** 一句话简介 */
   description:
     "面向学院行政办的学生助理排班工具：导入课程表、自动排班、手动调整(未实现),Excel 导出。单机桌面应用(Windows)，数据保存在本机。(大部分代码由AI生成 :P)",
