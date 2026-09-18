@@ -21,14 +21,14 @@ describe('diffWeekSchedule（F08 重排差异对比）', () => {
     const oldRows = [r(1, 1, 1), r(1, 2, 2), r(2, 1, 3)]
     const newRows = [r(1, 1, 1), r(1, 2, 3), r(3, 1, 2)]
     const d = diffWeekSchedule(oldRows, newRows)
-    // 保持：1-1-张三
+    // 保持：1|c1|1
     expect(d.unchanged.map((e) => `${e.dayOfWeek}|${e.timeSlot}|${e.assistantId}`)).toEqual(['1|c1|1'])
-    // 移除：1-2-李四、2-1-助理3
+    // 移除：1|c2|2、2|c1|3
     expect(d.removed.map((e) => `${e.dayOfWeek}|${e.timeSlot}|${e.assistantId}`)).toEqual([
       '1|c2|2',
       '2|c1|3',
     ])
-    // 新增：1-2-助理3、3-1-李四
+    // 新增：1|c2|3、3|c1|2
     expect(d.added.map((e) => `${e.dayOfWeek}|${e.timeSlot}|${e.assistantId}`)).toEqual([
       '1|c2|3',
       '3|c1|2',

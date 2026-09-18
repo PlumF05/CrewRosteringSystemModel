@@ -45,18 +45,18 @@ describe('assistantRepo', () => {
   it('学号重复被拒绝', async () => {
     await assistantRepo.add({ ...baseAssistant })
     await expect(
-      assistantRepo.add({ ...baseAssistant, name: '李四' }),
+      assistantRepo.add({ ...baseAssistant, name: '示例学生A' }),
     ).rejects.toThrowError(DuplicateStudentNoError)
     // 数据库层唯一索引兜底也要验证：绕过 repo 直接写入同样被拒
     const ts = new Date().toISOString()
     await expect(
-      db.assistant.add({ ...baseAssistant, name: '王五', createdAt: ts, updatedAt: ts } as Assistant),
+      db.assistant.add({ ...baseAssistant, name: '示例学生B', createdAt: ts, updatedAt: ts } as Assistant),
     ).rejects.toThrowError()
   })
 
   it('更新时学号与其他人冲突被拒绝', async () => {
     const a = await assistantRepo.add({ ...baseAssistant })
-    await assistantRepo.add({ ...baseAssistant, studentNo: '1024002', name: '李四' })
+    await assistantRepo.add({ ...baseAssistant, studentNo: '1024002', name: '示例学生A' })
     await expect(
       assistantRepo.update(a, { studentNo: '1024002' }),
     ).rejects.toThrowError(DuplicateStudentNoError)
@@ -147,7 +147,7 @@ describe('dutyScheduleRepo', () => {
 
   it('同时段可以安排不同助理', async () => {
     const a = await assistantRepo.add({ ...baseAssistant })
-    const b = await assistantRepo.add({ ...baseAssistant, studentNo: '1024002', name: '李四' })
+    const b = await assistantRepo.add({ ...baseAssistant, studentNo: '1024002', name: '示例学生A' })
     await dutyScheduleRepo.add(duty(a))
     await dutyScheduleRepo.add(duty(b))
     expect(await dutyScheduleRepo.listByWeek(1)).toHaveLength(2)
@@ -196,7 +196,7 @@ describe('scheduleSnapshotRepo', () => {
 describe('operationLogRepo', () => {
   it('recent 按新到旧排列', async () => {
     await operationLogRepo.add('assistant.add', { name: '张三' })
-    await operationLogRepo.add('assistant.add', { name: '李四' })
+    await operationLogRepo.add('assistant.add', { name: '示例学生A' })
     await operationLogRepo.add('duty.assign', { slot: '1-2' })
     const logs = await operationLogRepo.recent(2)
     expect(logs).toHaveLength(2)

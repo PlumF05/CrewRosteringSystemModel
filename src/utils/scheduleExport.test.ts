@@ -49,7 +49,7 @@ const input = {
   ],
   nameById: new Map([
     [1, '张三'],
-    [2, '李四'],
+    [2, '示例学生A'],
   ]),
   phoneById: new Map([
     [1, '13800000001'],
@@ -133,12 +133,12 @@ describe('buildScheduleWorkbook（导出并读回校验）', () => {
     expect(ws['A3'].v).toBe('时段（节次）')
     expect(ws['B3'].v).toBe('星期一')
     expect(ws['C3'].v).toBe('星期五')
-    // 第1节：星期一=张三（姓名/电话换行），星期五=李四
+    // 第1节：星期一=张三（姓名/电话换行），星期五=示例学生A
     const at = (r: number, c: number) => ws[XLSX.utils.encode_cell({ r, c })].v
     expect(at(3, 1)).toBe('张三\n13800000001')
-    expect(at(3, 2)).toBe('李四\n13800000002')
-    // 第2节：星期一=李四，星期五无人
-    expect(at(4, 1)).toBe('李四\n13800000002')
+    expect(at(3, 2)).toBe('示例学生A\n13800000002')
+    // 第2节：星期一=示例学生A，星期五无人
+    expect(at(4, 1)).toBe('示例学生A\n13800000002')
     expect(at(4, 2)).toBe('—')
   })
 
@@ -182,15 +182,15 @@ describe('buildScheduleWorkbook（导出并读回校验）', () => {
       { dayOfWeek: 1, timeSlot: 'c1', assistantId: 2 },
     ]
     const withPhone = workbook({ rows: twoRows, includePhone: true }).Sheets['排班表']['B4'].v
-    expect(withPhone).toBe('张三\n13800000001\n李四\n13800000002')
+    expect(withPhone).toBe('张三\n13800000001\n示例学生A\n13800000002')
     const withoutPhone = workbook({ rows: twoRows, includePhone: false }).Sheets['排班表']['B4'].v
-    expect(withoutPhone).toBe('张三、李四')
+    expect(withoutPhone).toBe('张三、示例学生A')
   })
 
   it('未登记电话的助理：只显示姓名，不产生空行', () => {
     const ws = workbook({ phoneById: new Map([[2, '13800000002']]) }).Sheets['排班表']
     expect(ws['B4'].v).toBe('张三')
-    expect(ws['C4'].v).toBe('李四\n13800000002')
+    expect(ws['C4'].v).toBe('示例学生A\n13800000002')
   })
 
   it('标题行有合并单元格（横跨全部列）', () => {
@@ -205,11 +205,11 @@ describe('buildScheduleWorkbook（导出并读回校验）', () => {
     // 表头只有 5 列：周次/星期/节次/姓名/电话
     expect(Object.keys(ws).filter((k) => /^[A-Z]+1$/.test(k))).toEqual(['A1', 'B1', 'C1', 'D1', 'E1'])
     expect(ws['E1'].v).toBe('电话')
-    // 数据按 星期/节次/助理 排序：d1c1 张三 → d1c2 李四 → d5c1 李四
+    // 数据按 星期/节次/助理 排序：d1c1 张三 → d1c2 示例学生A → d5c1 示例学生A
     expect(ws['C2'].v).toBe('第1节 8:00~8:45')
     expect(ws['D2'].v).toBe('张三')
     expect(ws['E2'].v).toBe('13800000001')
-    expect(ws['D3'].v).toBe('李四')
+    expect(ws['D3'].v).toBe('示例学生A')
     expect(ws['E3'].v).toBe('13800000002')
     expect(ws['A4'].v).toBe(3)
   })
@@ -248,7 +248,7 @@ describe('buildScheduleWorkbook（导出并读回校验）', () => {
     }
     // 已写入的 c1/c2 排班必须仍出现在表中（行标签为数据独有的节次，无时间标注）
     expect(texts).toContain('张三\n13800000001')
-    expect(texts).toContain('李四\n13800000002')
+    expect(texts).toContain('示例学生A\n13800000002')
     expect(texts.some((t) => t.includes('第1节 8:00~8:45'))).toBe(true)
   })
 

@@ -34,7 +34,7 @@ function pc(over: Partial<ParsedCourse> = {}): ParsedCourse {
 }
 
 const base = {
-  studentName: '李四',
+  studentName: '示例学生A',
   studentNo: '1024002',
   identity: 'undergrad' as const,
 }
@@ -54,7 +54,7 @@ describe('importTimetableForStudent', () => {
     expect(r.courseCount).toBe(2)
     expect(await assistantRepo.count()).toBe(1)
     const created = await assistantRepo.findByStudentNo(base.studentNo)
-    expect(created?.name).toBe('李四')
+    expect(created?.name).toBe('示例学生A')
     expect(created?.identity).toBe('undergrad')
     expect(await courseRepo.listByAssistant(r.assistantId)).toHaveLength(2)
   })
@@ -62,7 +62,7 @@ describe('importTimetableForStudent', () => {
   it('情况一：学号已存在 → 更新姓名/身份，保留电话、QQ、班级', async () => {
     const id = await assistantRepo.add({
       studentNo: base.studentNo,
-      name: '李四（旧名）',
+      name: '示例学生A（旧名）',
       identity: 'undergrad',
       phone: '13800000001',
       qq: '123456',
@@ -70,7 +70,7 @@ describe('importTimetableForStudent', () => {
     })
 
     const r = await importTimetableForStudent({
-      studentName: '李四',
+      studentName: '示例学生A',
       studentNo: base.studentNo,
       identity: 'graduate', // 课程表出现（研）标记
       courses: [pc()],
@@ -83,7 +83,7 @@ describe('importTimetableForStudent', () => {
     expect(await assistantRepo.count()).toBe(1) // 不会重复建档
 
     const updated = await assistantRepo.get(id)
-    expect(updated?.name).toBe('李四')
+    expect(updated?.name).toBe('示例学生A')
     expect(updated?.identity).toBe('graduate')
     // 课程表没有的信息必须原样保留
     expect(updated?.phone).toBe('13800000001')
@@ -121,7 +121,7 @@ describe('importTimetableForStudent', () => {
     // 复位后模拟情况一：同一学号已存在
     await db.delete()
     await db.open()
-    const id = await assistantRepo.add({ ...base, name: '李四' })
+    const id = await assistantRepo.add({ ...base, name: '示例学生A' })
     const updated = await importTimetableForStudent({ ...base, courses })
     const rowsUpdated = await courseRepo.listByAssistant(id)
 

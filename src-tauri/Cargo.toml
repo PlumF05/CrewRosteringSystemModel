@@ -3,9 +3,9 @@ name = "crsm"
 version = "0.1.0"
 description = "学院行政办助理排班系统"
 authors = ["PlumF"]
+license = "MIT"
 edition = "2021"
-# GitHub 仓库地址（占位，待仓库建立后填写并取消注释）：
-# repository = "https://github.com/PlumF/CRSM"
+repository = "https://github.com/PlumF05/CrewRosteringSystemModel"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

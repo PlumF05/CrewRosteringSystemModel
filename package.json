@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "private": true,
   "author": "PlumF",
+"license": "MIT",
+"repository": {
+  "type": "git",
+  "url": "git+https://github.com/PlumF05/CrewRosteringSystemModel.git"
+},
   "keywords": [
     "排班",
     "助理管理",

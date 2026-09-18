@@ -80,7 +80,8 @@ function checkInvariants(input: ScheduleInput, out: ReturnType<typeof scheduleOn
     expect(c).toBeLessThanOrEqual(input.rules.maxPerSlot)
   }
   for (const s of out.summaries) {
-    expect(s.sections).toBeLessThanOrEqual(input.rules.maxSectionsPerAssistant)
+    // 按**该助理生效的上限**校验：设了个性化上限的助理可以高于（也可低于）全局上限
+    expect(s.sections).toBeLessThanOrEqual(s.maxSections)
   }
   // 忙的格子不允许有排班（时段=单节；课程与时段都换算到"节次序号"后判重叠）
   for (const a of out.assignments) {
@@ -419,14 +420,14 @@ describe('回归：三助理真实数据（缺陷案例——撤销孤立块后�
     readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '__fixtures__/regression-3assistants.json'), 'utf-8'),
   )
 
-  it('撤销孤立块后应继续补位，庞士豪达到下限 6 节', () => {
+  it('撤销孤立块后应继续补位，示例学生C达到下限 6 节', () => {
     const out = scheduleAll({
       rules: fixture.rules,
       assistants: fixture.assistants,
       courses: fixture.courses,
     })
     const w1 = out.find((w) => w.weekNo === 1)!
-    const psh = w1.summaries.find((s) => s.name === '庞士豪')!
+    const psh = w1.summaries.find((s) => s.name === '示例学生C')!
     expect(psh.belowMin).toBe(false)
     expect(psh.sections).toBe(6)
 
@@ -950,6 +951,56 @@ describe('个性化值班节数（2026-09-13 增补）', () => {
     const secs = (id: number) => out.summaries.find((s) => s.assistantId === id)!.sections
     expect(secs(1)).toBe(1)
     expect(secs(2)).toBe(3)
+    checkInvariants(input, out)
+  })
+  // 缺陷回归（2026-09-18）：每日均衡阶段"新建连续块"的剩余额度误用**全局上限**计算，
+  // 使设了较小个性化上限的助理被多排。修复前实测：全局上限 3、个人上限 1、
+  // 3 个工作日 × 每日 3 节 → 助理#2 被排 3 节，超出其上限 1 节。
+  // 成因：canPlaceBlock 只校验节次/课程占用/同时段人数，不校验个人工时，
+  // 故该 remain 是本阶段唯一的工时闸门。
+  it('每日均衡补空时段时不得突破个性化上限（缺陷回归）', () => {
+    const rules = baseRules({
+      workdays: [1, 2, 3],
+      workSections: [{ start: 1, end: 3, label: '上午' }],
+      minSectionsPerAssistant: 0,
+      maxSectionsPerAssistant: 3,
+      minPerSlot: 1,
+      maxPerSlot: 1,
+      minConsecutiveSections: 1,
+      balanceDaily: true,
+    })
+    const input = mkInput({
+      rules,
+      assistants: [A(1), { ...A(2), maxSections: 1 }],
+    })
+    const out = scheduleOneWeek(input)
+    const s2 = out.summaries.find((s) => s.assistantId === 2)!
+    expect(s2.maxSections).toBe(1)
+    expect(s2.sections).toBe(1) // 修复前为 3
+    checkInvariants(input, out)
+  })
+
+  // 反向保护：个性化上限**大于**全局上限时应能真正用满，防止"把上限一律夹到全局值"的过度纠正。
+  it('个性化上限大于全局上限时仍能突破全局值（防过度纠正）', () => {
+    const rules = baseRules({
+      workdays: [1, 2, 3],
+      workSections: [{ start: 1, end: 3, label: '上午' }],
+      minSectionsPerAssistant: 0,
+      maxSectionsPerAssistant: 2,
+      minPerSlot: 1,
+      maxPerSlot: 1,
+      minConsecutiveSections: 1,
+      balanceDaily: true,
+    })
+    const input = mkInput({
+      rules,
+      assistants: [A(1), { ...A(2), maxSections: 5 }],
+    })
+    const out = scheduleOneWeek(input)
+    const s2 = out.summaries.find((s) => s.assistantId === 2)!
+    expect(s2.maxSections).toBe(5)
+    expect(s2.sections).toBeGreaterThan(2) // 用满个人额度（实测 5），高于全局上限 2
+    expect(s2.sections).toBeLessThanOrEqual(5)
     checkInvariants(input, out)
   })
 })

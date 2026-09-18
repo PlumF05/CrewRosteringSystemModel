@@ -429,11 +429,18 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     if (i >= 0) assignments.splice(i, 1)
   }
 
-  /** 策略①：为指定天新建一个连续块（优先已值班天数少者，使排班分散到更多天） */
+  /**
+   * 策略①：为指定天新建一个连续块（优先已值班天数少者，使排班分散到更多天）。
+   *
+   * 注意：剩余额度必须按**该助理生效的上限**（个性化覆盖优先）计算。
+   * `canPlaceBlock` 只校验节次存在、课程占用与同时段人数上限，**不校验个人工时**，
+   * 因此这里的 `remain` 是本阶段唯一的工时闸门；用全局上限代替会让设了个性化上限的
+   * 助理被多排（2026-09-18 修复：此前确实会突破，已由回归用例锁定）。
+   */
   function fillDayByNewBlock(day: number): boolean {
     const minLen = Math.max(1, rules.minConsecutiveSections)
     const cands = assistants
-      .map((a) => ({ a, remain: rules.maxSectionsPerAssistant - (hours.get(a.id) ?? 0) }))
+      .map((a) => ({ a, remain: maxSectionsOf(a) - (hours.get(a.id) ?? 0) }))
       .filter((c) => c.remain >= minLen)
       .sort(
         (x, y) =>

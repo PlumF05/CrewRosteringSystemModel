@@ -3,17 +3,17 @@
   {
    "id": 7,
    "identity": "undergrad",
-   "name": "王五"
+   "name": "示例学生A"
   },
   {
    "id": 8,
    "identity": "undergrad",
-   "name": "赵四"
+   "name": "示例学生B"
   },
   {
    "id": 9,
    "identity": "undergrad",
-   "name": "庞士豪"
+   "name": "示例学生C"
   }
  ],
  "courses": [
