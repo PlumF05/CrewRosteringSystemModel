@@ -8,15 +8,16 @@
 
 - Python 3.12.4（`D:\python\python.exe`）；py 启动器另有 3.14.0；uv 0.x 可用
 - **Docker 不在 PATH；PostgreSQL 未安装** → PG 并发/部署/恢复类验收暂列为环境阻塞，持续记录
-- Node v24.18.0、npm 11.16.0；前端基线 162 用例通过（38aaa2b）
+- Node v24.18.0、npm 11.16.0；前端基线 162 用例通过（原 38aaa2b，历史清洗后映射为 **f86f6b6**，见 DECISIONS.md D-02）
 - 依赖锁定：见 `backend/pyproject.toml` 与 VERIFICATION.md 版本记录
+- 2026-10-26 完成 git 历史隐私清洗并强推（用户授权，D-02）；**此后不再强推**；里程碑自动推送协议生效（D-03：测试全绿即 push origin/fullstack，main 仅验收节点经确认）
 
 ## M0 基线与设计
 
 | # | 任务 | 状态 | 说明/产出 |
 |---|------|------|----------|
-| M0.1 | 复核 HEAD 与审查反例 P01~P08 | verified | 审计文档已载；HEAD==38aaa2b 无代码漂移 |
-| M0.2 | O/R/N 需求矩阵与台账 | verified | ACCEPTANCE.md 建立 |
+| M0.1 | 复核 HEAD 与审查反例 P01~P08 | verified | 审计文档已载；HEAD==f86f6b6（原 38aaa2b，D-02 映射）无代码漂移 |
+| M0.2 | O/R/N 需求矩阵与台账 | verified | ACCEPTANCE/VERIFICATION/DECISIONS/TASKS 四台账齐备 |
 | M0.3 | 锁依赖、探测环境、演示数据规则 | in_progress | 环境见上；后端依赖以 uv 锁定；演示数据一律合成/脱敏（DECISIONS.md D-01） |
 | M0.4 | 全栈 SRS + 架构/算法/版本 ADR | in_progress | docs/architecture/ADR-003~005 草案随 M1 代码落地补全 |
 
