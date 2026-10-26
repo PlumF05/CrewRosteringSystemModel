@@ -47,3 +47,21 @@ export async function openXlsx(): Promise<PickedFile | null> {
   const data = await readFile(picked)
   return { name: picked.split(/[\\/]/).pop() ?? picked, data }
 }
+
+/**
+ * Tauri：弹出系统「打开」对话框并读取**多个** xlsx（S2 批量导入，FE-05）。
+ * @returns 所选文件数组；null=用户取消或非 Tauri 环境（调用方走 <input multiple> 回退）
+ */
+export async function openXlsxMultiple(): Promise<PickedFile[] | null> {
+  if (!isTauri) return null
+  const { open } = await import('@tauri-apps/plugin-dialog')
+  const { readFile } = await import('@tauri-apps/plugin-fs')
+  const picked = await open({ multiple: true, filters: XLSX_FILTER })
+  if (picked === null) return null
+  const paths = Array.isArray(picked) ? picked : [picked]
+  const out: PickedFile[] = []
+  for (const p of paths) {
+    out.push({ name: p.split(/[\\/]/).pop() ?? p, data: await readFile(p) })
+  }
+  return out
+}

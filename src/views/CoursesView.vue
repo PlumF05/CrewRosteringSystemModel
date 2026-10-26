@@ -26,6 +26,7 @@ import {
   operationLogRepo,
 } from "../db/repositories";
 import { importTimetableForStudent } from "../db/importService";
+import { importTimetableBatch, type BatchItemResult } from "../db/batchImportService";
 import {
   addCourse,
   updateCourse,
@@ -49,7 +50,7 @@ import {
   type ParsedCourse,
 } from "../utils/courseParser";
 import { formatWeekRanges } from "../utils/weekParser";
-import { isTauri, openXlsx } from "../utils/fileAccess";
+import { isTauri, openXlsxMultiple } from "../utils/fileAccess";
 import { IDENTITY_LABEL } from "../utils/dict";
 
 const router = useRouter();
@@ -255,18 +256,66 @@ function goReschedule() {
 
 async function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-  // 浏览器环境回退入口；Tauri 桌面端走 pickAndImport（系统文件对话框）
-  await handleBuffer(await file.arrayBuffer());
+  const files = Array.from(input.files ?? []);
   input.value = ""; // 允许重复选择同一文件
+  if (files.length === 0) return;
+  // 浏览器环境回退入口；Tauri 桌面端走 pickAndImport（系统文件对话框）
+  if (files.length === 1) {
+    await handleBuffer(await files[0].arrayBuffer());
+    return;
+  }
+  // S2 批量导入（FE-05）：多文件逐项处理，逐项报告
+  await runBatch(
+    files.map((f) => ({ fileName: f.name, data: new Uint8Array() })),
+    async (i) => new Uint8Array(await files[i].arrayBuffer()),
+  );
 }
 
-/** Tauri 桌面端：弹出系统「打开」对话框选 xlsx，读取后进入与浏览器一致的解析导入流程 */
+/** Tauri 桌面端：弹出系统「打开」对话框选 xlsx（支持多选），读取后进入与浏览器一致的解析导入流程 */
 async function pickAndImport() {
-  const picked = await openXlsx();
-  if (!picked) return; // 用户取消
-  await handleBuffer(picked.data.buffer as ArrayBuffer);
+  const picked = await openXlsxMultiple();
+  if (!picked || picked.length === 0) return; // 用户取消
+  if (picked.length === 1) {
+    await handleBuffer(picked[0].data.buffer as ArrayBuffer);
+    return;
+  }
+  await runBatch(
+    picked.map((p) => ({ fileName: p.name, data: new Uint8Array() })),
+    async (i) => picked[i].data,
+  );
+}
+
+// ---------- S2 批量导入（FE-05）：逐项结果 ----------
+const batchResults = ref<BatchItemResult[]>([]);
+const batchDialogVisible = ref(false);
+
+/** 惰性读取：逐文件取内容、处理完即释放（计划 §8：不同时读取无限文件） */
+async function runBatch(
+  files: Array<{ fileName: string; data: Uint8Array }>,
+  readAt: (index: number) => Promise<Uint8Array>,
+) {
+  importing.value = true;
+  try {
+    const results: BatchItemResult[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const data = await readAt(i);
+      const one = await importTimetableBatch([{ fileName: files[i].fileName, data }]);
+      results.push(...one);
+    }
+    batchResults.value = results;
+    batchDialogVisible.value = true;
+    const ok = results.filter((r) => r.status === "ok").length;
+    const bad = results.filter((r) => r.status === "failed").length;
+    const skip = results.filter((r) => r.status === "skipped").length;
+    ElMessage[bad > 0 ? "warning" : "success"](
+      `批量导入完成：成功 ${ok}、失败 ${bad}、跳过 ${skip}`,
+    );
+    await refreshAssistants();
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : "批量导入失败");
+  } finally {
+    importing.value = false;
+  }
 }
 
 /** 解析 + 自动归档 + 冲突检测的公共主体（浏览器与 Tauri 两种取文件方式收口于此） */
@@ -373,13 +422,14 @@ async function handleBuffer(buf: ArrayBuffer) {
 </script>
 
 <template>
-  <!-- 导入区：选文件即自动解析 + 自动归属 + 自动落库，无二次确认 -->
+  <!-- 导入区：选文件即自动解析 + 自动归属 + 自动落库，无二次确认（支持一次多选） -->
   <el-card class="card">
-    <template #header>导入课程表（学院标准 xlsx 格式）</template>
+    <template #header>导入课程表（学院标准 xlsx 格式，可多选批量）</template>
     <input
       ref="fileInput"
       type="file"
       accept=".xlsx,.xls"
+      multiple
       class="hidden-input"
       @change="onFileChange"
     />
@@ -388,7 +438,7 @@ async function handleBuffer(buf: ArrayBuffer) {
       :loading="importing"
       @click="isTauri ? pickAndImport() : fileInput?.click()"
     >
-      {{ importing ? "正在解析并导入…" : "选择课程表文件" }}
+      {{ importing ? "正在解析并导入…" : "选择课程表文件（可多选）" }}
     </el-button>
     <div class="hint">
       选择文件后系统会<b>自动</b>按表头中的「学生：姓名(学号)」归档：<br />
@@ -691,6 +741,34 @@ async function handleBuffer(buf: ArrayBuffer) {
       <el-button @click="courseRemoveVisible = false">取消</el-button>
       <el-button type="danger" @click="handleCourseRemoveConfirmed"
         >删除</el-button
+      >
+    </template>
+  </el-dialog>
+
+  <!-- S2 批量导入逐项结果（FE-05） -->
+  <el-dialog v-model="batchDialogVisible" title="批量导入结果" width="720px">
+    <el-table :data="batchResults" border size="small" max-height="380">
+      <el-table-column prop="fileName" label="文件" min-width="160" />
+      <el-table-column label="结果" width="90">
+        <template #default="{ row }">
+          <el-tag
+            :type="row.status === 'ok' ? 'success' : row.status === 'skipped' ? 'info' : 'danger'"
+            size="small"
+          >
+            {{ row.status === "ok" ? "成功" : row.status === "skipped" ? "跳过" : "失败" }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="归属" width="150">
+        <template #default="{ row }">
+          {{ row.studentName ? `${row.studentName}（${row.studentNo}）` : "—" }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="message" label="说明" min-width="240" />
+    </el-table>
+    <template #footer>
+      <el-button type="primary" @click="batchDialogVisible = false"
+        >知道了</el-button
       >
     </template>
   </el-dialog>
