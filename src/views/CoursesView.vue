@@ -31,7 +31,9 @@ import type { SchedulingRules } from "../algorithms/types";
 import { normalizeRules } from "../algorithms/types";
 import {
   findDutyConflicts,
+  findDutyNeedsReview,
   type DutyConflict,
+  type DutyNeedsReview,
 } from "../algorithms/dutyConflict";
 import {
   parseTimetableWorkbook,
@@ -69,6 +71,7 @@ const lastImport = ref<ImportOutcome | null>(null);
 
 /** 导入课程表后检测到的冲突排班（排在了该生有课的节次上，SRS F06 第 3 条） */
 const conflicts = ref<DutyConflict[]>([]);
+const needsReview = ref<DutyNeedsReview[]>([]);
 const clearing = ref(false);
 
 const ACTION_TEXT: Record<ImportOutcome["action"], string> = {
@@ -143,6 +146,7 @@ async function handleBuffer(buf: ArrayBuffer) {
   importing.value = true;
   lastImport.value = null;
   conflicts.value = [];
+  needsReview.value = [];
   try {
     const result = parseTimetableWorkbook(new Uint8Array(buf));
 
@@ -189,6 +193,25 @@ async function handleBuffer(buf: ArrayBuffer) {
       (d) => d.assistantId === outcome.assistantId,
     );
     conflicts.value = findDutyConflicts({
+      rules: savedRules,
+      assistantId: outcome.assistantId,
+      courses: result.courses.map((c) => ({
+        assistantId: outcome.assistantId,
+        kind: c.kind,
+        dayOfWeek: c.dayOfWeek,
+        courseName: c.courseName,
+        sectionText: c.sectionText,
+        weekRanges: c.weekRanges,
+      })),
+    duties: duties.map((d) => ({
+      id: d.id,
+      weekNo: d.weekNo,
+      dayOfWeek: d.dayOfWeek,
+      timeSlot: d.timeSlot,
+      assistantId: d.assistantId,
+    })),
+    });
+    needsReview.value = findDutyNeedsReview({
       rules: savedRules,
       assistantId: outcome.assistantId,
       courses: result.courses.map((c) => ({
@@ -347,6 +370,28 @@ async function handleBuffer(buf: ArrayBuffer) {
         <el-button size="small" @click="goReschedule"
           >去排班表重新生成</el-button
         >
+      </div>
+    </el-alert>
+
+    <!-- P05（2026-10-26）：节次无法识别的课程 × 当天有排班 → 无法判定，必须"待核对"，
+         空冲突清单不等于安全 -->
+    <el-alert
+      v-if="needsReview.length > 0"
+      type="warning"
+      :closable="false"
+      class="block"
+    >
+      <template #title>
+        有 {{ needsReview.length }} 条排班与"节次无法识别"的课程同日，无法自动判定是否冲突，请人工核对
+      </template>
+      <div class="conflict-list">
+        <div
+          v-for="n in needsReview"
+          :key="`${n.weekNo}-${n.dayOfWeek}-${n.timeSlot}-${n.courseName}`"
+        >
+          第{{ n.weekNo }}周 星期{{ n.dayOfWeek }} 第{{ n.timeSlot.slice(1) }}节
+          —— 课程「{{ n.courseName }}」（节次原文：{{ n.sectionText }}）
+        </div>
       </div>
     </el-alert>
 

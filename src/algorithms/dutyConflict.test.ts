@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import 'fake-indexeddb/auto'
 import { DEFAULT_RULES, type SchedulingRules } from '../algorithms/types'
-import { findDutyConflicts } from './dutyConflict'
+import { findDutyConflicts, findDutyNeedsReview } from './dutyConflict'
 import { db } from '../db/database'
 import { dutyScheduleRepo } from '../db/repositories'
 
@@ -123,5 +123,59 @@ describe('dutyScheduleRepo.removeMany', () => {
     await dutyScheduleRepo.add({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: 1 })
     await dutyScheduleRepo.removeMany([])
     expect((await dutyScheduleRepo.all()).length).toBe(1)
+  })
+})
+
+describe('findDutyNeedsReview（P05：未知节次的"待核对"判定）', () => {
+  it('未知节次课程 × 同日排班 → 进入待核对清单（空冲突清单≠安全）', () => {
+    const out = findDutyNeedsReview({
+      rules,
+      assistantId: 1,
+      courses: [course({ sectionText: '待定', courseName: '神秘课' })],
+      duties: [duty()],
+    })
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', courseName: '神秘课', sectionText: '待定' })
+    // 同一输入下 findDutyConflicts 为空——两者必须配合展示，不能只看冲突清单
+    expect(
+      findDutyConflicts({ rules, assistantId: 1, courses: [course({ sectionText: '待定' })], duties: [duty()] }),
+    ).toHaveLength(0)
+  })
+
+  it('可识别节次不进入待核对（走正常冲突通道）', () => {
+    const out = findDutyNeedsReview({
+      rules,
+      assistantId: 1,
+      courses: [course({ sectionText: '第三节-第四节', courseName: '编译原理' })],
+      duties: [duty({ timeSlot: 'c1' })],
+    })
+    expect(out).toHaveLength(0)
+  })
+
+  it('不同日/不计入类别/未生效周不进入待核对', () => {
+    expect(
+      findDutyNeedsReview({
+        rules,
+        assistantId: 1,
+        courses: [course({ sectionText: '待定', dayOfWeek: 2 })],
+        duties: [duty()],
+      }),
+    ).toHaveLength(0)
+    expect(
+      findDutyNeedsReview({
+        rules: { ...rules, countExperiment: false },
+        assistantId: 1,
+        courses: [course({ sectionText: '待定', kind: 'experiment' })],
+        duties: [duty()],
+      }),
+    ).toHaveLength(0)
+    expect(
+      findDutyNeedsReview({
+        rules,
+        assistantId: 1,
+        courses: [course({ sectionText: '待定', weekRanges: [[5, 5]] })],
+        duties: [duty({ weekNo: 1 })],
+      }),
+    ).toHaveLength(0)
   })
 })

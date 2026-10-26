@@ -52,11 +52,24 @@ describe('importTimetableForStudent', () => {
 
     expect(r.action).toBe('created')
     expect(r.courseCount).toBe(2)
+    expect(r.timetableStatus).toBe('ready')
     expect(await assistantRepo.count()).toBe(1)
     const created = await assistantRepo.findByStudentNo(base.studentNo)
     expect(created?.name).toBe('示例学生A')
     expect(created?.identity).toBe('undergrad')
+    expect(created?.timetableStatus).toBe('ready')
     expect(await courseRepo.listByAssistant(r.assistantId)).toHaveLength(2)
+  })
+
+  it('S1 四分类：含无法识别节次 → needs_review 并持久化；空课表 → confirmed_empty', async () => {
+    const r1 = await importTimetableForStudent({ ...base, courses: [pc({ sectionText: '待定', sectionStart: null, sectionEnd: null })] })
+    expect(r1.timetableStatus).toBe('needs_review')
+    expect((await assistantRepo.findByStudentNo(base.studentNo))?.timetableStatus).toBe('needs_review')
+
+    const other = { ...base, studentNo: '1024003', studentName: '示例学生B' }
+    const r2 = await importTimetableForStudent({ ...other, courses: [] })
+    expect(r2.timetableStatus).toBe('confirmed_empty')
+    expect((await assistantRepo.findByStudentNo(other.studentNo))?.timetableStatus).toBe('confirmed_empty')
   })
 
   it('情况一：学号已存在 → 更新姓名/身份，保留电话、QQ、班级', async () => {

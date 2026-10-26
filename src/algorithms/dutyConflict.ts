@@ -85,3 +85,52 @@ export function findDutyConflicts(params: {
     (a, b) => a.weekNo - b.weekNo || a.dayOfWeek - b.dayOfWeek || Number(a.timeSlot.slice(1)) - Number(b.timeSlot.slice(1)),
   )
 }
+
+/** 待核对项（P05，2026-10-26）：节次无法识别的课程 × 该生当天确有排班 → 无法判定是否冲突 */
+export interface DutyNeedsReview {
+  weekNo: number
+  dayOfWeek: number
+  timeSlot: string
+  assistantId: number
+  courseName: string
+  sectionText: string
+}
+
+/**
+ * 找出"无法判定"的排班：课程节次无法识别（序号轴解析失败）时，
+ * 冲突清单返回空**不等于安全**——这些条目必须以"待核对"呈现给用户，
+ * 与 findDutyConflicts（可判定的冲突）配合使用。
+ */
+export function findDutyNeedsReview(params: {
+  rules: SchedulingRules
+  assistantId: number
+  courses: ConflictCourse[]
+  duties: ConflictDuty[]
+}): DutyNeedsReview[] {
+  const { rules, assistantId, courses, duties } = params
+  const mine = courses.filter((c) => c.assistantId === assistantId)
+  const out: DutyNeedsReview[] = []
+  for (const duty of duties) {
+    const ord = sectionOrdinal(duty.timeSlot.replace(/^c/, ''))
+    if (ord === null) continue
+    for (const c of mine) {
+      if (c.dayOfWeek !== duty.dayOfWeek) continue
+      const isExp = (c.kind ?? 'theory') === 'experiment'
+      if (isExp ? !rules.countExperiment : !rules.countTheory) continue
+      if (!weekInRanges(duty.weekNo, c.weekRanges)) continue
+      if (sectionOrdinalRange(c.sectionText) !== null) continue // 能识别的走 findDutyConflicts
+      out.push({
+        weekNo: duty.weekNo,
+        dayOfWeek: duty.dayOfWeek,
+        timeSlot: duty.timeSlot,
+        assistantId: duty.assistantId,
+        courseName: c.courseName,
+        sectionText: c.sectionText,
+      })
+      break
+    }
+  }
+  return out.sort(
+    (a, b) => a.weekNo - b.weekNo || a.dayOfWeek - b.dayOfWeek || Number(a.timeSlot.slice(1)) - Number(b.timeSlot.slice(1)),
+  )
+}

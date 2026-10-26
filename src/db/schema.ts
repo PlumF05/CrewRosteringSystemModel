@@ -34,6 +34,12 @@ export interface Assistant {
   customMinSections?: number
   /** 个性化值班节数上限；缺省（undefined）= 跟随全局规则的 maxSectionsPerAssistant */
   customMaxSections?: number
+  /**
+   * 课表提交状态（S1，2026-10-26，见 algorithms/timetableStatus.ts 的四分类语义）。
+   * 缺省（undefined）= 从未导入（运行时按"有课程记录→ready"保守回填）。
+   * 非索引字段，无需数据库版本升级。
+   */
+  timetableStatus?: 'ready' | 'confirmed_empty' | 'needs_review'
   createdAt: string
   updatedAt: string
 }

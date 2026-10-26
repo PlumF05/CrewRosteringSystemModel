@@ -59,6 +59,16 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-010 S1.5 课表状态四分类与 P05 待核对展示（2026-10-26）
+
+- **四分类语义**（新 `src/algorithms/timetableStatus.ts`，纯函数）：ready（已导入且节次全部可识别）/ confirmed_empty（确认无课）/ needs_review（存在无法识别节次）/ missing（从未导入）。旧数据保守回填：无标记但有课程记录 → ready，否则 missing。"未提交课表≠全天空闲"：仅 ready 与 confirmed_empty 可参与自动排班。
+- **导入接线**：importTimetableForStudent 落库后推导并持久化 `assistant.timetableStatus`（空课表→confirmed_empty、含未知节次→needs_review、否则 ready），结果与操作日志均携带状态；schema 加非索引可选字段，无需升库。
+- **排班入口**（ScheduleView）：missing/needs_review 助理被排除且逐人给出原因（warning），全部不可排时给可行动错误提示；keep 同步过滤到可排人员。
+- **确认入口**（AssistantsView）：课表状态列（标签）；missing→「确认无课」、needs_review→「已核对」行内动作，写操作日志。
+- **P05 UI 面**：`findDutyNeedsReview`（dutyConflict.ts）——未知节次课程 × 同日排班进入"待核对"清单；CoursesView 导入后以 warning 警报展示"无法自动判定是否冲突，请人工核对"，与冲突清单并列（空冲突清单≠安全）。
+- **测试**：timetableStatus.test.ts（8 例：回填/可排班/推导）、dutyConflict.test.ts 增 3 例（待核对判定与排除分支）、importService.test.ts 增 1 例（状态持久化）。`npx vitest run` **209/209**（14 文件）；`npm run build` 通过（755ms）。
+- **边界**：手动建助理未导课表者现被排除出自动排班（语义变更，按计划 FE-02 执行），确认入口已提供；needs_review 的"核对后修改课表节次原文"编辑能力属 S2 课程编辑。
+
 ## V-009 S1.4 保留项（keep）安全校验与周次语义（2026-10-26，P01/P02/P03/P04）
 
 - **P01/P02（入口校验）**：greedy 预占阶段对每条 keep 依次校验——时段合法、人员存在、课程冲突（含未知节次的保守全天占用）、时段上限、重复、个人上限；任一不过即拒绝并携带原因进入输出 `rejectedKeeps`（新字段，ScheduleOutput 扩展），不再"手动来源豁免"。合法 keep 照常保留为 manual。

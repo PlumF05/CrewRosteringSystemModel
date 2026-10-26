@@ -19,6 +19,7 @@
 import { assistantRepo, courseRepo, operationLogRepo } from './repositories'
 import type { Course, Identity } from './schema'
 import type { ParsedCourse } from '../utils/courseParser'
+import { deriveImportStatus, type TimetableStatusRecord } from '../algorithms/timetableStatus'
 
 export interface ImportTimetableInput {
   studentName: string
@@ -37,6 +38,8 @@ export interface ImportTimetableResult {
   identityChanged: boolean
   /** 写入的课程条数 */
   courseCount: number
+  /** 本次导入推导出的课表状态（S1 四分类，已持久化到助理档案） */
+  timetableStatus: TimetableStatusRecord
 }
 
 /** ParsedCourse → Course 落库模型：只写数据模型声明的字段，丢弃解析器的调试字段 sourceText */
@@ -99,12 +102,17 @@ export async function importTimetableForStudent(
     assistantId,
     courses.map((c) => toCourseRow(assistantId, c)),
   )
+  // S1（2026-10-26）四分类：导入即推导课表状态并持久化——空课表=确认无课，
+  // 存在无法识别节次=待核对（P05：不能当"安全"），否则=已导入。
+  const timetableStatus = deriveImportStatus(courses)
+  await assistantRepo.update(assistantId, { timetableStatus })
   await operationLogRepo.add('course.import', {
     studentNo,
     studentName,
     count: courses.length,
     assistantAction: action,
+    timetableStatus,
   })
 
-  return { assistantId, action, nameChanged, identityChanged, courseCount: courses.length }
+  return { assistantId, action, nameChanged, identityChanged, courseCount: courses.length, timetableStatus }
 }

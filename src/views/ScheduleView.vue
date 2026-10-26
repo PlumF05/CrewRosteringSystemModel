@@ -17,6 +17,7 @@ import {
   type SchedulingRules,
   type WeeklySchedule,
 } from '../algorithms/types'
+import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableStatus'
 import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
 import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
@@ -86,18 +87,11 @@ async function onWeekChange() {
   }
 }
 
-async function generate() {
+  async function generate() {
   generating.value = true
   try {
-    const assistants = (await assistantRepo.list()).map((a) => ({
-      id: a.id!,
-      name: a.name,
-      identity: a.identity,
-      // 个性化值班节数（2026-09-13 增补）：未设置的助理在算法内跟随全局默认
-      minSections: a.customMinSections,
-      maxSections: a.customMaxSections,
-    }))
-    if (assistants.length === 0) {
+    const rows = await assistantRepo.list()
+    if (rows.length === 0) {
       ElMessage.error('请先在"助理管理"中添加助理')
       return
     }
@@ -109,6 +103,35 @@ async function generate() {
       sectionText: c.sectionText,
       weekRanges: c.weekRanges.map(([s, e]) => [s, e] as [number, number]),
     }))
+    // S1 四分类（2026-10-26）：未导入课表（missing）与待核对（needs_review）的助理
+    // 不参与自动排班——"未提交课表不等于全天空闲"；排除原因明确告知，不静默跳过。
+    const courseCountBy = new Map<number, number>()
+    for (const c of courses) courseCountBy.set(c.assistantId, (courseCountBy.get(c.assistantId) ?? 0) + 1)
+    const excluded: string[] = []
+    const schedulableRows = rows.filter((a) => {
+      const st = timetableStatusOf(a, (courseCountBy.get(a.id!) ?? 0) > 0)
+      const ok = isSchedulableStatus(st)
+      if (!ok) {
+        excluded.push(`「${a.name}」${st === 'missing' ? '未导入课表' : '课表含无法识别的节次（待核对）'}`)
+      }
+      return ok
+    })
+    if (schedulableRows.length === 0) {
+      ElMessage.error('没有可参与排班的助理：请先在「课程管理」导入课表，或在「助理管理」确认无课')
+      return
+    }
+    if (excluded.length > 0) {
+      ElMessage.warning(`已排除 ${excluded.length} 人（未参与本次排班）：${excluded.join('；')}`)
+    }
+    const schedulableIds = new Set(schedulableRows.map((a) => a.id!))
+    const assistants = schedulableRows.map((a) => ({
+      id: a.id!,
+      name: a.name,
+      identity: a.identity,
+      // 个性化值班节数（2026-09-13 增补）：未设置的助理在算法内跟随全局默认
+      minSections: a.customMinSections,
+      maxSections: a.customMaxSections,
+    }))
     // F08：快照"重排前"数据（逐周读库），供差异对比
     beforeRowsMap.value = new Map()
     for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
@@ -119,14 +142,19 @@ async function generate() {
     // 安排被应用到全部周）。算法按周次过滤；无法保留的项以明细反馈。
     const keep = Array.from(beforeRowsMap.value.values())
       .flat()
-      .filter((r) => r.source === 'manual')
+      .filter((r) => r.source === 'manual' && schedulableIds.has(r.assistantId))
       .map((r) => ({
         weekNo: r.weekNo,
         dayOfWeek: r.dayOfWeek,
         slotKey: r.timeSlot,
         assistantId: r.assistantId,
       }))
-    previews.value = scheduleAll({ rules: JSON.parse(JSON.stringify(rules.value)), assistants, courses, keep })
+    previews.value = scheduleAll({
+      rules: JSON.parse(JSON.stringify(rules.value)),
+      assistants,
+      courses,
+      keep,
+    })
     previewWeek.value = previews.value[0]?.weekNo
     // P01/P02/P04 的用户反馈面：被拒绝的保留项逐条给出原因，不静默丢弃
     const rejected = previews.value.flatMap((w) =>

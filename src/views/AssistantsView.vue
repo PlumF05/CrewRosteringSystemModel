@@ -10,16 +10,29 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import { assistantRepo, operationLogRepo } from '../db/repositories'
+import { assistantRepo, courseRepo, operationLogRepo } from '../db/repositories'
 import type { Assistant } from '../db/schema'
 import { IDENTITY_LABEL } from '../utils/dict'
 import AssistantForm from '../components/AssistantForm.vue'
+import {
+  TIMETABLE_STATUS_LABEL,
+  isSchedulableStatus,
+  timetableStatusOf,
+  type TimetableStatus,
+} from '../algorithms/timetableStatus'
 
 const list = ref<Assistant[]>([])
 const keyword = ref('')
 const formVisible = ref(false)
 /** null = 新增模式；有值 = 编辑该记录 */
 const editing = ref<Assistant | null>(null)
+
+/** 课表状态四分类（S1）：课程行数用于旧数据的保守回填（有课程记录 → ready） */
+const courseCountBy = ref<Map<number, number>>(new Map())
+
+function statusOf(row: Assistant): TimetableStatus {
+  return timetableStatusOf(row, (courseCountBy.value.get(row.id!) ?? 0) > 0)
+}
 
 /** 删除确认（声明式对话框：不用 ElMessageBox 命令式服务，行为一致且可测） */
 const confirmVisible = ref(false)
@@ -36,6 +49,32 @@ const filtered = computed(() => {
 
 async function refresh() {
   list.value = await assistantRepo.list()
+  const counts = new Map<number, number>()
+  for (const c of await courseRepo.all()) {
+    counts.set(c.assistantId, (counts.get(c.assistantId) ?? 0) + 1)
+  }
+  courseCountBy.value = counts
+}
+
+/**
+ * 状态确认动作（S1 四分类的"确认入口"）：
+ * - missing → 确认无课（老师明确该生本学期无课，可参与排班）
+ * - needs_review → 标记已核对（老师已人工核过无法识别的节次）
+ */
+async function confirmStatus(row: Assistant, target: 'confirmed_empty' | 'ready') {
+  try {
+    await assistantRepo.update(row.id!, { timetableStatus: target })
+    await operationLogRepo.add('assistant.timetableStatus', {
+      studentNo: row.studentNo,
+      name: row.name,
+      from: statusOf(row),
+      to: target,
+    })
+    ElMessage.success(target === 'confirmed_empty' ? `已确认「${row.name}」无课（可参与排班）` : `已标记「${row.name}」课表核对完成`)
+    await refresh()
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '操作失败')
+  }
 }
 
 onMounted(refresh)
@@ -103,6 +142,28 @@ async function handleRemoveConfirmed() {
     <el-table-column prop="phone" label="联系电话" width="140" />
     <el-table-column prop="qq" label="QQ" width="130" />
     <el-table-column prop="className" label="班级" min-width="120" />
+    <el-table-column label="课表状态" width="130">
+      <template #default="{ row }">
+        <el-tag
+          v-if="isSchedulableStatus(statusOf(row))"
+          :type="statusOf(row) === 'confirmed_empty' ? 'success' : 'primary'"
+          size="small"
+          >{{ TIMETABLE_STATUS_LABEL[statusOf(row)] }}</el-tag
+        >
+        <template v-else>
+          <el-tag type="warning" size="small">{{ TIMETABLE_STATUS_LABEL[statusOf(row)] }}</el-tag>
+          <el-button
+            link
+            type="primary"
+            size="small"
+            style="margin-left: 6px"
+            @click="confirmStatus(row, statusOf(row) === 'missing' ? 'confirmed_empty' : 'ready')"
+          >
+            {{ statusOf(row) === 'missing' ? '确认无课' : '已核对' }}
+          </el-button>
+        </template>
+      </template>
+    </el-table-column>
     <el-table-column label="值班节数" width="120">
       <template #default="{ row }">
         <el-tag
