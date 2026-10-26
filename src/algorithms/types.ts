@@ -150,32 +150,62 @@ export interface RuleIssue {
 }
 
 /**
- * 校验排班规则的一致性（2026-09-13 增补）。
+ * 校验排班规则的一致性与取值合法性（2026-09-13 增补；2026-10-26 S1 按 P06 收紧）。
  *
  * 为什么必须有这一层：非法规则（如 weekStart > weekEnd）此前不会被拦截，
  * scheduleAll 会**静默产出 0 周结果**——界面点"生成方案"毫无反应、写入按钮不可用，
  * 用户只会以为按钮坏了。配置页保存前校验与算法入口把关共用本函数，行为一致。
+ *
+ * 2026-10-26 收紧（审查 P06：负数上下限、星期 0/8、小数节次曾全部通过校验）：
+ * 所有数值字段必须是整数且在语义范围内；工作日必须是 1~7；节次区间端点必须是整数。
+ * "能排出来的数"才允许进入算法——类型系统不拦数值域，这一层就是数值域的唯一闸门。
  *
  * 覆盖：排班周期、工时上下限、同时段人数上下限、工作日非空、
  * 上班节次区间合法且**互不重叠**。
  */
 export function validateRules(rules: SchedulingRules): RuleIssue[] {
   const issues: RuleIssue[] = []
-  if (rules.weekStart < 1 || rules.weekEnd < rules.weekStart)
-    issues.push({ field: 'weekStart', message: '排班周期不合法（起 ≤ 止，且从第 1 周起）' })
-  if (rules.weekEnd > 30) issues.push({ field: 'weekEnd', message: '排班周期不能超过第 30 周' })
-  if (rules.minSectionsPerAssistant > rules.maxSectionsPerAssistant)
+  const int = (v: unknown): boolean => Number.isInteger(v)
+
+  if (!int(rules.weekStart) || !int(rules.weekEnd) || rules.weekStart < 1 || rules.weekEnd < rules.weekStart)
+    issues.push({ field: 'weekStart', message: '排班周期不合法（起 ≤ 止、均为整数，且从第 1 周起）' })
+  if (int(rules.weekEnd) && rules.weekEnd > 30)
+    issues.push({ field: 'weekEnd', message: '排班周期不能超过第 30 周' })
+
+  if (!int(rules.minSectionsPerAssistant) || rules.minSectionsPerAssistant < 0)
+    issues.push({ field: 'minSectionsPerAssistant', message: '每人最少值班节数必须是不小于 0 的整数' })
+  if (!int(rules.maxSectionsPerAssistant) || rules.maxSectionsPerAssistant < 1)
+    issues.push({ field: 'maxSectionsPerAssistant', message: '每人最多值班节数必须是不小于 1 的整数' })
+  else if (int(rules.minSectionsPerAssistant) && rules.minSectionsPerAssistant > rules.maxSectionsPerAssistant)
     issues.push({ field: 'maxSectionsPerAssistant', message: '每人最少工时不能大于最多工时' })
-  if (rules.minPerSlot > rules.maxPerSlot)
+
+  if (!int(rules.minPerSlot) || rules.minPerSlot < 0)
+    issues.push({ field: 'minPerSlot', message: '同时段最少人数必须是不小于 0 的整数' })
+  if (!int(rules.maxPerSlot) || rules.maxPerSlot < 1)
+    issues.push({ field: 'maxPerSlot', message: '同时段最多人数必须是不小于 1 的整数' })
+  else if (int(rules.minPerSlot) && rules.minPerSlot > rules.maxPerSlot)
     issues.push({ field: 'maxPerSlot', message: '同时段最少人数不能大于最多人数' })
-  if (!Array.isArray(rules.workdays) || rules.workdays.length === 0)
+
+  if (!int(rules.minConsecutiveSections) || rules.minConsecutiveSections < 1)
+    issues.push({ field: 'minConsecutiveSections', message: '最少连续值班节数必须是不小于 1 的整数' })
+
+  if (!Array.isArray(rules.workdays) || rules.workdays.length === 0) {
     issues.push({ field: 'workdays', message: '至少选择一个工作日' })
+  } else {
+    const bad = rules.workdays.filter((d) => !int(d) || d < 1 || d > 7)
+    if (bad.length > 0)
+      issues.push({
+        field: 'workdays',
+        message: `工作日不合法（应为 1~7 的整数）：${[...new Set(bad)].join('、')}`,
+      })
+  }
+
   if (!Array.isArray(rules.workSections) || rules.workSections.length === 0) {
     issues.push({ field: 'workSections', message: '至少设置一个上班节次区间' })
   } else {
     for (const s of rules.workSections) {
-      if (s.start < 1 || s.end > 13 || s.end < s.start) {
-        issues.push({ field: 'workSections', message: `节次区间不合法：第 ${s.start}~${s.end} 节` })
+      if (!int(s.start) || !int(s.end) || s.start < 1 || s.end > 13 || s.end < s.start) {
+        issues.push({ field: 'workSections', message: `节次区间不合法：第 ${s.start}~${s.end} 节（端点须为 1~13 的整数且起 ≤ 止）` })
       }
     }
     // 重叠检测：按起点排序后，后一段的起点不得落入前一段
@@ -198,6 +228,25 @@ export function assertRulesValid(rules: SchedulingRules): void {
   if (issues.length > 0) {
     throw new Error(`排班规则不合法：${issues.map((i) => i.message).join('；')}`)
   }
+}
+
+/**
+ * 旧配置的数据质量警告（2026-10-26 增补，P07）：读取存量规则时调用，
+ * 返回需要用户确认（"待核对"）的提示；返回空数组表示无需处理。
+ * 当前识别：下午 8~11 节——2026-09-13 之前的旧默认，与课程表编号错配，
+ * 但无法与用户刻意设置的同值自定义区分，因此不改写、只提示。
+ */
+export function rulesDataWarnings(saved: Partial<SchedulingRules> | null | undefined): string[] {
+  const warnings: string[] = []
+  if (saved && Array.isArray(saved.workSections)) {
+    if (saved.workSections.some((s) => s?.start === 8 && s?.end === 11)) {
+      warnings.push(
+        '检测到"下午 8~11 节"配置：这是 2026-09-13 之前旧版本的默认值，与课程表编号（下午 6~9 节）错配，' +
+          '但无法与刻意设置的自定义区间区分，故未自动改写。请确认后保存为"下午 6~9 节"或保留自定义。',
+      )
+    }
+  }
+  return warnings
 }
 
 /**
@@ -242,12 +291,10 @@ export function normalizeRules(saved: Partial<SchedulingRules> | null | undefine
   if (!Array.isArray(r.workdays) || r.workdays.length === 0) r.workdays = [...DEFAULT_WORKDAYS]
   if (!Array.isArray(r.workSections) || r.workSections.length === 0)
     r.workSections = JSON.parse(JSON.stringify(DEFAULT_WORK_SECTIONS))
-  // 2026-09-13 迁移：把存量配置里的旧默认"下午 8~11 节"对齐为课程表编号"下午 6~9 节"。
-  // 只迁移与旧默认值完全一致的区间，避免误改管理员自定义的节次；不迁移会持续造成
-  // "课程表第6节 vs 排班表第8节"的错配，进而在上课时间排班。
-  r.workSections = r.workSections.map((s) =>
-    s.start === 8 && s.end === 11 ? { ...s, start: 6, end: 9 } : s,
-  )
+  // 2026-10-26 修订（审查 P07）：**不再**把"下午 8~11 节"静默改写为 6~9。
+  // 旧默认与恰好同值的自定义无法区分，按数值猜测改写会掩盖用户真实配置；
+  // 歧义配置原样保留，由 rulesDataWarnings() 标记"待核对"交由用户确认
+  //（配合 ScheduleConfigView 的警告条，见 FE 验收"歧义 8~11 不静默迁移"）。
   if (typeof r.uniformMode !== 'boolean') r.uniformMode = false
   if (typeof r.countTheory !== 'boolean') r.countTheory = true
   if (typeof r.countExperiment !== 'boolean') r.countExperiment = true

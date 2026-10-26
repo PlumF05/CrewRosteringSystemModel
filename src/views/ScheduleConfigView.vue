@@ -11,6 +11,7 @@ import { configRepo, operationLogRepo } from "../db/repositories";
 import {
   DEFAULT_RULES,
   normalizeRules,
+  rulesDataWarnings,
   validateRules,
   type SchedulingRules,
 } from "../algorithms/types";
@@ -19,6 +20,8 @@ const form = reactive<SchedulingRules>(
   JSON.parse(JSON.stringify(DEFAULT_RULES)),
 );
 const saving = ref(false);
+/** 存量配置的"待核对"警告（P07：歧义配置不静默改写，交用户确认） */
+const dataWarnings = ref<string[]>([]);
 
 const DAY_OPTIONS = [
   { value: 1, label: "周一" },
@@ -33,6 +36,7 @@ const DAY_OPTIONS = [
 onMounted(async () => {
   const saved = await configRepo.get<SchedulingRules>("rules");
   Object.assign(form, normalizeRules(saved));
+  dataWarnings.value = rulesDataWarnings(saved);
 });
 
 function validateIssues() {
@@ -82,6 +86,15 @@ function removeSection(idx: number) {
 <template>
   <el-card>
     <template #header>排班规则</template>
+    <el-alert
+      v-for="(w, i) in dataWarnings"
+      :key="i"
+      type="warning"
+      show-icon
+      :closable="false"
+      style="margin-bottom: 12px"
+      >{{ w }}</el-alert
+    >
     <el-form label-width="170px" style="max-width: 680px">
       <el-form-item label="排班周期">
         <el-input-number v-model="form.weekStart" :min="1" :max="30" /> 周

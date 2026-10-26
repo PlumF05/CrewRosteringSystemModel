@@ -9,6 +9,7 @@ import {
   buildSlots,
   formatSectionLabel,
   normalizeRules,
+  rulesDataWarnings,
   validateRules,
   type CourseInput,
   type ScheduleInput,
@@ -762,7 +763,9 @@ describe('节次编号对齐与占用判定（2026-09-13 缺陷修复）', () =>
     ])
   })
 
-  it('存量配置迁移：旧默认"下午 8~11"自动对齐为"下午 6~9"，自定义节次不受影响', () => {
+  it('存量配置迁移（P07，2026-10-26 语义变更）："下午 8~11"不再静默改写，标记待核对', () => {
+    // 旧断言（已废弃）：8~11 自动对齐为 6~9。P07：旧默认与同值自定义无法区分，
+    // 按数值猜测改写会掩盖用户真实配置——现原样保留并交 rulesDataWarnings 提示确认。
     const legacy = normalizeRules({
       workSections: [
         { start: 1, end: 4, label: '上午' },
@@ -771,8 +774,9 @@ describe('节次编号对齐与占用判定（2026-09-13 缺陷修复）', () =>
     })
     expect(legacy.workSections).toEqual([
       { start: 1, end: 4, label: '上午' },
-      { start: 6, end: 9, label: '下午' },
+      { start: 8, end: 11, label: '下午' },
     ])
+    expect(rulesDataWarnings({ workSections: [{ start: 8, end: 11, label: '下午' }] })).toHaveLength(1)
     const custom = normalizeRules({ workSections: [{ start: 3, end: 5, label: '加时' }] })
     expect(custom.workSections).toEqual([{ start: 3, end: 5, label: '加时' }])
   })
@@ -787,7 +791,7 @@ describe('规则一致性校验（2026-09-13 增补）', () => {
 
   it('覆盖已知非法组合（此前均静默产出空结果）', () => {
     expect(messages(baseRules({ weekStart: 5, weekEnd: 2 }))).toEqual([
-      '排班周期不合法（起 ≤ 止，且从第 1 周起）',
+      '排班周期不合法（起 ≤ 止、均为整数，且从第 1 周起）',
     ])
     expect(messages(baseRules({ minPerSlot: 5, maxPerSlot: 1 }))).toEqual([
       '同时段最少人数不能大于最多人数',
