@@ -169,6 +169,98 @@ describe('scheduleOneWeek（贪心排班）', () => {
     checkInvariants(input, out)
   })
 
+  describe('保留项安全校验与周次语义（P01/P02/P03/P04，2026-10-26）', () => {
+    it('P01：有课时段的保留项被拒绝并给出原因，不进入输出', () => {
+      const input = mkInput({
+        assistants: [A(1), A(2)],
+        courses: [course(1, 1, 1, 1)],
+        keep: [{ weekNo: 1, dayOfWeek: 1, slotKey: 'c1', assistantId: 1 }],
+      })
+      const out = scheduleOneWeek(input)
+      expect(
+        out.assignments.some((a) => a.assistantId === 1 && a.dayOfWeek === 1 && a.slotKey === 'c1'),
+      ).toBe(false)
+      expect(out.rejectedKeeps).toHaveLength(1)
+      expect(out.rejectedKeeps[0].reason).toContain('有课')
+      checkInvariants(input, out)
+    })
+
+    it('P02：保留项挤爆时段容量时后来者被拒绝（maxPerSlot 不因手动豁免）', () => {
+      const input = mkInput({
+        assistants: [A(1), A(2)],
+        keep: [
+          { weekNo: 1, dayOfWeek: 1, slotKey: 'c1', assistantId: 1 },
+          { weekNo: 1, dayOfWeek: 1, slotKey: 'c1', assistantId: 2 },
+        ],
+      })
+      const out = scheduleOneWeek(input)
+      const day1c1 = out.assignments.filter((a) => a.dayOfWeek === 1 && a.slotKey === 'c1')
+      expect(day1c1).toHaveLength(1)
+      expect(day1c1[0].source).toBe('manual')
+      expect(out.rejectedKeeps).toHaveLength(1)
+      expect(out.rejectedKeeps[0].reason).toContain('上限')
+      checkInvariants(input, out)
+    })
+
+    it('P04：带周次的保留项只对所属周生效（第 1 周的手动安排不再传播到第 2 周）', () => {
+      const out = scheduleAll({
+        rules: baseRules({ weekEnd: 2 }),
+        assistants: [A(1), A(2)],
+        courses: [],
+        keep: [{ weekNo: 1, dayOfWeek: 1, slotKey: 'c1', assistantId: 1 }],
+      })
+      expect(out).toHaveLength(2)
+      expect(out[0].assignments.some((a) => a.source === 'manual' && a.assistantId === 1)).toBe(true)
+      expect(out[1].assignments.some((a) => a.source === 'manual' && a.assistantId === 1)).toBe(false)
+    })
+
+    it('uniform 模式：指向其他周的保留项按明细拒绝，不静默忽略', () => {
+      const out = scheduleAll({
+        rules: baseRules({ weekEnd: 2, uniformMode: true }),
+        assistants: [A(1), A(2)],
+        courses: [],
+        keep: [{ weekNo: 2, dayOfWeek: 1, slotKey: 'c1', assistantId: 1 }],
+      })
+      for (const w of out) {
+        expect(w.rejectedKeeps.some((k) => k.reason.includes('各周相同'))).toBe(true)
+      }
+      expect(out[0].assignments.some((a) => a.source === 'manual')).toBe(false)
+    })
+
+    it('P03：每日均衡不搬移手动安排（审计场景：两天上限一人，手动集中第一天）', () => {
+      const rules = baseRules({
+        balanceDaily: true,
+        workdays: [1, 2],
+        minSectionsPerAssistant: 1,
+        maxSectionsPerAssistant: 1,
+      })
+      const out = scheduleOneWeek({
+        weekNo: 1,
+        rules,
+        assistants: [A(1), A(2)],
+        courses: [],
+        keep: [
+          { weekNo: 1, dayOfWeek: 1, slotKey: 'c1', assistantId: 1 },
+          { weekNo: 1, dayOfWeek: 1, slotKey: 'c2', assistantId: 2 },
+        ],
+      })
+      // 两条手动安排都保持在第 1 天原位、来源不变
+      expect(out.assignments.find((a) => a.assistantId === 1)).toMatchObject({
+        dayOfWeek: 1,
+        slotKey: 'c1',
+        source: 'manual',
+      })
+      expect(out.assignments.find((a) => a.assistantId === 2)).toMatchObject({
+        dayOfWeek: 1,
+        slotKey: 'c2',
+        source: 'manual',
+      })
+      // 两人额度已满，第 2 天无法补人 → 保持无人并如实报告缺口，而不是搬走手动项
+      expect(out.assignments.filter((a) => a.dayOfWeek === 2)).toHaveLength(0)
+      checkInvariants({ weekNo: 1, rules, assistants: [A(1), A(2)], courses: [] }, out)
+    })
+  })
+
   it('无解场景：没有助理时全部时段进入未满足清单', () => {
     const out = scheduleOneWeek(mkInput({ assistants: [] }))
     expect(out.assignments).toHaveLength(0)

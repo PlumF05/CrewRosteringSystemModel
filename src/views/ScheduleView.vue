@@ -114,12 +114,27 @@ async function generate() {
     for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
       beforeRowsMap.value.set(w, await dutyScheduleRepo.listByWeek(w))
     }
-    // F08：手动调整记录作为 keep 保留（仅对各自周次生效）
-    const keep = storedRows.value
+    // F08：手动调整记录作为 keep 保留——P04 修复（2026-10-26）：收集**整个周期**各周
+    // 的手动记录并显式携带 weekNo（此前只取当前查看周且丢掉周次，导致第 N 周的手动
+    // 安排被应用到全部周）。算法按周次过滤；无法保留的项以明细反馈。
+    const keep = Array.from(beforeRowsMap.value.values())
+      .flat()
       .filter((r) => r.source === 'manual')
-      .map((r) => ({ dayOfWeek: r.dayOfWeek, slotKey: r.timeSlot, assistantId: r.assistantId }))
+      .map((r) => ({
+        weekNo: r.weekNo,
+        dayOfWeek: r.dayOfWeek,
+        slotKey: r.timeSlot,
+        assistantId: r.assistantId,
+      }))
     previews.value = scheduleAll({ rules: JSON.parse(JSON.stringify(rules.value)), assistants, courses, keep })
     previewWeek.value = previews.value[0]?.weekNo
+    // P01/P02/P04 的用户反馈面：被拒绝的保留项逐条给出原因，不静默丢弃
+    const rejected = previews.value.flatMap((w) =>
+      w.rejectedKeeps.map((k) => `第${k.weekNo ?? w.weekNo}周 星期${k.dayOfWeek} ${k.slotKey}：${k.reason}`),
+    )
+    if (rejected.length > 0) {
+      ElMessage.warning(`有 ${rejected.length} 条手动安排无法保留：${rejected[0]}${rejected.length > 1 ? ' 等' : ''}`)
+    }
   } catch (err) {
     // 规则不合法等确定性错误直接可见（validateRules 已在算法入口把关）
     ElMessage.error(err instanceof Error ? err.message : '生成排班失败')

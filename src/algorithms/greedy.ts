@@ -29,6 +29,7 @@ import type {
   AssistantInput,
   AssistantSummary,
   BaseScheduleInput,
+  RejectedKeep,
   ScheduleInput,
   ScheduleOutput,
   Slot,
@@ -145,13 +146,45 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
 
   const assignments: Assignment[] = []
   const keptKeys = new Set<string>()
-  for (const k of keep ?? []) {
+  const rejectedKeeps: RejectedKeep[] = []
+  // P04（2026-10-26）：带周次的保留项只对所属周生效；缺省周次 = 全周生效（兼容旧调用）
+  const weekKeep = (keep ?? []).filter((k) => k.weekNo === undefined || k.weekNo === weekNo)
+  for (const k of weekKeep) {
     const key = slotKeyOf(k.dayOfWeek, k.slotKey)
-    if (!slotCount.has(key)) continue
-    if (slotMembers.get(key)!.has(k.assistantId)) continue
-    const h = slotHoursOf(k.dayOfWeek, k.slotKey)
     const ka = assistantById.get(k.assistantId)
-    if (!ka || (hours.get(k.assistantId) ?? 0) + h > maxSectionsOf(ka)) continue
+    // P01/P02（2026-10-26）：保留项与自动安排共用同一套安全校验——
+    // "手动来源"不豁免课程冲突、时段上限与个人上限；拒绝必须给出明细，不静默丢弃。
+    if (!slotCount.has(key)) {
+      rejectedKeeps.push({ ...k, reason: `时段不合法：星期${k.dayOfWeek} ${k.slotKey} 不在上班时段内` })
+      continue
+    }
+    if (!ka) {
+      rejectedKeeps.push({ ...k, reason: `助理 #${k.assistantId} 不存在` })
+      continue
+    }
+    if (busy.get(k.assistantId)?.has(key)) {
+      rejectedKeeps.push({
+        ...k,
+        reason: `星期${k.dayOfWeek} ${k.slotKey} 该生有课（或课程节次无法识别，需先核对课表）`,
+      })
+      continue
+    }
+    if (slotCount.get(key)! >= rules.maxPerSlot) {
+      rejectedKeeps.push({ ...k, reason: `星期${k.dayOfWeek} ${k.slotKey} 人数已达上限 ${rules.maxPerSlot}` })
+      continue
+    }
+    if (slotMembers.get(key)!.has(k.assistantId)) {
+      rejectedKeeps.push({ ...k, reason: `星期${k.dayOfWeek} ${k.slotKey} 重复保留了同一人` })
+      continue
+    }
+    const h = slotHoursOf(k.dayOfWeek, k.slotKey)
+    if ((hours.get(k.assistantId) ?? 0) + h > maxSectionsOf(ka)) {
+      rejectedKeeps.push({
+        ...k,
+        reason: `「${ka.name}」保留后将超过个人上限 ${maxSectionsOf(ka)} 节`,
+      })
+      continue
+    }
     slotCount.set(key, slotCount.get(key)! + 1)
     slotMembers.get(key)!.add(k.assistantId)
     hours.set(k.assistantId, (hours.get(k.assistantId) ?? 0) + h)
@@ -479,6 +512,9 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
       for (const d of workdaysSorted) {
         if (d === toDay) continue
         for (const block of blocksOf(a.id, d)) {
+          // P03（2026-10-26）：手动安排不参与均衡搬移——"手动来源"表示老师的明确意图，
+          // 均衡只能调度自动生成的块；混合块（含手动）整体不动。
+          if (!block.every((b) => b.source === 'auto')) continue
           if (block.length >= minLen) chunks.push({ a, block })
         }
       }
@@ -531,6 +567,8 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
         if (d === toDay) continue
         const srcCount = assignments.filter((x) => x.dayOfWeek === d).length
         for (const block of blocksOf(a.id, d)) {
+          // P03：兜底让位同样不搬手动安排
+          if (!block.every((b) => b.source === 'auto')) continue
           if (block.length < minLen) continue
           // 硬闸门：源日让出整块后不能变成"空白天"
           if (srcCount - block.length < 1) continue
@@ -650,6 +688,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     ),
     unmetSlots,
     summaries,
+    rejectedKeeps,
     elapsedMs: performance.now() - t0,
   }
 }
@@ -667,8 +706,32 @@ export function scheduleAll(input: BaseScheduleInput): WeeklySchedule[] {
   for (let w = rules.weekStart; w <= rules.weekEnd; w++) weeks.push(w)
 
   if (rules.uniformMode) {
-    const once = scheduleOneWeek({ ...input, weekNo: rules.weekStart }, true)
-    return weeks.map((weekNo) => ({ ...once, weekNo, replicated: true }))
+    // P04（2026-10-26）：各周相同模式下，模板 = 第 weekStart 周的一份方案。
+    // 显式指向其他周的手动安排无法在"各周相同"语义下保留——按明细拒绝，不静默忽略。
+    const templateWeek = rules.weekStart
+    const inapplicable = (input.keep ?? []).filter(
+      (k) => k.weekNo !== undefined && k.weekNo !== templateWeek,
+    )
+    const once = scheduleOneWeek(
+      {
+        ...input,
+        weekNo: templateWeek,
+        keep: (input.keep ?? []).filter(
+          (k) => k.weekNo === undefined || k.weekNo === templateWeek,
+        ),
+      },
+      true,
+    )
+    const uniformRejections: RejectedKeep[] = inapplicable.map((k) => ({
+      ...k,
+      reason: `各周相同模式下手动安排只作用于第 ${templateWeek} 周的模板，第 ${k.weekNo} 周的安排无法保留（请改用"各周独立"模式）`,
+    }))
+    return weeks.map((weekNo) => ({
+      ...once,
+      rejectedKeeps: [...once.rejectedKeeps, ...uniformRejections],
+      weekNo,
+      replicated: true,
+    }))
   }
   return weeks.map((weekNo) => ({ ...scheduleOneWeek({ ...input, weekNo }), weekNo }))
 }

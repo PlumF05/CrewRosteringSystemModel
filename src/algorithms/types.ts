@@ -343,11 +343,23 @@ export interface CourseInput {
  * minSectionsPerAssistant / maxSectionsPerAssistant 语义不变（节数）。
  */
 
-/** F08 的"保留手动调整"：重排前已确定的人岗（阶段 6 使用，算法即已支持） */
+/**
+ * F08 的"保留手动调整"：重排前已确定的人岗。
+ * 2026-10-26 修订（审查 P04）：显式携带 **weekNo**——某周的手动安排只对那周生效，
+ * 不再被应用到整个排班周期。缺省（undefined）= 全周生效，仅为兼容旧调用方保留；
+ * 新代码（ScheduleView 等）必须显式携带周次。
+ */
 export interface KeepEntry {
+  /** 该手动安排所属周次；缺省 = 全部周生效（兼容旧数据/旧调用） */
+  weekNo?: number
   dayOfWeek: number
   slotKey: string
   assistantId: number
+}
+
+/** 被拒绝的保留项：entry 原样 + 人可读原因（P01/P02/P04：拒绝必须给明细，不静默丢弃） */
+export interface RejectedKeep extends KeepEntry {
+  reason: string
 }
 
 export interface BaseScheduleInput {
@@ -400,6 +412,8 @@ export interface ScheduleOutput {
   assignments: Assignment[]
   unmetSlots: UnmetSlot[]
   summaries: AssistantSummary[]
+  /** 因课程冲突/时段上限/个人上限/模式不兼容等原因未被采纳的保留项（含原因） */
+  rejectedKeeps: RejectedKeep[]
   /** 算法耗时（毫秒，用于 SRS 4.1 性能验证） */
   elapsedMs: number
 }
