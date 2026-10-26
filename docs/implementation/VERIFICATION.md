@@ -59,6 +59,14 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-006 S0 Worker/离线安装包可行性检查（2026-10-26）
+
+- **Tauri 构建**：`npx tauri info` 全绿——rustc/cargo 1.95.0（stable-msvc）、MSVC 2022 生成工具、WebView2 运行时 155.0.4283.62、tauri 🦀 2.11.5（@tauri-apps/cli 2.11.4）、fs/dialog 插件就位，build-type bundle。**NSIS 离线打包能力具备**。
+- **WebView2 安装方式现状**：`src-tauri/tauri.conf.json` 未配置 `webviewInstallMode` → Tauri 默认 downloadBootstrapper（**依赖网络**）。S7 前需改为 `bundle.windows.webviewInstallMode = { "type": "offlineInstaller" }` 并将 WebView2 离线安装器（MicrosoftEdgeWebView2RuntimeInstallerX64.exe，约 100+ MB）放至 Tauri 约定路径随包分发；embedBootstrapper 不满足断网首装。
+- **Web Worker**：项目用 rolldown-vite，支持 `new Worker(new URL('./x.ts', import.meta.url), { type: 'module' })` 标准写法；Node 测试环境无法真实运行 Worker，真实冒烟推迟到 S4（FE-15：桌面生产包内 Worker 可用为最终门槛）。S0 结论：方案可行，无阻塞性配置。
+- **版本注**：tauri 全家桶有可用更新（2.12.x），不阻塞本期；是否升级在 S7 打包时一并决定。
+- 边界：以上证明"能打包/能配离线"，不等于已产出安装包或断网机器验收（那是 FE-23）。
+
 ## V-005 S0 夹具恢复与测试基线修复（2026-10-26，对应 FE-01）
 
 - **背景**：V-002 历史清洗把 `src/algorithms/__fixtures__/regression-3assistants.json` 从全部历史移除时，工作树中该文件（2026-09-13 的**脱敏重建版**：示例学生A/B/C、131 条课程）也被一并删除，导致 greedy.test.ts 51 个用例无法加载（162→111）。
