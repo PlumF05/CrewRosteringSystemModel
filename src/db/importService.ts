@@ -17,9 +17,11 @@
  * 属于"不该落库"的情形，由调用方直接报错中止。
  */
 import { assistantRepo, courseRepo, operationLogRepo } from './repositories'
+import { db } from './database'
 import type { Course, Identity } from './schema'
 import type { ParsedCourse } from '../utils/courseParser'
 import { deriveImportStatus, type TimetableStatusRecord } from '../algorithms/timetableStatus'
+import { withDataRevision } from './dataRevision'
 
 export interface ImportTimetableInput {
   studentName: string
@@ -62,57 +64,69 @@ function toCourseRow(assistantId: number, c: ParsedCourse): Omit<Course, 'id'> {
 /**
  * 归档一名学生的课程表（自动建档 / 更新 + 整体替换课程表）。
  * 两种情况共用同一个收口动作 replaceForAssistant，因此最终状态只取决于解析结果。
+ *
+ * S2（2026-10-26）原子性：建档/更新、课程整体替换、课表状态、操作日志与
+ * dataRevision 递增全部包裹在**同一个读写事务**里（审计 §5.1：此前是四次独立写入，
+ * 课程替换阶段失败会留下"助理已建/已改名但没有课表"的半更新状态）。
+ * 事务内任何一步抛错 → 全部回滚。解析、哈希等耗时计算在调用方完成，位于事务外。
  */
 export async function importTimetableForStudent(
   input: ImportTimetableInput,
 ): Promise<ImportTimetableResult> {
   const { studentName, studentNo, identity, courses } = input
-
-  const existing = await assistantRepo.findByStudentNo(studentNo)
-
-  let assistantId: number
-  let action: ImportTimetableResult['action']
-  let nameChanged = false
-  let identityChanged = false
-
-  if (existing) {
-    // ---------- 情况一：已存在 → 更新其信息 ----------
-    nameChanged = existing.name !== studentName
-    identityChanged = existing.identity !== identity
-    if (nameChanged || identityChanged) {
-      await assistantRepo.update(existing.id!, { name: studentName, identity })
-      await operationLogRepo.add('assistant.update', {
-        studentNo,
-        name: studentName,
-        via: 'course-import',
-        changed: { name: nameChanged, identity: identityChanged },
-      })
-    }
-    assistantId = existing.id!
-    action = 'updated'
-  } else {
-    // ---------- 情况二：不存在 → 直接新建 ----------
-    assistantId = await assistantRepo.add({ name: studentName, studentNo, identity })
-    await operationLogRepo.add('assistant.add', { studentNo, name: studentName, via: 'course-import' })
-    action = 'created'
-  }
-
-  // ---------- 共同出口：整体替换该助理的课程表（幂等）----------
-  await courseRepo.replaceForAssistant(
-    assistantId,
-    courses.map((c) => toCourseRow(assistantId, c)),
-  )
-  // S1（2026-10-26）四分类：导入即推导课表状态并持久化——空课表=确认无课，
-  // 存在无法识别节次=待核对（P05：不能当"安全"），否则=已导入。
+  // 事务外预计算：课程行与状态推导不碰数据库，失败在这里就已拦截
   const timetableStatus = deriveImportStatus(courses)
-  await assistantRepo.update(assistantId, { timetableStatus })
-  await operationLogRepo.add('course.import', {
-    studentNo,
-    studentName,
-    count: courses.length,
-    assistantAction: action,
-    timetableStatus,
-  })
 
-  return { assistantId, action, nameChanged, identityChanged, courseCount: courses.length, timetableStatus }
+  const { result } = await withDataRevision(
+    null,
+    [db.assistant, db.course, db.operation_log],
+    async () => {
+    const existing = await assistantRepo.findByStudentNo(studentNo)
+
+    let assistantId: number
+    let action: ImportTimetableResult['action']
+    let nameChanged = false
+    let identityChanged = false
+
+    if (existing) {
+      // ---------- 情况一：已存在 → 更新其信息 ----------
+      nameChanged = existing.name !== studentName
+      identityChanged = existing.identity !== identity
+      if (nameChanged || identityChanged) {
+        await assistantRepo.update(existing.id!, { name: studentName, identity })
+        await operationLogRepo.add('assistant.update', {
+          studentNo,
+          name: studentName,
+          via: 'course-import',
+          changed: { name: nameChanged, identity: identityChanged },
+        })
+      }
+      assistantId = existing.id!
+      action = 'updated'
+    } else {
+      // ---------- 情况二：不存在 → 直接新建 ----------
+      assistantId = await assistantRepo.add({ name: studentName, studentNo, identity })
+      await operationLogRepo.add('assistant.add', { studentNo, name: studentName, via: 'course-import' })
+      action = 'created'
+    }
+
+    // ---------- 共同出口：整体替换该助理的课程表（幂等）----------
+    await courseRepo.replaceForAssistant(
+      assistantId,
+      courses.map((c) => toCourseRow(assistantId, c)),
+    )
+    // S1（2026-10-26）四分类：导入即推导课表状态并持久化
+    await assistantRepo.update(assistantId, { timetableStatus })
+    await operationLogRepo.add('course.import', {
+      studentNo,
+      studentName,
+      count: courses.length,
+      assistantAction: action,
+      timetableStatus,
+    })
+
+    return { assistantId, action, nameChanged, identityChanged, courseCount: courses.length, timetableStatus }
+    },
+  )
+  return result
 }

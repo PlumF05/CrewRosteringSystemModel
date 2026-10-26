@@ -9,7 +9,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { assistantRepo, configRepo, courseRepo, dutyScheduleRepo, operationLogRepo } from '../db/repositories'
+import { assistantRepo, configRepo, courseRepo, dutyScheduleRepo } from '../db/repositories'
 import type { DutySchedule } from '../db/schema'
 import { scheduleAll } from '../algorithms/greedy'
 import {
@@ -18,6 +18,8 @@ import {
   type WeeklySchedule,
 } from '../algorithms/types'
 import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableStatus'
+import { saveFullCycle } from '../db/scheduleService'
+import { StaleDataError, getDataRevision } from '../db/dataRevision'
 import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
 import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
@@ -34,6 +36,8 @@ const weekNo = ref(1)
 const previews = ref<WeeklySchedule[]>([])
 /** 预览区当前查看的周 */
 const previewWeek = ref<number>()
+/** 本次预览所基于的业务数据版本（写入时 CAS 校验，防旧预览覆盖新数据） */
+const previewedRevision = ref<number>(0)
 const writing = ref(false)
 const generating = ref(false)
 const exporting = ref(false)
@@ -156,6 +160,8 @@ async function onWeekChange() {
       keep,
     })
     previewWeek.value = previews.value[0]?.weekNo
+    // 记录预览所基于的业务版本：写入时若版本已前进（期间有导入/保存/手调）则拒绝
+    previewedRevision.value = await getDataRevision()
     // P01/P02/P04 的用户反馈面：被拒绝的保留项逐条给出原因，不静默丢弃
     const rejected = previews.value.flatMap((w) =>
       w.rejectedKeeps.map((k) => `第${k.weekNo ?? w.weekNo}周 星期${k.dayOfWeek} ${k.slotKey}：${k.reason}`),
@@ -257,24 +263,25 @@ async function write() {
   if (previews.value.length === 0) return
   writing.value = true
   try {
-    for (const w of previews.value) {
-      await dutyScheduleRepo.replaceWeek(
-        w.weekNo,
-        w.assignments.map((a) => ({
-          weekNo: w.weekNo,
+    // S2（2026-10-26）：全周期单事务原子保存（FE-12）——此前逐周 replaceWeek，
+    // 中途失败会留下部分周更新、部分周保持旧方案。预览携带生成时的业务版本，
+    // 期间发生过导入/保存/手调（版本前进）则拒绝写入，避免旧预览覆盖新数据。
+    await saveFullCycle(
+      previews.value.map((w) => ({
+        weekNo: w.weekNo,
+        rows: w.assignments.map((a) => ({
           dayOfWeek: a.dayOfWeek,
           timeSlot: a.slotKey,
           assistantId: a.assistantId,
-          status: 'normal' as const,
           source: a.source,
         })),
-      )
-    }
-    await operationLogRepo.add('schedule.write', {
-      weeks: [rules.value.weekStart, rules.value.weekEnd],
-      mode: rules.value.uniformMode ? 'uniform' : 'perWeek',
-      count: previews.value.reduce((s, w) => s + w.assignments.length, 0),
-    })
+      })),
+      previewedRevision.value,
+      {
+        weekRange: [rules.value.weekStart, rules.value.weekEnd],
+        mode: rules.value.uniformMode ? 'uniform' : 'perWeek',
+      },
+    )
     ElMessage.success(
       `已写入第 ${rules.value.weekStart}~${rules.value.weekEnd} 周排班（共 ${previews.value.reduce(
         (s, w) => s + w.assignments.length,
@@ -285,6 +292,10 @@ async function write() {
     previewWeek.value = undefined
     await loadWeek()
   } catch (err) {
+    if (err instanceof StaleDataError) {
+      ElMessage.error('数据已变化（预览生成后发生过新的导入或保存），请重新生成预览后再写入')
+      return
+    }
     ElMessage.error(err instanceof Error ? err.message : '写入失败')
   } finally {
     writing.value = false

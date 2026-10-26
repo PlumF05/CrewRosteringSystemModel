@@ -59,6 +59,15 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-011 S2 第一片：dataRevision 版本协议 + 导入/全周期保存原子化（2026-10-26）
+
+- **版本原语**（新 `src/db/dataRevision.ts`）：config key `dataRevision` 单调递增；`withDataRevision(expected, tables, fn)` 把"版本校验 → 业务写入 → 版本+1"放进**同一个 Dexie 读写事务**（CAS）；`StaleDataError` 携带期望/实际版本。
+- **导入原子化（FE-06）**：importTimetableForStudent 全部动作（建档/改名、课程整体替换、课表状态、两条操作日志、版本递增）收进单事务；解析/推导在事务外。故障注入测试：课程替换失败 → 助理/课程/日志/版本**全部回滚**；更新分支改名后状态写失败 → 姓名保持原样、旧课表未清空。
+- **全周期原子保存（FE-12）**（新 `src/db/scheduleService.ts`）：`saveFullCycle(weeks, expectedRevision, meta)` 单事务替换全部周 + 日志 + 版本递增；ScheduleView.write() 从逐周 replaceWeek 切换至此，并携带预览生成时的版本——期间发生过导入/保存则拒绝并提示重新生成（StaleDataError 专项提示）。故障注入测试：第 2 周写入失败 → 两周全回滚、版本不动。
+- **CAS 测试**：同旧版本连续提交第二次被拒（FE-11 的基础语义；真实双连接验证在 S3 手调提交接入后补充）。
+- **结果**：`npx vitest run` **219/219**（16 文件，新增 dataRevision.test.ts 7 例 + scheduleService.test.ts 3 例）；`npm run build` 通过。
+- **边界**：手调提交/撤销链的版本携带（FE-10）与真实双 Dexie 连接并发（FE-11 全量）随 S3 落地；批量导入（FE-05）与课程编辑（FE-07）属 S2 后续片。
+
 ## V-010 S1.5 课表状态四分类与 P05 待核对展示（2026-10-26）
 
 - **四分类语义**（新 `src/algorithms/timetableStatus.ts`，纯函数）：ready（已导入且节次全部可识别）/ confirmed_empty（确认无课）/ needs_review（存在无法识别节次）/ missing（从未导入）。旧数据保守回填：无标记但有课程记录 → ready，否则 missing。"未提交课表≠全天空闲"：仅 ready 与 confirmed_empty 可参与自动排班。
