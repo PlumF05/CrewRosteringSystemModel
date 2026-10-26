@@ -1,5 +1,16 @@
 # 验证记录（VERIFICATION）
 
+## 当前目标与最新基线（2026-10-26）
+
+当前执行目标已改为纯前端原架构完善，见 CRSM-FRONTEND-IMPROVEMENT-PLAN.md。下面早期 Web 目标的环境阻塞和依赖计划只保留历史，不是当前完成条件。
+
+- 复核 HEAD：3d3a44e。
+- 实际执行 npm test：10 个测试文件/111 个用例通过；greedy.test.ts 因 regression-3assistants.json 缺失而无法加载，整条测试命令退出 1。此时不能声称全部 162 个用例通过。
+- **2026-10-26 更新（V-005）**：缺失夹具已按计划用脱敏数据恢复，npm test **11 文件/162 用例全部通过**；npm run build 复验通过（661ms，大分块警告仍在）。
+- 实际执行 npm run build：类型检查与 Vite 构建通过；仍有大分块警告，fileAccess 约 866 kB、入口约 1024 kB（压缩前）。
+- 本轮功能、Tauri 安装包、原生 Worker、数据库升级和跨机恢复尚未实现或验证；新 FE-01～FE-24 均保持 pending。
+- 本次产物为方案、执行目标、台账重定向与历史归档，没有修改应用源码或安装数据库。
+
 > 每条验证记录：编号、日期、内容、命令/方式、结果、结论边界（能证明什么/不能证明什么）。
 > 台账规则：ACCEPTANCE.md 中标 verified 的项必须能指回本文件的条目。
 
@@ -36,6 +47,22 @@
 
 边界：不证明 GitHub 服务端旧对象立即消失（GC 前仍可能按 SHA 访问，见 D-02 残余风险）；不证明无人曾 clone。
 
-## V-003 后端依赖锁定与冒烟（M0.3，待填）
+## V-003 后端依赖锁定与冒烟（M0.3，已因目标重定向终止）
 
-- 待执行：uv 初始化、依赖安装、Django/OR-Tools import 冒烟、版本记录。
+2026-10-26 实际执行与结果：
+
+- `uv init --bare` 完成（backend/pyproject.toml、.python-version=3.12）；用户级 `UV_CACHE_DIR=D:\uv\cache`、`UV_PYTHON_INSTALL_DIR=D:\uv\python`（D 盘约束，旧缓存 330K 已迁移）。
+- `uv add django==5.2.18 ... or-tools ...` 两次失败：报 "or-tools was not found in the package registry"（清缓存后仍复现；git-filter-repo 等小包可正常安装，原因未定位）。此时先前的 pip 版 venv 已删除，**backend/.venv 现为 uv 创建的空环境，Django 不再在其中**。
+- 边界：仅记录 Web 目标终止时的环境事实；新目标（纯前端）不依赖这些组件，不再追查 or-tools 解析问题。
+
+## V-004 → 由 V-005 承接（编号保留说明）
+
+（台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
+
+## V-005 S0 夹具恢复与测试基线修复（2026-10-26，对应 FE-01）
+
+- **背景**：V-002 历史清洗把 `src/algorithms/__fixtures__/regression-3assistants.json` 从全部历史移除时，工作树中该文件（2026-09-13 的**脱敏重建版**：示例学生A/B/C、131 条课程）也被一并删除，导致 greedy.test.ts 51 个用例无法加载（162→111）。
+- **方式**：从本机备份 bundle（`C:\Users\pang\AppData\Local\Temp\crsm-pre-sanitize.bundle`，D-02 记录）提取 38aaa2b 版夹具；提取后扫描 `庞士豪|王五|赵四|李四|1[3-9][0-9]{9}` **0 匹配**；核对结构（3 助理、131 课程、rules 下午 6~9）与测试期望一致后恢复到工作树。
+- **结果**：`npm test` 11 文件/162 用例全部通过（含 greedy.test.ts 51 项：补位迭代、全周期无课程冲突、第 1 周五天覆盖、均衡守恒、确定性）；`npm run build` 通过（661ms）。
+- **边界**：证明算法基线恢复到清洗前水平；不证明 P01～P08 已修复（那是 S1 的任务，见 FE-03）；临时 bundle 克隆目录已删除，bundle 本体仍含旧历史（见 D-02）。
+

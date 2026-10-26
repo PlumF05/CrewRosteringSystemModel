@@ -1,5 +1,9 @@
 # 本机 Python / Django 环境
 
+> 历史环境说明：2026-10-26 用户决定保留原纯前端架构，本轮不依赖 Python/Django。下文记录先前安装时的情况，不作为当前环境可用性或项目运行要求；不要据此继续开展已取消的后端重构。
+>
+> **2026-10-26 事实更正**：下表描述的 pip 版 venv 已在随后 uv 试验中删除重建，`D:\CRSM\backend\.venv` 现为 uv 创建的**空环境（不含 Django）**；uv 缓存已按用户要求永久重定向至 `D:\uv\cache`（用户级 UV_CACHE_DIR/UV_PYTHON_INSTALL_DIR）。重建 Django 环境的配方仍以 `backend/requirements-bootstrap.txt` 为准，详见 VERIFICATION V-003 与 DECISIONS D-04。
+
 安装日期：2026-10-26。用途：为 CRSM 后续 Python 后端开发准备独立环境。
 
 ## 已安装内容

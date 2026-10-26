@@ -1,5 +1,7 @@
 # CRSM 全栈优化与完善计划
 
+> **已停止执行（2026-10-26）**：用户决定保留原纯前端架构，仅完成功能与质量完善。当前主方案为 [CRSM 原架构完善计划](CRSM-FRONTEND-IMPROVEMENT-PLAN.md)，执行目标为 [CRSM-ZCODE-GOAL.md](CRSM-ZCODE-GOAL.md)。下文仅保留历史，不再要求 Python、服务端数据库或联网协作。
+
 版本：规划稿 1.0。日期：2026-10-26。审查基线：`38aaa2b` / 桌面版 `0.1.0`。
 
 用途：作为 ZCode 的长期实施目标及验收依据。配套资料：[当前审查](CRSM-BASELINE-AUDIT-2026-10-26.md)、[业务术语](../../GLOSSARY.md)、[可直接转交的目标](CRSM-ZCODE-GOAL.md)。本文描述目标设计，尚未实现。

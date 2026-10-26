@@ -1,0 +1,8 @@
+[project]
+name = "crsm-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+# 2026-10-26 目标重定向（DECISIONS D-04）：保留文件骨架但清空依赖声明。
+# 原因：uv add 因 or-tools 解析失败未完成锁定；Web 目标已取消，不再追查。
+# 如需重建 Django 环境，见 backend/requirements-bootstrap.txt 与 PYTHON-ENVIRONMENT.md。
+dependencies = []

@@ -27,3 +27,10 @@
   3. **禁止**：任何情形下不再强推或重写历史（D-02 豁免已用毕）；不推未过测试的状态。
 - **凭据**：Windows 凭据管理器中的 PAT（已验证可免交互 push）。
 - **替代方案记录**：git hooks（无测试门禁、离线即败）与定时无人值守推送（无人纠正坏状态）均被评估并否决，仅保留为可选补充。
+
+## D-04 目标重定向：保留纯前端离线架构（2026-10-26，用户决定）
+
+- **背景**：Web 全栈目标（旧 CRSM-ZCODE-GOAL-WEB，含 Django/MySQL/Celery 与 M0～M9/A01～A32）启动当日，用户改为主张保留 Vue/Tauri/Dexie 原架构，交付完全离线 Windows 桌面应用。新依据：新版 CRSM-ZCODE-GOAL.md + CRSM-FRONTEND-IMPROVEMENT-PLAN.md（S0～S7、FE-01～FE-24），详见 ADR-0001（docs/adr/0001-retain-frontend-desktop.md）。
+- **决定**：停止一切后端开发；backend/、Python、uv（缓存已按用户要求重定向 D:\uv\cache）、MySQL80 全部**保留不删不卸**，但不再是运行依赖或阻塞；旧 Web 台账归档于 docs/implementation/archive/ 与 docs/plans/archive/。
+- **环境事实更正**：backend/.venv 已在 uv 试验中重建为空环境（原 pip 版 Django 5.2.18 不再安装在内），重建配方仍在 backend/requirements-bootstrap.txt；uv add 因 or-tools 解析失败未完成锁定（V-003）。backend/pyproject.toml 清空依赖声明，仅保留项目骨架。
+- **兼容性**：D-01（数据脱敏）、D-02（历史清洗）、D-03（自动推送协议）继续有效；D-03 的"测试全绿才推送"按新 FE 口径执行。

@@ -1,0 +1,1942 @@
+{
+ "assistants": [
+  {
+   "id": 7,
+   "identity": "undergrad",
+   "name": "示例学生A"
+  },
+  {
+   "id": 8,
+   "identity": "undergrad",
+   "name": "示例学生B"
+  },
+  {
+   "id": 9,
+   "identity": "undergrad",
+   "name": "示例学生C"
+  }
+ ],
+ "courses": [
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "sectionText": "第二节-第四节",
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "sectionText": "第二节-第四节",
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 2,
+   "sectionText": "第二节-第四节",
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     10,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     17,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课1-中课2",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课1-中课2",
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课1-中课2",
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课2-中课2",
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课1-中课2",
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": null,
+   "sectionText": "中课2-中课2",
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "sectionText": "中课1-第七节",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "sectionText": "中课1-第七节",
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": 9,
+   "sectionText": "第九节-晚课",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     10,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "sectionText": "晚课-第十三节",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "sectionText": "晚课-第十三节",
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "sectionText": "晚课-第十三节",
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 5,
+   "kind": "experiment",
+   "sectionEnd": 13,
+   "sectionStart": null,
+   "sectionText": "晚课-第十三节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 7,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     5,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     5,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     5,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     7,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     4,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     3,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     7,
+     7
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     6,
+     6
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 2,
+   "kind": "experiment",
+   "sectionEnd": 9,
+   "sectionStart": 6,
+   "sectionText": "第六节-第九节",
+   "weekRanges": [
+    [
+     8,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "sectionText": "第六节-第七节",
+   "weekRanges": [
+    [
+     13,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "sectionText": "第六节-第七节",
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 8,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     5,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     10,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     13,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": 4,
+   "sectionStart": 1,
+   "sectionText": "第一节-第四节",
+   "weekRanges": [
+    [
+     17,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     5,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 2,
+   "sectionStart": 1,
+   "sectionText": "第一节-第二节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     6,
+     17
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     8
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "experiment",
+   "sectionEnd": null,
+   "sectionStart": 3,
+   "sectionText": "第三节-中课2",
+   "weekRanges": [
+    [
+     9,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     14,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 5,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     1,
+     2
+    ],
+    [
+     5,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 4,
+   "sectionStart": 3,
+   "sectionText": "第三节-第四节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 7,
+   "kind": "theory",
+   "sectionEnd": 5,
+   "sectionStart": 3,
+   "sectionText": "第三节-第五节",
+   "weekRanges": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "sectionText": "中课1-第七节",
+   "weekRanges": [
+    [
+     14,
+     14
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "experiment",
+   "sectionEnd": 7,
+   "sectionStart": null,
+   "sectionText": "中课1-第七节",
+   "weekRanges": [
+    [
+     16,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     16
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 7,
+   "sectionStart": 6,
+   "sectionText": "第六节-第七节",
+   "weekRanges": [
+    [
+     10,
+     13
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 8,
+   "sectionStart": 6,
+   "sectionText": "第六节-第八节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     6,
+     15
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 2,
+   "kind": "theory",
+   "sectionEnd": 10,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十节",
+   "weekRanges": [
+    [
+     6,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "experiment",
+   "sectionEnd": 11,
+   "sectionStart": 9,
+   "sectionText": "第九节-第十一节",
+   "weekRanges": [
+    [
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     12,
+     12
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 1,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 3,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
+   "weekRanges": [
+    [
+     1,
+     4
+    ],
+    [
+     6,
+     10
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     5,
+     9
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 4,
+   "kind": "theory",
+   "sectionEnd": 12,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十二节",
+   "weekRanges": [
+    [
+     1,
+     3
+    ]
+   ]
+  },
+  {
+   "assistantId": 9,
+   "dayOfWeek": 6,
+   "kind": "theory",
+   "sectionEnd": 13,
+   "sectionStart": 11,
+   "sectionText": "第十一节-第十三节",
+   "weekRanges": [
+    [
+     5,
+     5
+    ]
+   ]
+  }
+ ],
+ "rules": {
+  "countExperiment": true,
+  "countTheory": true,
+  "maxPerSlot": 2,
+  "maxSectionsPerAssistant": 6,
+  "minConsecutiveSections": 2,
+  "minPerSlot": 1,
+  "minSectionsPerAssistant": 6,
+  "uniformMode": false,
+  "weekEnd": 17,
+  "weekStart": 1,
+  "workSections": [
+   {
+    "end": 4,
+    "label": "上午",
+    "start": 1
+   },
+   {
+    "end": 9,
+    "label": "下午",
+    "start": 6
+   }
+  ],
+  "workdays": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ }
+}

@@ -5,6 +5,8 @@
 面向学院行政办的学生助理排班工具：导入学生课程表 → 按规则自动排班 → 一键导出排班表。
 Windows 单机桌面应用（Tauri），**数据全部保存在本机，无后端、无网络传输**。
 
+> **当前完善目标（2026-10-26）**：保留现有纯前端架构，补齐 F01～F08、可靠备份与离线交付，见 [完整方案](docs/plans/CRSM-FRONTEND-IMPROVEMENT-PLAN.md) 和 [ZCode 执行目标](docs/plans/CRSM-ZCODE-GOAL.md)。本次复核构建通过，但测试因回归夹具缺失未全绿（111 用例通过、1 个测试文件加载失败），详见 [验证台账](docs/implementation/VERIFICATION.md)；下文旧测试计数不代表当前验证结果。
+
 ## 功能特性
 
 **已实现**

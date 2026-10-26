@@ -1,52 +1,28 @@
-# 实施任务台账（TASKS）
+# CRSM 原架构完善任务台账
 
-> 由 CRSM-ZCODE-GOAL.md 驱动。状态：pending / in_progress / blocked / verified。
-> verified 标准（计划 §13.3）：代码、页面/API、必要数据迁移、业务验证及文档都齐。
-> 本文件是跨会话恢复的入口：切换会话后先读本文件与 ACCEPTANCE.md，不重新规划。
+当前驱动：CRSM-ZCODE-GOAL.md + CRSM-FRONTEND-IMPROVEMENT-PLAN.md。2026-10-26 按用户要求保留纯前端架构；旧 Web 台账已归档，不再执行。
 
-## 环境事实（M0.3 探测，2026-10-24）
+本文件状态只表示当前新目标。本文档整理完成不代表功能实现。状态：pending / in_progress / verified；verified 必须有实际证据。
 
-- Python 3.12.4（`D:\python\python.exe`）；py 启动器另有 3.14.0；uv 0.x 可用
-- **Docker 不在 PATH；PostgreSQL 未安装** → PG 并发/部署/恢复类验收暂列为环境阻塞，持续记录
-- Node v24.18.0、npm 11.16.0；前端基线 162 用例通过（原 38aaa2b，历史清洗后映射为 **f86f6b6**，见 DECISIONS.md D-02）
-- 依赖锁定：见 `backend/pyproject.toml` 与 VERIFICATION.md 版本记录
-- 2026-10-26 完成 git 历史隐私清洗并强推（用户授权，D-02）；**此后不再强推**；里程碑自动推送协议生效（D-03：测试全绿即 push origin/fullstack，main 仅验收节点经确认）
+## 当前基线
 
-## M0 基线与设计
+- HEAD：3d3a44e。业务保持 Vue/TS + Dexie + Tauri。
+- npm test：**11 文件/162 用例全部通过**（2026-10-26 恢复脱敏夹具后，V-005；此前 111 用例 + greedy.test.ts 加载失败）。
+- npm run build：通过，有大分块警告。
+- 尚未验证：Tauri 完整构建、原生 Worker、实际桌面数据库升级、干净机断网安装。
+- Python、MySQL、Docker、PostgreSQL 不再是本目标依赖或阻塞（backend/ 与工具保留，D-04；uv 缓存已重定向 D:\uv\cache，backend/.venv 现为空环境）。
 
-| # | 任务 | 状态 | 说明/产出 |
-|---|------|------|----------|
-| M0.1 | 复核 HEAD 与审查反例 P01~P08 | verified | 审计文档已载；HEAD==f86f6b6（原 38aaa2b，D-02 映射）无代码漂移 |
-| M0.2 | O/R/N 需求矩阵与台账 | verified | ACCEPTANCE/VERIFICATION/DECISIONS/TASKS 四台账齐备 |
-| M0.3 | 锁依赖、探测环境、演示数据规则 | in_progress | 环境见上；后端依赖以 uv 锁定；演示数据一律合成/脱敏（DECISIONS.md D-01） |
-| M0.4 | 全栈 SRS + 架构/算法/版本 ADR | in_progress | docs/architecture/ADR-003~005 草案随 M1 代码落地补全 |
+| 阶段 | 任务 | 状态 | 证据 |
+| --- | --- | --- | --- |
+| S0 | 合成夹具、恢复测试、需求同步、最小离线包/Worker 冒烟 | in_progress | 夹具恢复+162 绿=V-005（FE-01 verified）；余下：Worker/离线包冒烟 |
+| S1 | 严格规则、独立评价器、P01～P08、输入状态与版本 | pending | |
+| S2 | 原子归档、批量导入、课程手改、profile 底层 | pending | |
+| S3 | 手调、锁定、undo/redo、命名快照、陈旧写入保护 | pending | |
+| S4 | 增量/全量、局部改良、质量差异、Worker 取消超时 | pending | |
+| S5 | 双模板、多周/历史导出、备份恢复、升级兼容 | pending | |
+| S6 | 拆分大页面、性能、E2E/CI、帮助和文档 | pending | |
+| S7 | 完整离线安装包、干净机/跨机恢复、交付学习材料 | pending | |
 
-## M1 最小全栈纵切
+下一步：S0 收尾——① Worker/离线安装可行性冒烟（tauri.conf 现为默认 WebView2 在线引导器，S7 需 offlineInstaller，V-006 记录）；② 进入 S1：独立评价器 evaluateSchedule + 严格规则校验（P06/P07）+ P01～P08 回归。不能恢复旧真实数据或删除失败测试。后续按阶段继续，不逐模块等用户学习确认。
 
-| # | 任务 | 状态 | 说明/产出 |
-|---|------|------|----------|
-| M1.1 | Django/PG(暂SQLite开发)/迁移/配置骨架 | pending | backend/ 目录；PG 部署配置写好待环境 |
-| M1.2 | 登录、CSRF、三角色与老师学期权限 | pending | Session+CSRF；accounts app |
-| M1.3 | 学期/当期人员 API + Vue 页面接通 | pending | academics app；前端 features/terms |
-| M1.4 | OpenAPI(drf-spectacular)/TS 类型/CI 基础 | pending | |
-
-## M2~M9
-
-按计划 §11 顺序：M2 课表可靠导入 → M3 评价器/贪心 → M4 手调/发布 → M5 CP-SAT/增量 → M6 任务恢复 → M7 学生协作 → M8 双模板/迁移 → M9 交付。随推进在此展开子任务（先建骨架行）。
-
-| 阶段 | 一句话范围 | 状态 |
-|------|-----------|------|
-| M2 | 时间/周次模型、解析器迁移、原子归档、课程手改、profile 版本 | pending |
-| M3 | 规则/策略/预检、纯 Python 贪心、独立评价器、P01~P08 回归 | pending |
-| M4 | 草稿/版本链、手调/锁定/例外/undo-redo、发布门禁与并发 | pending |
-| M5 | CP-SAT 模型/目标、全量/增量/部分周、差异解释、oracle 基准 | pending |
-| M6 | Job+outbox+dispatcher、Celery、恢复/重复投递测试 | pending |
-| M7 | 学生端、请假、调班审批、通知 | pending |
-| M8 | 导入/导出双模板、多周/历史导出、旧版迁移、备份恢复 | pending |
-| M9 | 优化、E2E/性能/CI/部署、需求清零、演示与学习材料 | pending |
-
-## 下一步（恢复会话从这里继续）
-
-1. M0.3：用 uv 初始化 backend 项目并安装锁定依赖，冒烟 Django+OR-Tools import（记录版本）
-2. M0.4：写 ADR-003（全栈架构替代关系）/ADR-004（双求解器与评价器）/ADR-005（版本协议）
-3. M1.1：Django config + apps 骨架 + 首个迁移（开发期 SQLite，PG 验收挂起待环境）
+旧任务记录：[历史 Web 台账](archive/TASKS-WEB-2026-10-26.md)。旧授权记录本身不构成本轮额外行动授权。
