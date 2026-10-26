@@ -321,6 +321,11 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     const added = repairPass()
     if (!removed && !added) break
   }
+  // P08 终态校验（2026-10-26，S1）：上述迭代可能因轮次上限恰好在 repairPass
+  // 添加孤立单节后退出。此处做一次"只撤销、不再补"的终态清理——再补位会回到
+  // 修复/撤销震荡；被撤销者若低于下限，由 summaries.belowMin / unmetSlots 如实
+  // 报告为缺口，绝不以孤立单节换取"达标"假象。
+  removalPass()
 
   // ---------- 6.6 每日均衡（2026-09-13 增补，规则 balanceDaily） ----------
   // 目标：在"不违反其他约束"的前提下尽量平均每日排班，避免出现某天无人值班。
@@ -597,6 +602,8 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     for (let round = 0; round < maxRounds; round++) {
       if (!balanceDailyPass()) break
     }
+    // P08 终态校验：均衡搬移同样不允许残留 auto 孤立短段（防御性再清理）
+    removalPass()
   }
 
   // ---------- 7. 汇总 ----------

@@ -15,7 +15,7 @@
 | 阶段 | 任务 | 状态 | 证据 |
 | --- | --- | --- | --- |
 | S0 | 合成夹具、恢复测试、需求同步、最小离线包/Worker 冒烟 | **verified** | V-005（夹具+162 绿，FE-01 verified）+ V-006（tauri info 全绿，NSIS 能力具备；WebView2 需 S7 改 offlineInstaller） |
-| S1 | 严格规则、独立评价器、P01～P08、输入状态与版本 | pending | |
+| S1 | 严格规则、独立评价器、P01～P08、输入状态与版本 | in_progress | 评价器 evaluate.ts + 19 用例落地；**P08 已修复并全周验证**（V-007，181/181 绿）；余：P06/P07 严格校验、课表四状态、P01~P04 的 keep/锁定改造 |
 | S2 | 原子归档、批量导入、课程手改、profile 底层 | pending | |
 | S3 | 手调、锁定、undo/redo、命名快照、陈旧写入保护 | pending | |
 | S4 | 增量/全量、局部改良、质量差异、Worker 取消超时 | pending | |
