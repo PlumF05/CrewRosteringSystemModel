@@ -26,6 +26,14 @@ import {
   operationLogRepo,
 } from "../db/repositories";
 import { importTimetableForStudent } from "../db/importService";
+import {
+  addCourse,
+  updateCourse,
+  removeCourse,
+  validateCourseEdit,
+  analyzeCourseImpact,
+  type CourseEditInput,
+} from "../db/courseService";
 import type { Assistant, Course, Identity } from "../db/schema";
 import type { SchedulingRules } from "../algorithms/types";
 import { normalizeRules } from "../algorithms/types";
@@ -96,8 +104,128 @@ async function loadStored() {
     : [];
 }
 
-watch(viewAssistantId, loadStored);
+watch(viewAssistantId, () => {
+  loadStored();
+  runImpact();
+});
 onMounted(refreshAssistants);
+
+// ---------- F06 手动编辑（S2，2026-10-26）：新增 / 修改 / 删除 + 影响分析 ----------
+
+const emptyCourseForm = (): CourseEditInput => ({
+  courseNo: "",
+  courseName: "",
+  kind: "theory",
+  dayOfWeek: 1,
+  sectionText: "",
+  weeksText: "",
+  location: "",
+});
+
+const courseDialogVisible = ref(false);
+/** null = 新增；有值 = 编辑该课程行 */
+const editingCourse = ref<Course | null>(null);
+const courseForm = ref<CourseEditInput>(emptyCourseForm());
+const courseSaving = ref(false);
+
+/** 删除确认（声明式对话框，行为与助理管理一致） */
+const courseRemoveVisible = ref(false);
+const courseRemoveTarget = ref<Course | null>(null);
+
+const DAY_OPTIONS = [
+  { value: 1, label: "周一" },
+  { value: 2, label: "周二" },
+  { value: 3, label: "周三" },
+  { value: 4, label: "周四" },
+  { value: 5, label: "周五" },
+  { value: 6, label: "周六" },
+  { value: 7, label: "周日" },
+];
+
+/** 编辑表单回填：周次区间转回文本（"1-4周,6-17周"风格） */
+function openCourseCreate() {
+  if (!viewAssistantId.value) {
+    ElMessage.warning("请先选择要新增课程的助理");
+    return;
+  }
+  editingCourse.value = null;
+  courseForm.value = emptyCourseForm();
+  courseDialogVisible.value = true;
+}
+
+function openCourseEdit(row: Course) {
+  editingCourse.value = row;
+  courseForm.value = {
+    courseNo: row.courseNo ?? "",
+    courseName: row.courseName,
+    kind: row.kind ?? "theory",
+    dayOfWeek: row.dayOfWeek,
+    sectionText: row.sectionText,
+    weeksText: formatWeekRanges(row.weekRanges),
+    location: row.location ?? "",
+  };
+  courseDialogVisible.value = true;
+}
+
+async function saveCourse() {
+  const errors = validateCourseEdit(courseForm.value);
+  if (errors.length > 0) {
+    ElMessage.error(errors[0]);
+    return;
+  }
+  courseSaving.value = true;
+  try {
+    if (editingCourse.value) {
+      await updateCourse(editingCourse.value.id!, courseForm.value);
+      ElMessage.success(`已修改课程「${courseForm.value.courseName}」`);
+    } else {
+      await addCourse(viewAssistantId.value!, courseForm.value);
+      ElMessage.success(`已新增课程「${courseForm.value.courseName}」`);
+    }
+    courseDialogVisible.value = false;
+    await loadStored();
+    await refreshAssistants(); // 课表状态可能变化（如待核对 → 已导入）
+    await runImpact();
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : "保存失败");
+  } finally {
+    courseSaving.value = false;
+  }
+}
+
+function askRemoveCourse(row: Course) {
+  courseRemoveTarget.value = row;
+  courseRemoveVisible.value = true;
+}
+
+async function handleCourseRemoveConfirmed() {
+  const row = courseRemoveTarget.value;
+  if (!row) return;
+  try {
+    await removeCourse(row.id!);
+    courseRemoveVisible.value = false;
+    ElMessage.success(`已删除课程「${row.courseName}」`);
+    await loadStored();
+    await refreshAssistants();
+    await runImpact();
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : "删除失败");
+  }
+}
+
+/** 课表变化对当前排班的影响（与导入路径同一套冲突/待核对判定，F06 第 3 条） */
+async function runImpact() {
+  const id = viewAssistantId.value;
+  if (!id) {
+    conflicts.value = [];
+    needsReview.value = [];
+    return;
+  }
+  const savedRules = normalizeRules(await configRepo.get<SchedulingRules>("rules"));
+  const impact = await analyzeCourseImpact(id, savedRules);
+  conflicts.value = impact.conflicts;
+  needsReview.value = impact.needsReview;
+}
 
 async function clearConflicts() {
   const ids = conflicts.value
@@ -427,29 +555,54 @@ async function handleBuffer(buf: ArrayBuffer) {
     </el-table>
   </el-card>
 
-  <!-- 已存储课程表（F06 查看功能） -->
+  <!-- 已存储课程表（F06：查看 + 手动编辑） -->
   <el-card class="card">
     <template #header>已存储的课程表</template>
-    <el-select
-      v-model="viewAssistantId"
-      placeholder="选择助理查看课程表"
-      style="width: 260px"
-      class="block"
-    >
-      <el-option
-        v-for="a in assistants"
-        :key="a.id"
-        :value="a.id!"
-        :label="`${a.name}（${a.studentNo}）`"
-      />
-    </el-select>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <el-select
+        v-model="viewAssistantId"
+        placeholder="选择助理查看课程表"
+        style="width: 260px"
+      >
+        <el-option
+          v-for="a in assistants"
+          :key="a.id"
+          :value="a.id!"
+          :label="`${a.name}（${a.studentNo}）`"
+        />
+      </el-select>
+      <el-button
+        type="primary"
+        :disabled="!viewAssistantId"
+        @click="openCourseCreate"
+        >新增课程</el-button
+      >
+    </div>
     <el-empty
       v-if="storedCourses.length === 0"
-      description="该助理暂无课程记录"
+      description="该助理暂无课程记录（可点「新增课程」手动添加，或上方导入课表）"
       :image-size="60"
+      style="margin-top: 12px"
     />
-    <el-table v-else :data="storedCourses" border size="small" max-height="360">
+    <el-table
+      v-else
+      :data="storedCourses"
+      border
+      size="small"
+      max-height="360"
+      class="block"
+    >
       <el-table-column prop="courseName" label="课程" min-width="140" />
+      <el-table-column label="类别" width="60">
+        <template #default="{ row }">
+          <el-tag
+            :type="row.kind === 'experiment' ? 'warning' : 'primary'"
+            size="small"
+          >
+            {{ row.kind === "experiment" ? "实" : "本" }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="星期" width="70">
         <template #default="{ row }">星期{{ row.dayOfWeek }}</template>
       </el-table-column>
@@ -459,9 +612,88 @@ async function handleBuffer(buf: ArrayBuffer) {
           formatWeekRanges(row.weekRanges)
         }}</template>
       </el-table-column>
-      <el-table-column prop="location" label="地点" min-width="150" />
+      <el-table-column prop="location" label="地点" min-width="140" />
+      <el-table-column label="操作" width="110" fixed="right">
+        <template #default="{ row }">
+          <el-button link type="primary" size="small" @click="openCourseEdit(row)"
+            >编辑</el-button
+          >
+          <el-button link type="danger" size="small" @click="askRemoveCourse(row)"
+            >删除</el-button
+          >
+        </template>
+      </el-table-column>
     </el-table>
   </el-card>
+
+  <!-- F06 课程编辑对话框（声明式，行为与助理表单一致） -->
+  <el-dialog
+    v-model="courseDialogVisible"
+    :title="editingCourse ? '修改课程' : '新增课程'"
+    width="480px"
+  >
+    <el-form label-width="90px">
+      <el-form-item label="课程名" required>
+        <el-input v-model="courseForm.courseName" placeholder="如：软件工程" />
+      </el-form-item>
+      <el-form-item label="课程号">
+        <el-input v-model="courseForm.courseNo" placeholder="选填" />
+      </el-form-item>
+      <el-form-item label="类别">
+        <el-radio-group v-model="courseForm.kind">
+          <el-radio value="theory">理论（本/研）</el-radio>
+          <el-radio value="experiment">实验（实）</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="星期" required>
+        <el-select v-model="courseForm.dayOfWeek" style="width: 140px">
+          <el-option
+            v-for="d in DAY_OPTIONS"
+            :key="d.value"
+            :value="d.value"
+            :label="d.label"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="节次" required>
+        <el-input
+          v-model="courseForm.sectionText"
+          placeholder="如：第三节-中课2 / 第一节-第三节"
+        />
+        <div class="hint-inline">
+          节次写原文；无法识别的写法会把该助理课表标记为"待核对"
+        </div>
+      </el-form-item>
+      <el-form-item label="周次" required>
+        <el-input
+          v-model="courseForm.weeksText"
+          placeholder="如：1-4周,6-17周 或 5-17周单周"
+        />
+      </el-form-item>
+      <el-form-item label="地点">
+        <el-input v-model="courseForm.location" placeholder="选填" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="courseDialogVisible = false">取消</el-button>
+      <el-button type="primary" :loading="courseSaving" @click="saveCourse"
+        >保存</el-button
+      >
+    </template>
+  </el-dialog>
+
+  <!-- 课程删除确认（声明式对话框） -->
+  <el-dialog v-model="courseRemoveVisible" title="删除课程" width="380px">
+    <span
+      >确定删除课程「{{ courseRemoveTarget?.courseName }}」吗？删除后将立即重新分析对当前排班的影响。</span
+    >
+    <template #footer>
+      <el-button @click="courseRemoveVisible = false">取消</el-button>
+      <el-button type="danger" @click="handleCourseRemoveConfirmed"
+        >删除</el-button
+      >
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -496,5 +728,11 @@ async function handleBuffer(buf: ArrayBuffer) {
   margin-top: 8px;
   display: flex;
   gap: 8px;
+}
+.hint-inline {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 2px;
 }
 </style>

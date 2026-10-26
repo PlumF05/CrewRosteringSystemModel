@@ -59,6 +59,15 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-012 S2 第二片：课程手动编辑与影响分析（2026-10-26，F06/FE-07）
+
+- **服务**（新 `src/db/courseService.ts`）：addCourse / updateCourse / removeCourse——校验（课程名/星期 1~7/节次原文/周次文本经 parseWeekList 解析，单双周合法）→ 单写事务（写课程行 + **重算课表状态** + 日志 + 版本递增）。状态重算规则：含无法识别节次 → needs_review；删到 0 条 → confirmed_empty；否则 ready。
+- **影响分析** `analyzeCourseImpact`：课程变化后对已写入排班跑与导入路径同一套冲突 + 待核对判定。
+- **UI**（CoursesView）：已存储课程表加类别/操作列与「新增课程」；声明式编辑对话框（课程名/号/类别/星期/节次原文/周次/地点，含"无法识别会转待核对"提示）与删除确认；保存/删除后自动刷新课程、助理列表（状态列）并重跑影响分析（复用既有冲突/待核对警报，含"删除冲突排班/去重排"入口——F06 影响闭环）。
+- **测试**（courseService.test.ts，11 例）：校验边界、状态重算三态、周次展开、冲突/待核对影响、无误报。
+- **结果**：`npx vitest run` **230/230**（17 文件）；`npm run build` 通过（677ms）。
+- **边界**：实验分批/单双周"不丢失"由 parseWeekList + 整体替换语义保障（解析层已有测试）；批量导入（FE-05）属 S2 第三片。
+
 ## V-011 S2 第一片：dataRevision 版本协议 + 导入/全周期保存原子化（2026-10-26）
 
 - **版本原语**（新 `src/db/dataRevision.ts`）：config key `dataRevision` 单调递增；`withDataRevision(expected, tables, fn)` 把"版本校验 → 业务写入 → 版本+1"放进**同一个 Dexie 读写事务**（CAS）；`StaleDataError` 携带期望/实际版本。
