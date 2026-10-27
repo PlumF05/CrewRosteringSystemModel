@@ -668,10 +668,10 @@ async function handleBuffer(buf: ArrayBuffer) {
       <el-table-column prop="location" label="地点" min-width="140" />
       <el-table-column label="操作" width="110" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="openCourseEdit(row)"
+          <el-button link type="primary" size="small" @click="openCourseEdit(row as Course)"
             >编辑</el-button
           >
-          <el-button link type="danger" size="small" @click="askRemoveCourse(row)"
+          <el-button link type="danger" size="small" @click="askRemoveCourse(row as Course)"
             >删除</el-button
           >
         </template>

@@ -199,6 +199,10 @@ export const scheduleSnapshotRepo = {
     return db.schedule_snapshot.add({ label, data: copy, createdAt: now() })
   },
 
+  count(): Promise<number> {
+    return db.schedule_snapshot.count()
+  },
+
   latest(): Promise<ScheduleSnapshot | undefined> {
     return db.schedule_snapshot.orderBy('id').last()
   },

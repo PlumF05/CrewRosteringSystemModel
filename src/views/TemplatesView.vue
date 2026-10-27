@@ -7,7 +7,6 @@
  * 不可改不可删，可复制；启用切换即时生效（导入解析与排班导出使用启用中的模板）。
  */
 import { onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Upload, DocumentCopy } from '@element-plus/icons-vue'
 import {
   createTemplate,
@@ -179,11 +178,11 @@ async function onTrialFile(e: Event) {
         </el-table-column>
         <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openTrial(row)">试解析</el-button>
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link size="small" @click="openVersions(row)">版本</el-button>
-            <el-button link size="small" @click="copy(row)">复制</el-button>
-            <el-button link type="danger" size="small" :disabled="row.isBuiltIn" @click="remove(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="openTrial(row as ImportTemplate)">试解析</el-button>
+            <el-button link type="primary" size="small" @click="openEdit(row as ImportTemplate | ExportTemplate)">编辑</el-button>
+            <el-button link size="small" @click="openVersions(row as ImportTemplate | ExportTemplate)">版本</el-button>
+            <el-button link size="small" @click="copy(row as ImportTemplate | ExportTemplate)">复制</el-button>
+            <el-button link type="danger" size="small" :disabled="row.isBuiltIn" @click="remove(row as ImportTemplate | ExportTemplate)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -220,10 +219,10 @@ async function onTrialFile(e: Event) {
         </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link size="small" @click="openVersions(row)">版本</el-button>
-            <el-button link size="small" @click="copy(row)">复制</el-button>
-            <el-button link type="danger" size="small" :disabled="row.isBuiltIn" @click="remove(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="openEdit(row as ImportTemplate | ExportTemplate)">编辑</el-button>
+            <el-button link size="small" @click="openVersions(row as ImportTemplate | ExportTemplate)">版本</el-button>
+            <el-button link size="small" @click="copy(row as ImportTemplate | ExportTemplate)">复制</el-button>
+            <el-button link type="danger" size="small" :disabled="row.isBuiltIn" @click="remove(row as ImportTemplate | ExportTemplate)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

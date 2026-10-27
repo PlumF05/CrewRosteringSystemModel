@@ -59,6 +59,18 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-023 S6：性能实测、包体优化、主页可行动信息、页面拆分与 CI（2026-10-26，FE-22）
+
+- **性能基准**（新 `scripts/perf-bench.ts`，固定 seed=20261026 可复现，Node v24.18.0）：
+  - ① 50 助理 × 17 周 × 5 天 × 8 节（600 门随机课/680 时段）：生成 59ms + 逐周有界改良 1178ms + 独立终态评价 13ms = **合计 1250ms ≤ 5000ms 口径 PASS**（合法=true，0 缺口）；
+  - ② 标准课表解析（脱敏样例 A.xlsx，42 门课）：**9ms ≤ 3000ms PASS**（预热后计测）。
+- **包体实测与优化**（先测后改，未调高警告阈值）：基线入口 1004KB → 引入 unplugin-auto-import/components + ElementPlusResolver 按需引入（移除 7 个视图的显式 ElMessage 导入，模板 slot 类型补断言，声明文件纳入 tsconfig 并随仓库分发）→ **入口 783KB（gzip ~250KB，-22%）**；xlsx 重依赖（854KB chunk）确认**不在首屏**（课程/排班页懒加载）；桌面应用为本地资源加载。构建大分块警告保留如实。
+- **主页可行动信息**（DashboardView 重写）：缺课表人数、待核对人数、最近周排班缺口数、硬违规数、"输入已变化建议复核"（dataRevision≠scheduleWriteRevision）、无排班引导——逐项点击直达对应页；统计卡 + 操作日志补全全部动作文案。
+- **页面拆分**：快照管理从 ScheduleView 抽出为 `ScheduleSnapshotsCard.vue`（自包含加载/对话框，restored 事件通知父层刷新）——ScheduleView 含此前 ManualAdjustDialog 共完成两处拆分。
+- **CI 基础**（`.github/workflows/ci.yml`）：push/PR 触发，windows-latest + Node 22，npm ci → npm test → npm run build → 性能基准回归（超口径即失败）。
+- **结果**：`npx vitest run` **298/298**；`npm run build` 通过。
+- **边界**：常用页面"可交互 ≤2 秒"在桌面本地资源下由架构保证（无网络依赖），未做逐页秒表录屏——S7 安装验收时以真实桌面包复核；E2E 浏览器自动化脚本未引入（FE-22 未强制），主流程人工核验记录归 S7 演示。
+
 ## V-022 S5 第三片：备份恢复与升级兼容（2026-10-26，F05/FE-19/20/21）
 
 - **schema v4**（database.ts）：仅新增 `recovery_backup` 表（恢复前副本，与主数据隔离），不动存量数据——升级无损。

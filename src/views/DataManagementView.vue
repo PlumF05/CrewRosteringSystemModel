@@ -8,7 +8,6 @@
  * 独立恢复副本 → 单事务整体替换 → 重载校验。失败原数据保持。
  */
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Download, UploadFilled } from '@element-plus/icons-vue'
 import { createBackup, restoreBackup, validateBackup, type BackupValidation } from '../db/backupService'
 import { isTauri, saveXlsx } from '../utils/fileAccess'

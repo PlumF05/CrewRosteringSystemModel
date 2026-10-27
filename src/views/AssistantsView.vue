@@ -8,7 +8,6 @@
  * - 数据读写全部经由 assistantRepo，本层不出现 Dexie。
  */
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { assistantRepo, courseRepo, operationLogRepo } from '../db/repositories'
 import type { Assistant } from '../db/schema'
@@ -67,7 +66,7 @@ async function confirmStatus(row: Assistant, target: 'confirmed_empty' | 'ready'
     await operationLogRepo.add('assistant.timetableStatus', {
       studentNo: row.studentNo,
       name: row.name,
-      from: statusOf(row),
+      from: statusOf(row as Assistant),
       to: target,
     })
     ElMessage.success(target === 'confirmed_empty' ? `已确认「${row.name}」无课（可参与排班）` : `已标记「${row.name}」课表核对完成`)
@@ -145,21 +144,21 @@ async function handleRemoveConfirmed() {
     <el-table-column label="课表状态" width="130">
       <template #default="{ row }">
         <el-tag
-          v-if="isSchedulableStatus(statusOf(row))"
-          :type="statusOf(row) === 'confirmed_empty' ? 'success' : 'primary'"
+          v-if="isSchedulableStatus(statusOf(row as Assistant))"
+          :type="statusOf(row as Assistant) === 'confirmed_empty' ? 'success' : 'primary'"
           size="small"
-          >{{ TIMETABLE_STATUS_LABEL[statusOf(row)] }}</el-tag
+          >{{ TIMETABLE_STATUS_LABEL[statusOf(row as Assistant)] }}</el-tag
         >
         <template v-else>
-          <el-tag type="warning" size="small">{{ TIMETABLE_STATUS_LABEL[statusOf(row)] }}</el-tag>
+          <el-tag type="warning" size="small">{{ TIMETABLE_STATUS_LABEL[statusOf(row as Assistant)] }}</el-tag>
           <el-button
             link
             type="primary"
             size="small"
             style="margin-left: 6px"
-            @click="confirmStatus(row, statusOf(row) === 'missing' ? 'confirmed_empty' : 'ready')"
+            @click="confirmStatus(row as Assistant, statusOf(row as Assistant) === 'missing' ? 'confirmed_empty' : 'ready')"
           >
-            {{ statusOf(row) === 'missing' ? '确认无课' : '已核对' }}
+            {{ statusOf(row as Assistant) === 'missing' ? '确认无课' : '已核对' }}
           </el-button>
         </template>
       </template>
@@ -178,8 +177,8 @@ async function handleRemoveConfirmed() {
     </el-table-column>
     <el-table-column label="操作" width="150" fixed="right">
       <template #default="{ row }">
-        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-        <el-button link type="danger" @click="askRemove(row)">删除</el-button>
+        <el-button link type="primary" @click="openEdit(row as Assistant)">编辑</el-button>
+        <el-button link type="danger" @click="askRemove(row as Assistant)">删除</el-button>
       </template>
     </el-table-column>
     <template #empty>

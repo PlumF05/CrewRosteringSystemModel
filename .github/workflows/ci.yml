@@ -1,0 +1,26 @@
+# CI 基础（S6 / FE-22，2026-10-26）：每次推送/PR 跑全量测试 + 类型检查 + 构建。
+# 仅前端工具链（Node）——与离线桌面目标一致，不含后端/数据库环境。
+name: CI
+
+on:
+  push:
+    branches: [main, fullstack]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: 安装依赖
+        run: npm ci
+      - name: 单元测试（Vitest + fake-indexeddb）
+        run: npm test
+      - name: 类型检查与构建（vue-tsc + vite build）
+        run: npm run build
+      - name: 性能基准（50 人 × 17 周口径回归）
+        run: npx vite-node scripts/perf-bench.ts
