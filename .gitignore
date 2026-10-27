@@ -37,3 +37,4 @@ Desktop.ini
 *.xlsx
 # 例外：samples/ 下的**脱敏**样例是解析器的集成测试夹具，需要随仓库分发
 !samples/*.xlsx
+src-tauri/MicrosoftEdgeWebView2RuntimeInstallerX64.exe
