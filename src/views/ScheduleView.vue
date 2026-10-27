@@ -12,7 +12,6 @@ import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import { assistantRepo, configRepo, courseRepo, dutyScheduleRepo } from '../db/repositories'
 import type { DutySchedule } from '../db/schema'
-import { scheduleAll } from '../algorithms/greedy'
 import {
   normalizeRules,
   type SchedulingRules,
@@ -22,7 +21,8 @@ import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableS
 import { saveFullCycle } from '../db/scheduleService'
 import { StaleDataError, getDataRevision } from '../db/dataRevision'
 import { incrementalSchedule, type DiffEntry } from '../algorithms/incremental'
-import { improveWeek } from '../algorithms/improve'
+import { ScheduleWorkerClient } from '../workers/scheduleClient'
+import type { ScheduleJobResult } from '../workers/scheduleJob'
 import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
 import { getAdjustHistory, undoRedoAdjust, type AdjustHistory } from '../db/manualAdjustService'
 import {
@@ -60,6 +60,14 @@ const targetWeekStart = ref(rules.value.weekStart)
 const targetWeekEnd = ref(rules.value.weekEnd)
 const incrementalDiff = ref<DiffEntry[]>([])
 const zeroChange = ref(false)
+
+/** S4 Worker 客户端与进度（FE-15）：Worker 只计算不写库；取消/超时零改动 */
+const scheduleClient = new ScheduleWorkerClient()
+const progressPercent = ref(0)
+const progressMsg = ref('')
+function cancelGenerate() {
+  scheduleClient.cancel()
+}
 
 /** S3 手动调整（FE-08）：点击已写入网格的格子打开调整对话框 */
 const adjustVisible = ref(false)
@@ -280,7 +288,7 @@ async function onWeekChange() {
       beforeRowsMap.value.set(w, await dutyScheduleRepo.listByWeek(w))
     }
 
-    // ---- S4：全量 / 增量 两种重排模式（FE-13） ----
+    // ---- S4：全量 / 增量 两种重排模式（FE-13），全量经 Web Worker（FE-15） ----
     const pureRules = JSON.parse(JSON.stringify(rules.value))
     let rejectedAll: { weekNo?: number; dayOfWeek: number; slotKey: string; reason: string }[] = []
     if (rescheduleMode.value === 'incremental') {
@@ -321,7 +329,6 @@ async function onWeekChange() {
       incrementalDiff.value = []
       zeroChange.value = false
       // F08/S3：全量模式的保留项 = 锁定项（手动默认锁定；旧数据 manual 行回填为锁定）。
-      // P04 修复：收集整个周期并显式携带 weekNo；算法按周次过滤；无法保留项明细反馈。
       const keep = Array.from(beforeRowsMap.value.values())
         .flat()
         .filter(
@@ -335,22 +342,41 @@ async function onWeekChange() {
           slotKey: r.timeSlot,
           assistantId: r.assistantId,
         }))
-      previews.value = scheduleAll({ rules: pureRules, assistants, courses, keep })
-      rejectedAll = previews.value.flatMap((w) => w.rejectedKeeps)
-      // S4 有界局部改良（FE-14）：在合法基线上按预算爬山，永不劣于基线
-      const improveResults = previews.value.map((w) =>
-        improveWeek({ rules: pureRules, assistants, courses }, w),
-      )
-      previews.value = improveResults.map((r) => r.week)
-      const improvedCount = improveResults.filter((r) => r.improved).length
-      const totalApplied = improveResults.reduce((s, r) => s + r.applied, 0)
-      const budgetStopped = improveResults.filter((r) => r.stopReason !== 'converged').length
-      if (improvedCount > 0) {
-        ElMessage.success(
-          `局部改良：${improvedCount} 周共应用 ${totalApplied} 次优化` +
-            (budgetStopped > 0 ? `（${budgetStopped} 周触及预算上限，已保留当前最佳合法解）` : ''),
+      // S4（FE-15）：生成 + 局部改良 + 独立校验全部在 Web Worker 执行——
+      // 主线程只收进度与结果；取消/超时（默认 30s）终止计算，当前排班零改动。
+      progressPercent.value = 0
+      progressMsg.value = '正在启动计算…'
+      const job = await new Promise<ScheduleJobResult | null>((resolve) => {
+        scheduleClient.run(
+          { rules: pureRules, assistants, courses, keep },
+          {
+            onProgress: (p) => {
+              progressPercent.value = p.percent
+              progressMsg.value = p.message
+            },
+            onDone: (r) => resolve(r),
+            onCancelled: (reason) => {
+              ElMessage[reason === 'timeout' ? 'error' : 'info'](
+                reason === 'timeout' ? '计算超时已终止（当前排班未受影响），请缩小范围后重试' : '已取消计算（当前排班未受影响）',
+              )
+              resolve(null)
+            },
+            onError: (m) => {
+              ElMessage.error(m)
+              resolve(null)
+            },
+          },
         )
+      })
+      progressPercent.value = 0
+      progressMsg.value = ''
+      if (job === null) return // 已取消/超时/出错——不产生预览，数据零改动
+      if (!job.legal) {
+        ElMessage.error('生成的方案未通过独立终态校验（不应发生），已放弃本次结果——请反馈此问题')
+        return
       }
+      previews.value = job.weeks
+      rejectedAll = job.weeks.flatMap((w) => w.rejectedKeeps)
     }
     previewWeek.value = previews.value[0]?.weekNo
     // 记录预览所基于的业务版本：写入时若版本已前进（期间有导入/保存/手调）则拒绝
@@ -565,6 +591,13 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
       <el-button type="primary" :loading="generating" @click="generate">
         {{ previews.length ? '重新生成全部周方案' : `一次性生成第 ${rules.weekStart}~${rules.weekEnd} 周方案` }}
       </el-button>
+      <el-button v-if="generating && scheduleClient.isBusy" type="danger" plain @click="cancelGenerate">
+        取消计算
+      </el-button>
+      <div v-if="generating && progressMsg" class="progress-line">
+        <el-progress :percentage="progressPercent" :stroke-width="8" style="flex: 1; min-width: 220px" />
+        <span class="progress-text">{{ progressMsg }}</span>
+      </div>
       <el-radio-group v-model="rescheduleMode" size="small" style="margin-left: 8px">
         <el-radio-button value="full">全量重排</el-radio-button>
         <el-radio-button value="incremental">增量重排</el-radio-button>
@@ -921,6 +954,8 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
 <style scoped>
 .card { margin-bottom: 14px; }
 .incr-result { width: 100%; margin-top: 12px; }
+.progress-line { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; }
+.progress-text { font-size: 12px; color: var(--el-text-color-secondary); white-space: nowrap; }
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .block { margin-top: 12px; margin-bottom: 8px; }
 .preview-nav { display: flex; align-items: center; gap: 8px; }

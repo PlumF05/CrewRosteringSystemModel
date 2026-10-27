@@ -59,6 +59,16 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-019 S4 第三片：排班 Web Worker（2026-10-26，FE-15）
+
+- **计算内核**（新 `src/workers/scheduleJob.ts`，纯函数）：生成（scheduleAll）→ 逐周有界改良（improveWeek）→ 独立终态评价（evaluateAllWeeks）三阶段，带百分比进度回调；Worker 与主线程回退路径共用同一实现。
+- **Worker**（新 `src/workers/scheduleWorker.ts`）：消息协议 run/progress/result/error，均携带 jobId；**只计算不 import 任何 db 模块**（不写 IndexedDB 红线）。
+- **客户端**（新 `src/workers/scheduleClient.ts`）：jobId 单调递增；**旧 jobId 迟到消息丢弃 + 闭包级 done 标志**（终结后忽略一切消息，覆盖 terminate 竞态）；取消 = terminate（当前排班零改动）；超时（默认 30s）自动取消；Worker 不可用时回退主线程同一实现（协议不变）。
+- **UI**：全量生成改经 Worker——进度条 + 阶段文案 + 「取消计算」按钮；取消/超时明确提示"当前排班未受影响"；结果经独立校验不合法则放弃并报错（防御性，不应触发）。
+- **构建证据**：`npm run build` 产出独立 `scheduleWorker-*.js` chunk（dist/assets 实测存在）。
+- **测试**（scheduleClient.test.ts，6 例，假 Worker 注入）：内核进度单调+合法、正常流转回收、取消即终止且迟到结果丢弃、旧 jobId 丢弃、超时自动取消、回退路径结果一致。**278/278**（24 文件）；build 通过。
+- **边界**：浏览器/Node 层协议语义已测；**桌面生产包（Tauri WebView）内 Worker 实际运行**与断网取消实测归 FE-23/S7 安装验收。
+
 ## V-018 S4 第二片：有界局部改良（2026-10-26，F01/FE-14）
 
 - **纯域模块**（新 `src/algorithms/improve.ts`）`improveWeek(input, week, options)`：在**合法基线**上做带预算爬山——① 缺员/空白天补位（空白天优先）② 低于下限者补位 ③ 无空可补时从高负载者**让位搬移**。每个候选先经独立评价器复算，按质量优先级（空白天→覆盖缺口→个人不足→公平方差）**严格变优才应用**——结果永不劣于基线、保留最佳合法解；操作数（默认 200）与耗时（默认 1500ms）双预算，触发预算如实记录 attempts/applied/stopReason（converged/operation-budget/time-budget）；确定性（固定遍历序 + seed 扰动），同输入同 seed 同预算结果一致。基线非法时原样返回不改良。
