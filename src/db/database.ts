@@ -5,6 +5,7 @@ import type {
   Course,
   DutySchedule,
   OperationLog,
+  RecoveryBackup,
   ScheduleSnapshot,
 } from './schema'
 
@@ -27,6 +28,7 @@ export class CrsmDatabase extends Dexie {
   config!: Table<ConfigEntry, string>
   operation_log!: Table<OperationLog, number>
   schedule_snapshot!: Table<ScheduleSnapshot, number>
+  recovery_backup!: Table<RecoveryBackup, number>
 
   constructor() {
     super('crsm')
@@ -104,6 +106,18 @@ export class CrsmDatabase extends Dexie {
         })
         await table.clear()
       })
+    // v4（2026-10-26，S5/FE-20）：新增 recovery_backup 表（恢复前副本，与主数据隔离）。
+    // 仅加表不动存量数据——升级无损；表内容为运行时生成，无需迁移。
+    this.version(4).stores({
+      assistant: '++id, &studentNo, name, identity, className',
+      course: '++id, assistantId, courseNo, courseName',
+      duty_schedule:
+        '++id, &[weekNo+dayOfWeek+timeSlot+assistantId], weekNo, dayOfWeek, timeSlot, assistantId, source',
+      config: '&key',
+      operation_log: '++id, operatedAt, action',
+      schedule_snapshot: '++id, createdAt, label',
+      recovery_backup: '++id, createdAt',
+    })
   }
 }
 

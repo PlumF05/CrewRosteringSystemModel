@@ -98,6 +98,15 @@ export interface DutySchedule {
   updatedAt: string
 }
 
+/** 恢复前副本（S5 / FE-20）：恢复备份前把当前数据整体存档到独立表，与主数据隔离 */
+export interface RecoveryBackup {
+  id?: number
+  createdAt: string
+  reason: string
+  /** 恢复前的完整业务数据（与备份文件同构） */
+  payload: unknown
+}
+
 /** 系统配置（键值对）。value 走 JSON 结构化存储，schema 由使用方约定 */
 export interface ConfigEntry {
   key: string

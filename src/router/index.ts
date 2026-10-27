@@ -21,6 +21,7 @@ const router = createRouter({
         { path: 'config', name: 'config', component: () => import('../views/ScheduleConfigView.vue'), meta: { title: '排班配置' } },
         { path: 'schedule', name: 'schedule', component: () => import('../views/ScheduleView.vue'), meta: { title: '排班表' } },
         { path: 'templates', name: 'templates', component: () => import('../views/TemplatesView.vue'), meta: { title: '模板管理' } },
+        { path: 'data', name: 'data', component: () => import('../views/DataManagementView.vue'), meta: { title: '数据管理' } },
       ],
     },
   ],
