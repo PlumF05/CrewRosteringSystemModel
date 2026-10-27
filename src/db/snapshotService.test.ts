@@ -8,7 +8,7 @@ import 'fake-indexeddb/auto'
 import { db } from './database'
 import { assistantRepo, configRepo, courseRepo, dutyScheduleRepo } from './repositories'
 import { addManualAssignment } from './manualAdjustService'
-import { createNamedSnapshot, deleteSnapshot, listSnapshots, restoreSnapshot, snapshotDiff } from './snapshotService'
+import { buildSnapshotExportBuffer, createNamedSnapshot, deleteSnapshot, listSnapshots, restoreSnapshot, snapshotDiff } from './snapshotService'
 import { getDataRevision } from './dataRevision'
 import { DEFAULT_RULES, type SchedulingRules } from '../algorithms/types'
 
@@ -114,5 +114,34 @@ describe('命名快照（FE-16）', () => {
     await deleteSnapshot(id)
     expect(await listSnapshots()).toHaveLength(0)
     expect(await dutyScheduleRepo.listByWeek(1)).toHaveLength(1)
+  })
+})
+
+describe('快照导出（FE-18：固定信息）', () => {
+  it('使用快照固定姓名（人员已删除仍显示原名）且不含电话；周 sheet 正确', async () => {
+    const a1 = await assistantRepo.add({ name: '示例学生A', studentNo: '1', identity: 'undergrad' })
+    const a2 = await assistantRepo.add({ name: '示例学生B', studentNo: '2', identity: 'undergrad' })
+    await dutyScheduleRepo.add({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 })
+    await dutyScheduleRepo.add({ weekNo: 2, dayOfWeek: 2, timeSlot: 'c2', assistantId: a2 })
+    const id = await createNamedSnapshot('留档')
+    await assistantRepo.remove(a2) // 当前已删除
+
+    const snap = (await listSnapshots()).find((s) => s.id === id)!
+    const buf = buildSnapshotExportBuffer(snap)
+    const XLSX = (await import('xlsx-js-style')).default
+    const wb = XLSX.read(buf, { type: 'array' })
+    expect(wb.SheetNames).toEqual(['第1周', '第2周'])
+    const texts: string[] = []
+    for (const name of wb.SheetNames) {
+      const ws = wb.Sheets[name]
+      for (const addr of Object.keys(ws)) {
+        if (addr.startsWith('!')) continue
+        const v = (ws[addr] as { v?: unknown }).v
+        if (v !== undefined && v !== null) texts.push(String(v))
+      }
+    }
+    expect(texts.some((t) => t.includes('示例学生B'))).toBe(true) // 固定姓名未被当前删除影响
+    expect(texts.some((t) => /1[3-9]\d{9}/.test(t))).toBe(false) // 快照导出永不含电话
+    expect(texts.some((t) => /20\d{8}/.test(t))).toBe(false) // 无学号
   })
 })

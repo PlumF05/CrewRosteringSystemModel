@@ -15,6 +15,8 @@ import { withDataRevision } from './dataRevision'
 import { evaluateSchedule } from '../algorithms/evaluate'
 import { normalizeRules, type Assignment, type CourseInput, type SchedulingRules } from '../algorithms/types'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
+import { buildMultiWeekFileBuffer } from '../utils/scheduleExport'
+import type { ExportTemplateStyle } from '../templates/types'
 import type { ScheduleSnapshot } from './schema'
 
 const ADJUST_JOURNAL_KEY = 'adjustJournal'
@@ -47,6 +49,36 @@ export async function listSnapshots(): Promise<ScheduleSnapshot[]> {
 export async function deleteSnapshot(id: number): Promise<void> {
   await db.schedule_snapshot.delete(id)
   await operationLogRepo.add('snapshot.delete', { id })
+}
+
+/**
+ * 历史快照导出（S5 / FE-18）：**固定信息**——排班行、当时规则、当时人员姓名
+ * 全部取自快照 meta，不被当前规则/名单/数据变化重新解释；生成时间为快照创建时间。
+ * 快照不保存联系方式 → 导出**永不**含电话（更不含学号/QQ）。
+ * 旧格式快照（无 meta）按当前默认规则渲染并显示 #id 姓名。
+ */
+export function buildSnapshotExportBuffer(snapshot: ScheduleSnapshot, tpl?: ExportTemplateStyle): Uint8Array {
+  const rules = normalizeRules((snapshot.meta?.rules as Partial<SchedulingRules> | undefined) ?? null)
+  const nameById = new Map((snapshot.meta?.assistants ?? []).map((a) => [a.id, a.name]))
+  const weeks = [...new Set(snapshot.data.map((r) => r.weekNo))]
+    .sort((a, b) => a - b)
+    .map((weekNo) => ({
+      weekNo,
+      rows: snapshot.data
+        .filter((r) => r.weekNo === weekNo)
+        .map((r) => ({ dayOfWeek: r.dayOfWeek, timeSlot: r.timeSlot, assistantId: r.assistantId })),
+    }))
+  return buildMultiWeekFileBuffer(
+    {
+      rules,
+      nameById,
+      phoneById: new Map<number, string>(),
+      includePhone: false,
+      generatedAt: new Date(snapshot.createdAt).toLocaleString('zh-CN'),
+    },
+    weeks,
+    tpl,
+  )
 }
 
 export interface SnapshotWeekDiff {

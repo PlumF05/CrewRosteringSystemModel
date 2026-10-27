@@ -3,6 +3,8 @@ import { inflateRawSync } from 'node:zlib'
 import * as XLSX from 'xlsx-js-style'
 import {
   buildScheduleWorkbook,
+  buildScheduleFileBuffer,
+  buildMultiWeekFileBuffer,
   exportScheduleFile,
   isAssistantFree,
   scheduleFileName,
@@ -312,5 +314,79 @@ describe('导出模板样式（S5/FE-17）', () => {
     const defaultWb = buildScheduleWorkbook({ ...input })
     const defaultTitle = defaultWb.Sheets[defaultWb.SheetNames[0]][XLSX.utils.encode_cell({ r: 0, c: 0 })].v as string
     expect(defaultTitle).toContain('行政办助理排班表')
+  })
+})
+
+describe('多周工作簿与隐私断言（S5/FE-18）', () => {
+  const readWb = (buf: Uint8Array) => XLSX.read(buf, { type: 'array' })
+  /** 遍历全部 sheet 全部单元格的字符串值（隐私断言的扫描面） */
+  const allCellTexts = (wb: XLSX.WorkBook): Array<{ sheet: string; text: string; type: string }> => {
+    const out: Array<{ sheet: string; text: string; type: string }> = []
+    for (const name of wb.SheetNames) {
+      const ws = wb.Sheets[name]
+      for (const addr of Object.keys(ws)) {
+        if (addr.startsWith('!')) continue
+        const cell = ws[addr] as XLSX.CellObject
+        if (cell.v !== undefined && cell.v !== null) {
+          out.push({ sheet: name, text: String(cell.v), type: String(cell.t) })
+        }
+      }
+    }
+    return out
+  }
+
+  it('多周：每周一个 sheet（第N周/第N周明细），内容按周正确', () => {
+    const weeks = [
+      { weekNo: 1, rows: input.rows },
+      { weekNo: 2, rows: [{ dayOfWeek: 2, timeSlot: 'c1', assistantId: 2 }] },
+    ]
+    const buf = buildMultiWeekFileBuffer(
+      { rules: input.rules, nameById: input.nameById, phoneById: input.phoneById, includePhone: true },
+      weeks,
+    )
+    const wb = readWb(buf)
+    expect(wb.SheetNames).toEqual(['第1周', '第1周值班明细', '第2周', '第2周值班明细'])
+    const w1 = wb.Sheets['第1周']
+    const w1Title = w1[XLSX.utils.encode_cell({ r: 0, c: 0 })].v as string
+    expect(w1Title).toContain('第 1 周')
+    const w2 = wb.Sheets['第2周']
+    const w2Title = w2[XLSX.utils.encode_cell({ r: 0, c: 0 })].v as string
+    expect(w2Title).toContain('第 2 周')
+    // 第 2 周只有一条安排
+    const w2Texts = allCellTexts(wb).filter((c) => c.sheet === '第2周' && c.text.includes('示例学生A'))
+    expect(w2Texts.length).toBeGreaterThan(0)
+  })
+
+  it('隐私断言（关电话）：全部 sheet 均无电话；无学号样式数字；无公式单元格', () => {
+    const buf = buildScheduleFileBuffer({ ...input, includePhone: false })
+    const cells = allCellTexts(readWb(buf))
+    expect(cells.some((c) => c.text.includes('1380000'))).toBe(false) // 电话零出现
+    expect(cells.some((c) => /20\d{8}/.test(c.text))).toBe(false) // 学号样式零出现
+    expect(cells.every((c) => c.type !== 'f')).toBe(true) // 文本单元格，不执行公式
+    expect(cells.some((c) => c.text.includes('值班明细'))).toBe(false) // 明细 sheet 不生成
+  })
+
+  it('隐私断言（开电话）：电话仅出现在姓名格与明细表；仍无学号样式数字', () => {
+    const buf = buildScheduleFileBuffer({ ...input, includePhone: true })
+    const wb = readWb(buf)
+    const cells = allCellTexts(wb)
+    const phoneCells = cells.filter((c) => /1[3-9]\d{9}/.test(c.text))
+    expect(phoneCells.length).toBeGreaterThan(0)
+    // 含电话的 sheet 只有排班表（姓名格换行含电话）与值班明细
+    expect(new Set(phoneCells.map((c) => c.sheet))).toEqual(new Set([wb.SheetNames[0], '值班明细']))
+    expect(cells.some((c) => /20\d{8}/.test(c.text))).toBe(false)
+  })
+
+  it('文本边界：以 = 开头的姓名按文本写出，不成为公式', () => {
+    const evil = new Map([[1, '=SUM(A1:A9)']])
+    const buf = buildScheduleFileBuffer({
+      ...input,
+      includePhone: false,
+      nameById: evil,
+      rows: [{ dayOfWeek: 1, timeSlot: 'c1', assistantId: 1 }],
+    })
+    const cells = allCellTexts(readWb(buf))
+    expect(cells.some((c) => c.text === '=SUM(A1:A9)')).toBe(true) // 原样保留
+    expect(cells.every((c) => c.type !== 'f')).toBe(true) // 且不是公式单元格
   })
 })

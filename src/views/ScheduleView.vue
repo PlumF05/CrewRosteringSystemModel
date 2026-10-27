@@ -35,7 +35,8 @@ import {
   type SnapshotWeekDiff,
 } from '../db/snapshotService'
 import type { ScheduleSnapshot } from '../db/schema'
-import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
+import { buildScheduleFileBuffer, buildMultiWeekFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
+import { buildSnapshotExportBuffer } from '../db/snapshotService'
 import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
 import {
@@ -68,6 +69,85 @@ const progressPercent = ref(0)
 const progressMsg = ref('')
 function cancelGenerate() {
   scheduleClient.cancel()
+}
+
+/** S5 多周导出（FE-18）：把已写入的全部周合成一个工作簿（每周一个 sheet） */
+const exportingMulti = ref(false)
+async function doExportMultiWeek() {
+  exportingMulti.value = true
+  try {
+    const activeExport = await getActiveExportTemplate()
+    const weeks: Array<{ weekNo: number; rows: Array<{ dayOfWeek: number; timeSlot: string; assistantId: number }> }> = []
+    for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
+      const rows = (await dutyScheduleRepo.listByWeek(w)).map((r) => ({
+        dayOfWeek: r.dayOfWeek,
+        timeSlot: r.timeSlot,
+        assistantId: r.assistantId,
+      }))
+      if (rows.length > 0) weeks.push({ weekNo: w, rows })
+    }
+    if (weeks.length === 0) {
+      ElMessage.error('当前周期内没有已写入的排班，无法导出')
+      return
+    }
+    const y = new Date()
+    const stamp = `${y.getFullYear()}${String(y.getMonth() + 1).padStart(2, '0')}${String(y.getDate()).padStart(2, '0')}`
+    const fileName = `排班表-第${weeks[0].weekNo}-${weeks[weeks.length - 1].weekNo}周-${stamp}.xlsx`
+    const buffer = buildMultiWeekFileBuffer(
+      {
+        rules: JSON.parse(JSON.stringify(rules.value)),
+        nameById: nameById.value,
+        phoneById: phoneById.value,
+        includePhone: exportIncludePhone.value,
+      },
+      weeks,
+      activeExport.style,
+    )
+    const saved = await saveXlsx(fileName, buffer)
+    if (saved) {
+      ElMessage.success(`已保存 ${fileName}（${weeks.length} 个周 sheet）`)
+      return
+    }
+    if (isTauri) return
+    // 浏览器回退
+    const blob = new Blob([buffer.buffer as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(`已生成 ${fileName}`)
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '导出失败')
+  } finally {
+    exportingMulti.value = false
+  }
+}
+
+/** S5 快照导出（FE-18）：使用快照固定信息渲染 */
+async function doSnapExport(row: ScheduleSnapshot) {
+  try {
+    const activeExport = await getActiveExportTemplate()
+    const safe = row.label.replace(/[\\/:*?"<>|]/g, '_').slice(0, 30)
+    const fileName = `快照-${safe}.xlsx`
+    const buffer = buildSnapshotExportBuffer(row, activeExport.style)
+    const saved = await saveXlsx(fileName, buffer)
+    if (saved) {
+      ElMessage.success(`已保存 ${fileName}（使用快照固定信息，不含联系方式）`)
+      return
+    }
+    if (isTauri) return
+    const blob = new Blob([buffer.buffer as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '导出失败')
+  }
 }
 
 /** S3 手动调整（FE-08）：点击已写入网格的格子打开调整对话框 */
@@ -683,6 +763,7 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
         <el-switch v-model="exportIncludePhone" active-text="含电话" />
       </el-tooltip>
       <el-button :loading="exporting" @click="doExport">导出第 {{ weekNo }} 周排班</el-button>
+      <el-button :loading="exportingMulti" @click="doExportMultiWeek">导出多周工作簿</el-button>
     </div>
   </el-card>
 
@@ -878,9 +959,10 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="170" fixed="right">
+      <el-table-column label="操作" width="210" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="doSnapCompare(row)">对比</el-button>
+          <el-button link size="small" @click="doSnapExport(row)">导出</el-button>
           <el-button link type="warning" size="small" @click="askSnapRestore(row)">恢复</el-button>
           <el-button link type="danger" size="small" @click="doSnapDelete(row)">删除</el-button>
         </template>

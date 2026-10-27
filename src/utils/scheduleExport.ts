@@ -219,6 +219,35 @@ export function buildScheduleFileBuffer(input: ExportInput, tpl?: ExportTemplate
   return new Uint8Array(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer)
 }
 
+/**
+ * 多周工作簿（S5 / FE-18）：每周一个 sheet（网格 + 电话明细同单周口径），
+ * sheet 名「第N周」/「第N周明细」。数据由调用方传入（已写入数据或快照固定信息）。
+ */
+export function buildMultiWeekWorkbook(
+  base: Omit<ExportInput, 'weekNo' | 'rows'>,
+  weeks: Array<{ weekNo: number; rows: ExportInput['rows'] }>,
+  tpl: ExportTemplateStyle = DEFAULT_EXPORT_STYLE,
+): XLSX.WorkBook {
+  const out = XLSX.utils.book_new()
+  for (const w of weeks) {
+    const single = buildScheduleWorkbook({ ...base, weekNo: w.weekNo, rows: w.rows }, tpl)
+    for (const name of single.SheetNames) {
+      const sheetName = name === '排班表' ? `第${w.weekNo}周` : `第${w.weekNo}周${name}`
+      XLSX.utils.book_append_sheet(out, single.Sheets[name], sheetName)
+    }
+  }
+  return out
+}
+
+export function buildMultiWeekFileBuffer(
+  base: Omit<ExportInput, 'weekNo' | 'rows'>,
+  weeks: Array<{ weekNo: number; rows: ExportInput['rows'] }>,
+  tpl?: ExportTemplateStyle,
+): Uint8Array {
+  const wb = buildMultiWeekWorkbook(base, weeks, tpl)
+  return new Uint8Array(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer)
+}
+
 /** 生成并触发浏览器下载（浏览器环境回退；Tauri 环境请改走 fileAccess.saveXlsx） */
 export function exportScheduleFile(input: ExportInput, fileName: string, tpl?: ExportTemplateStyle): void {
   const wb = buildScheduleWorkbook(input, tpl)
