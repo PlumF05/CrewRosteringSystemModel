@@ -23,6 +23,7 @@ import { StaleDataError, getDataRevision } from '../db/dataRevision'
 import { incrementalSchedule, type DiffEntry } from '../algorithms/incremental'
 import { ScheduleWorkerClient } from '../workers/scheduleClient'
 import type { ScheduleJobResult } from '../workers/scheduleJob'
+import { getActiveExportTemplate } from '../templates/templateService'
 import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
 import { getAdjustHistory, undoRedoAdjust, type AdjustHistory } from '../db/manualAdjustService'
 import {
@@ -439,6 +440,8 @@ async function doExport() {
   exporting.value = true
   try {
     const fileName = scheduleFileName(weekNo.value)
+    // S5/FE-17：版式来自启用中的导出模板（学院默认版 / 简洁打印版 / 自定义）
+    const activeExport = await getActiveExportTemplate()
     const input: ExportInput = {
       weekNo: weekNo.value,
       rules: JSON.parse(JSON.stringify(rules.value)),
@@ -452,7 +455,7 @@ async function doExport() {
       includePhone: exportIncludePhone.value,
     }
     // Tauri：系统"另存为"对话框；用户取消（false）时静默结束
-    const saved = await saveXlsx(fileName, buildScheduleFileBuffer(input))
+    const saved = await saveXlsx(fileName, buildScheduleFileBuffer(input, activeExport.style))
     if (saved) {
       ElMessage.success(
         exportIncludePhone.value
@@ -463,7 +466,7 @@ async function doExport() {
     }
     if (isTauri) return
     // 浏览器回退：直接触发下载
-    exportScheduleFile(input, fileName)
+    exportScheduleFile(input, fileName, activeExport.style)
     ElMessage.success(
       exportIncludePhone.value
         ? `已生成 ${fileName}（排班表已填入值班人联系电话，不含学号/QQ）`

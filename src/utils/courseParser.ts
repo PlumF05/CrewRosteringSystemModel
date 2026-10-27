@@ -57,6 +57,16 @@ export interface TimetableParseResult {
 
 export class TimetableParseError extends Error {}
 
+/** 模板正则的安全编译（S5/FE-17）：非法或缺失时回退默认，不让配置错误炸掉导入 */
+function safeRegExp(pattern: string | undefined, fallback: string): RegExp {
+  const p = pattern?.trim() || fallback
+  try {
+    return new RegExp(p)
+  } catch {
+    return new RegExp(fallback)
+  }
+}
+
 /**
  * "第三节-中课2" → { sectionStart: 3, sectionEnd: null }；"中课1-中课2" → 两侧均 null
  * 节号换算统一走 utils/sectionOrder（与排班算法的"节次序号轴"同一来源），
@@ -156,7 +166,10 @@ function parseCellText(text: string, cell: string, problems: ParseProblem[]): Pa
   return courses
 }
 
-export function parseTimetableWorkbook(data: Uint8Array | ArrayBuffer): TimetableParseResult {
+export function parseTimetableWorkbook(
+  data: Uint8Array | ArrayBuffer,
+  mapping?: { headerAnchor?: string; studentPattern?: string; semesterPattern?: string },
+): TimetableParseResult {
   const wb = XLSX.read(data, { type: 'array' })
   const ws = wb.Sheets[wb.SheetNames[0]]
   if (!ws) throw new TimetableParseError('工作簿中没有工作表')
@@ -185,12 +198,19 @@ export function parseTimetableWorkbook(data: Uint8Array | ArrayBuffer): Timetabl
 
   const problems: ParseProblem[] = []
 
-  // 1. 定位表头行：包含 "节次/星期"
+  // 0. 导入模板的可配置锚点（S5/FE-17）：缺省与内置学院格式一致；非法正则回退默认
+  const anchors = {
+    headerAnchor: mapping?.headerAnchor?.trim() || '节次/星期',
+    studentRe: safeRegExp(mapping?.studentPattern, '学生\\s*[：:]\\s*(.+?)[（(](\\d+)[）)]'),
+    semesterRe: safeRegExp(mapping?.semesterPattern, '(\\d{4}-\\d{4}-\\d)'),
+  }
+
+  // 1. 定位表头行：包含表头锚点（默认 "节次/星期"）
   let headerRow = -1
   const dims = XLSX.utils.decode_range(range)
   for (let r = dims.s.r; r <= Math.min(dims.e.r, 30); r++) {
     for (let c = dims.s.c; c <= dims.e.c; c++) {
-      if (expanded(r, c)?.includes('节次/星期')) { headerRow = r; break }
+      if (expanded(r, c)?.includes(anchors.headerAnchor)) { headerRow = r; break }
     }
     if (headerRow >= 0) break
   }
@@ -214,9 +234,9 @@ export function parseTimetableWorkbook(data: Uint8Array | ArrayBuffer): Timetabl
     for (let c = dims.s.c; c <= dims.e.c; c++) {
       const v = expanded(r, c)
       if (!v) continue
-      const sm = v.match(/学生\s*[：:]\s*(.+?)[（(](\d+)[）)]/)
+      const sm = v.match(anchors.studentRe)
       if (sm) { studentName = sm[1].trim(); studentNo = sm[2] }
-      const sem = v.match(/(\d{4}-\d{4}-\d)/)
+      const sem = v.match(anchors.semesterRe)
       if (sem && !semester) semester = sem[1]
     }
   }

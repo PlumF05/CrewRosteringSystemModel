@@ -285,3 +285,32 @@ describe('isAssistantFree（导出/校验共用的占用判定）', () => {
     expect(isAssistantFree(courses, 1, 1, 3, 3, true, true)).toBe(true)
   })
 })
+
+describe('导出模板样式（S5/FE-17）', () => {
+  it('自定义模板：标题/表头首列/列宽生效；简洁版式无底色填充', () => {
+    const tpl = {
+      titleTemplate: '值班安排（第 {week} 周）',
+      headerFirst: '节次',
+      firstColumnWidth: 30,
+      dayColumnWidth: 14,
+      compact: false,
+    }
+    const wb = buildScheduleWorkbook({ ...input, weekNo: 1 }, tpl)
+    const sheet = wb.Sheets[wb.SheetNames[0]]
+    const title = sheet[XLSX.utils.encode_cell({ r: 0, c: 0 })].v as string
+    expect(title).toBe('值班安排（第 1 周）')
+    const headerFirst = sheet[XLSX.utils.encode_cell({ r: 2, c: 0 })].v as string
+    expect(headerFirst).toBe('节次')
+    expect(sheet['!cols']![0]).toEqual({ wch: 30 })
+    expect(sheet['!cols']![1]).toEqual({ wch: 14 })
+    // 简洁版式：表头单元格无 fill（黑白打印）
+    const compactWb = buildScheduleWorkbook({ ...input }, { ...tpl, compact: true })
+    const compactSheet = compactWb.Sheets[compactWb.SheetNames[0]]
+    const headerCell = compactSheet[XLSX.utils.encode_cell({ r: 2, c: 0 })]
+    expect(headerCell.s?.fill).toBeUndefined()
+    // 默认版式（无模板）行为不变：标题含"行政办"
+    const defaultWb = buildScheduleWorkbook({ ...input })
+    const defaultTitle = defaultWb.Sheets[defaultWb.SheetNames[0]][XLSX.utils.encode_cell({ r: 0, c: 0 })].v as string
+    expect(defaultTitle).toContain('行政办助理排班表')
+  })
+})

@@ -15,6 +15,7 @@
 import { importTimetableForStudent } from './importService'
 import { parseTimetableWorkbook } from '../utils/courseParser'
 import { deriveImportStatus } from '../algorithms/timetableStatus'
+import { getActiveImportTemplate } from '../templates/templateService'
 
 export interface BatchFileInput {
   fileName: string
@@ -66,6 +67,8 @@ export async function importTimetableBatch(
   const seenHash = new Map<string, string>() // 摘要 → 首次出现的文件名
   const ownerByStudentNo = new Map<string, string>() // 学号 → 首次成功导入的文件名
   const results: BatchItemResult[] = []
+  // S5/FE-17：解析锚点来自启用中的导入模板（与单文件导入同源）
+  const activeMapping = (await getActiveImportTemplate()).mapping
 
   for (const f of files) {
     if (f.data.byteLength > BATCH_LIMITS.maxFileBytes) {
@@ -92,7 +95,7 @@ export async function importTimetableBatch(
     // 解析：损坏/非课程表文件只影响自己
     let parsed: ReturnType<typeof parseTimetableWorkbook>
     try {
-      parsed = parseTimetableWorkbook(f.data)
+      parsed = parseTimetableWorkbook(f.data, activeMapping)
     } catch (e) {
       results.push({
         fileName: f.fileName,

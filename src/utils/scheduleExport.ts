@@ -41,6 +41,10 @@ export interface ExportInput {
   includePhone: boolean
 }
 
+// S5/FE-17：导出模板样式（受控字段）——默认值保证无模板调用行为不变
+import type { ExportTemplateStyle } from '../templates/types'
+import { DEFAULT_EXPORT_STYLE } from '../templates/types'
+
 /** 统一细边框，让打印出来的表格有网格感 */
 const BORDER: XLSX.CellStyle['border'] = {
   top: { style: 'thin', color: { rgb: 'BFBFBF' } },
@@ -86,7 +90,18 @@ const STYLE = {
   } as XLSX.CellStyle,
 }
 
-export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
+/** 简洁打印版式（S5/FE-17 导出模板 compact）：无底色、无占位灰字——黑白打印友好 */
+const COMPACT_STYLE: typeof STYLE = {
+  ...STYLE,
+  header: { ...STYLE.header, fill: undefined },
+  slot: { ...STYLE.slot, fill: undefined },
+  empty: { ...STYLE.empty, font: undefined },
+}
+
+export function buildScheduleWorkbook(
+  input: ExportInput,
+  tpl: ExportTemplateStyle = DEFAULT_EXPORT_STYLE,
+): XLSX.WorkBook {
   const { weekNo, rules, rows, nameById, phoneById, includePhone } = input
   const generatedAt = input.generatedAt ?? new Date().toLocaleString('zh-CN')
 
@@ -114,13 +129,14 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
     cellMap.set(key, list)
   }
 
-  // ----- Sheet1：排班表网格 -----
-  const header = ['时段（节次）', ...workdays.map((d) => DAY_LABELS[d])]
+  // ----- Sheet1：排班表网格（标题/表头/列宽/版式受导出模板控制，S5/FE-17） -----
+  const styleSet = tpl.compact ? COMPACT_STYLE : STYLE
+  const header = [tpl.headerFirst, ...workdays.map((d) => DAY_LABELS[d])]
   const gridAoa: (string | number)[][] = []
   const titleRow = 0
   const metaRow = 1
   const totalCols = header.length
-  gridAoa.push([`行政办助理排班表（第 ${weekNo} 周）`])
+  gridAoa.push([tpl.titleTemplate.replace('{week}', String(weekNo))])
   gridAoa.push([`生成时间：${generatedAt}　｜　排班周期：第 ${rules.weekStart}~${rules.weekEnd} 周`])
   gridAoa.push(header)
   for (const g of gridKeys) {
@@ -140,11 +156,11 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
     for (let c = 0; c < gridAoa[r].length; c++) {
       const cell = ws1[XLSX.utils.encode_cell({ r, c })]
       if (!cell) continue
-      if (r === titleRow) cell.s = STYLE.title
-      else if (r === metaRow) cell.s = STYLE.meta
-      else if (r === 2) cell.s = STYLE.header
-      else if (c === 0) cell.s = STYLE.slot
-      else cell.s = cell.v === '—' ? STYLE.empty : STYLE.cell
+      if (r === titleRow) cell.s = styleSet.title
+      else if (r === metaRow) cell.s = styleSet.meta
+      else if (r === 2) cell.s = styleSet.header
+      else if (c === 0) cell.s = styleSet.slot
+      else cell.s = cell.v === '—' ? styleSet.empty : styleSet.cell
     }
   }
 
@@ -152,8 +168,8 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
     { s: { r: titleRow, c: 0 }, e: { r: titleRow, c: totalCols - 1 } },
     { s: { r: metaRow, c: 0 }, e: { r: metaRow, c: totalCols - 1 } },
   ]
-  // 列宽：首列要容纳「上午 第1节 8:00~8:45」；含电话时日期列需容纳 11 位号码
-  ws1['!cols'] = [{ wch: 24 }, ...workdays.map(() => ({ wch: includePhone ? 18 : 12 }))]
+  // 列宽：模板受控字段（首列/日期列）
+  ws1['!cols'] = [{ wch: tpl.firstColumnWidth }, ...workdays.map(() => ({ wch: tpl.dayColumnWidth }))]
   // 仅固定标题两行的高度；数据行留空高度，交由 Excel 按换行内容自动撑开
   ws1['!rows'] = [{ hpt: 26 }, { hpt: 18 }]
 
@@ -198,14 +214,14 @@ export function buildScheduleWorkbook(input: ExportInput): XLSX.WorkBook {
 }
 
 /** 生成 xlsx 二进制（Tauri 桌面端：配合 saveXlsx 写入用户选择的路径；浏览器端请用 exportScheduleFile） */
-export function buildScheduleFileBuffer(input: ExportInput): Uint8Array {
-  const wb = buildScheduleWorkbook(input)
+export function buildScheduleFileBuffer(input: ExportInput, tpl?: ExportTemplateStyle): Uint8Array {
+  const wb = buildScheduleWorkbook(input, tpl)
   return new Uint8Array(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer)
 }
 
 /** 生成并触发浏览器下载（浏览器环境回退；Tauri 环境请改走 fileAccess.saveXlsx） */
-export function exportScheduleFile(input: ExportInput, fileName: string): void {
-  const wb = buildScheduleWorkbook(input)
+export function exportScheduleFile(input: ExportInput, fileName: string, tpl?: ExportTemplateStyle): void {
+  const wb = buildScheduleWorkbook(input, tpl)
   XLSX.writeFile(wb, fileName)
 }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { InfoFilled, Odometer, User, Reading, Setting, Calendar, QuestionFilled } from '@element-plus/icons-vue'
+import { InfoFilled, Odometer, User, Reading, Setting, Calendar, Files, QuestionFilled } from '@element-plus/icons-vue'
 import HelpDrawer from '../components/HelpDrawer.vue'
 import { APP_META } from '../meta'
 
@@ -24,6 +24,7 @@ const aboutVisible = ref(false)
         <el-menu-item index="/courses"><el-icon><Reading /></el-icon><span>课程表管理</span></el-menu-item>
         <el-menu-item index="/config"><el-icon><Setting /></el-icon><span>排班配置</span></el-menu-item>
         <el-menu-item index="/schedule"><el-icon><Calendar /></el-icon><span>排班表</span></el-menu-item>
+        <el-menu-item index="/templates"><el-icon><Files /></el-icon><span>模板管理</span></el-menu-item>
       </el-menu>
       <div class="aside-footer">
         <el-button link size="small" @click="aboutVisible = true">

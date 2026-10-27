@@ -20,6 +20,7 @@ const router = createRouter({
         { path: 'courses', name: 'courses', component: () => import('../views/CoursesView.vue'), meta: { title: '课程表管理' } },
         { path: 'config', name: 'config', component: () => import('../views/ScheduleConfigView.vue'), meta: { title: '排班配置' } },
         { path: 'schedule', name: 'schedule', component: () => import('../views/ScheduleView.vue'), meta: { title: '排班表' } },
+        { path: 'templates', name: 'templates', component: () => import('../views/TemplatesView.vue'), meta: { title: '模板管理' } },
       ],
     },
   ],

@@ -27,6 +27,7 @@ import {
 } from "../db/repositories";
 import { importTimetableForStudent } from "../db/importService";
 import { importTimetableBatch, type BatchItemResult } from "../db/batchImportService";
+import { getActiveImportTemplate } from "../templates/templateService";
 import {
   addCourse,
   updateCourse,
@@ -325,7 +326,9 @@ async function handleBuffer(buf: ArrayBuffer) {
   conflicts.value = [];
   needsReview.value = [];
   try {
-    const result = parseTimetableWorkbook(new Uint8Array(buf));
+    // S5/FE-17：解析锚点来自启用中的导入模板（受控字段，可在模板管理调整+试解析）
+    const activeImport = await getActiveImportTemplate();
+    const result = parseTimetableWorkbook(new Uint8Array(buf), activeImport.mapping);
 
     if (result.courses.length === 0) {
       ElMessage.error("未解析出任何课程，请确认文件是学院标准课程表");
