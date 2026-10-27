@@ -76,11 +76,24 @@ export interface DutySchedule {
   id?: number
   weekNo: number
   dayOfWeek: number
-  /** 时段标识，如 "1-2"（第一~二节）。具体时段定义存 config 表 */
+  /** 时段标识（单节化后为 c{节号}，如 c3）。具体时段定义存 config 表 */
   timeSlot: string
   assistantId: number
   status: DutyStatus
   source: DutySource
+  /**
+   * 锁定（S3，2026-10-26，FE-08/09）：要求重排时保持此安排不变。
+   * **与 source 分离**（GLOSSARY）：手动来源 ≠ 锁定——新手调默认锁定，
+   * 可显式解锁；auto 项也可锁定。重排时锁定项带 weekNo 进入 keep。
+   * 非索引字段，无需数据库版本升级。
+   */
+  locked?: boolean
+  /**
+   * 连续短段例外原因（S3）：手动短于 minConsecutiveSections 的段，
+   * 老师显式登记原因后仅豁免连续性（不豁免课程/人数/个人上限）。
+   * 非索引字段。
+   */
+  continuityExceptionReason?: string
   createdAt: string
   updatedAt: string
 }

@@ -23,6 +23,9 @@ export interface SaveWeekInput {
     assistantId: number
     status?: DutyStatus
     source?: DutySource
+    /** 锁定与短段例外（S3）：由调用方从重排前的行携带过来，写入不丢失 */
+    locked?: boolean
+    continuityExceptionReason?: string
   }>
 }
 
@@ -52,6 +55,8 @@ export async function saveFullCycle(
             assistantId: r.assistantId,
             status: r.status ?? ('normal' as const),
             source: r.source ?? ('auto' as const),
+            ...(r.locked !== undefined ? { locked: r.locked } : {}),
+            ...(r.continuityExceptionReason ? { continuityExceptionReason: r.continuityExceptionReason } : {}),
             createdAt: ts,
             updatedAt: ts,
           })),

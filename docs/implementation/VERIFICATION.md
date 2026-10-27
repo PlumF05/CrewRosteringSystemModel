@@ -59,6 +59,20 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-014 S3 第一片：手动调整基础（2026-10-26，F04/FE-08 核心 + FE-09 算法面）
+
+- **schema**：DutySchedule 增非索引字段 `locked?`（锁定与来源分离；旧 manual 行按锁定回填）与 `continuityExceptionReason?`（短段例外原因，只豁免连续性）。
+- **服务**（新 `src/db/manualAdjustService.ts`）：
+  - `getSlotCandidates`——逐人候选与**不可排原因**（已在时段/未导课表/待核对/有课含课程名/未知节次保守阻断/时段已满/个人周上限），界面直接展示；
+  - 五个原子操作（addManual 默认锁定 / remove / move / setLocked / setContinuityException），每个都是 CAS 写事务；
+  - **终态校验复用独立评价器**：改后整周 evaluate 与改前做差，新增硬违规即拒绝并给明细——遗留旧问题不阻塞无关操作；手动短段无例外原因被拒、登记后放行且原因可追溯。
+  - 事务表清单含 assistant/course（Dexie 事务范围教训：漏列即 TransactionInactiveError）。
+- **评价器增强**：course-conflict 消息带课程名（CourseInput 增可选 courseName 透传）。
+- **UI**：新组件 `ManualAdjustDialog.vue`——当前值班（来源/锁定/例外标签 + 锁定切换/移动/例外登记清除/移除）、候选选择 + 不可排原因列表、移动子表单（星期×节次）；ScheduleView 已写入网格格子可点击（悬停高亮，空格显示 ＋）；StaleDataError 提示刷新。
+- **锁定链路贯穿重排**：generate 的 keep = 锁定项（旧 manual 回填为锁定）；saveFullCycle 写入行携带 locked/例外原因不丢失（ScheduleView 从重排前行按 周天时段人 匹配携带）。
+- **测试**：manualAdjustService.test.ts 10 例（候选原因、添加各拒绝路径、短段例外语义、移动原子、字段维护、CAS、遗留不阻塞）+ scheduleService 增锁定持久化 1 例。**245/245**（19 文件）；build 通过。
+- **边界**：undo/redo 与编辑链版本（FE-10）、命名快照（FE-16）、双连接并发全量验证（FE-11）属 S3 后续片；GUI 点击流程的浏览器自动化验证归 S6 E2E。
+
 ## V-013 S2 第三片：批量导入逐项结果（2026-10-26，F05/FE-05）
 
 - **服务**（新 `src/db/batchImportService.ts`）：`importTimetableBatch`——逐文件顺序处理（读取即释放）；同内容重复（FNV 字节摘要）→ skipped；不同内容争同一学号 → 后者 failed 明确报冲突（先到者生效，不按先后覆盖）；文件数（>50）与单文件大小（>10MB）超限整批拒绝；每项落库沿用 V-011 单事务原子语义。

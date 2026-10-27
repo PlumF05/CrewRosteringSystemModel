@@ -239,7 +239,7 @@ export function evaluateSchedule(input: EvaluateInput): EvaluationReport {
       if (range.start <= ord && range.end >= ord) {
         violations.push({
           type: 'course-conflict',
-          message: `助理 #${a.assistantId} 在星期${a.dayOfWeek} ${a.slotKey} 有课（${c.sectionText}）`,
+          message: `助理 #${a.assistantId} 在星期${a.dayOfWeek} ${a.slotKey} 有课${c.courseName ? `：「${c.courseName}」` : ''}（${c.sectionText}）`,
           weekNo,
           dayOfWeek: a.dayOfWeek,
           slotKey: a.slotKey,

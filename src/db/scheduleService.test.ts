@@ -82,6 +82,29 @@ describe('saveFullCycle（全周期原子保存）', () => {
     expect(await getDataRevision()).toBe(0)
   })
 
+  it('S3：写入行携带 locked / 短段例外原因，落库不丢失', async () => {
+    await saveFullCycle(
+      [
+        {
+          weekNo: 3,
+          rows: [
+            { dayOfWeek: 1, timeSlot: 'c1', assistantId: 5, source: 'manual', locked: true, continuityExceptionReason: '老师补位' },
+            { dayOfWeek: 1, timeSlot: 'c2', assistantId: 6, source: 'auto', locked: false },
+          ],
+        },
+      ],
+      await getDataRevision(),
+      { weekRange: [3, 3], mode: 'perWeek' },
+    )
+    const rows = await dutyScheduleRepo.listByWeek(3)
+    const manual = rows.find((r) => r.assistantId === 5)!
+    expect(manual.locked).toBe(true)
+    expect(manual.continuityExceptionReason).toBe('老师补位')
+    const auto = rows.find((r) => r.assistantId === 6)!
+    expect(auto.locked).toBe(false)
+    expect(auto.continuityExceptionReason).toBeUndefined()
+  })
+
   it('旧预览拒绝：预览后发生过导入（版本前进）→ StaleDataError 且零改动', async () => {
     const previewRevision = await getDataRevision()
     // 预览生成后、写入前，发生了另一次业务写入（导入）

@@ -326,6 +326,8 @@ export interface AssistantInput {
 export interface CourseInput {
   assistantId: number
   kind?: CourseKind
+  /** 可选：课程名（评价器用于给用户解释冲突；求解器不使用） */
+  courseName?: string
   dayOfWeek: number
   /**
    * 节次原文，如 "第三节-中课2"、"中课1-第七节"、"第六节-第八节"。

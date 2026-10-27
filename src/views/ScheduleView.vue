@@ -20,6 +20,7 @@ import {
 import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableStatus'
 import { saveFullCycle } from '../db/scheduleService'
 import { StaleDataError, getDataRevision } from '../db/dataRevision'
+import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
 import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
 import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
@@ -39,6 +40,17 @@ const previewWeek = ref<number>()
 /** 本次预览所基于的业务数据版本（写入时 CAS 校验，防旧预览覆盖新数据） */
 const previewedRevision = ref<number>(0)
 const writing = ref(false)
+
+/** S3 手动调整（FE-08）：点击已写入网格的格子打开调整对话框 */
+const adjustVisible = ref(false)
+const adjustContext = ref<{ dayOfWeek: number; slotKey: string; label: string } | null>(null)
+function openAdjust(slotKey: string, label: string, dayOfWeek: number) {
+  adjustContext.value = { dayOfWeek, slotKey, label }
+  adjustVisible.value = true
+}
+async function onAdjustChanged() {
+  await loadWeek()
+}
 const generating = ref(false)
 const exporting = ref(false)
 /** 当前查看周已落库的排班 */
@@ -141,12 +153,16 @@ async function onWeekChange() {
     for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
       beforeRowsMap.value.set(w, await dutyScheduleRepo.listByWeek(w))
     }
-    // F08：手动调整记录作为 keep 保留——P04 修复（2026-10-26）：收集**整个周期**各周
-    // 的手动记录并显式携带 weekNo（此前只取当前查看周且丢掉周次，导致第 N 周的手动
-    // 安排被应用到全部周）。算法按周次过滤；无法保留的项以明细反馈。
+    // F08/S3：重排保留项 = **锁定项**（手动默认锁定；旧数据无 locked 字段的 manual
+    // 行按锁定回填——升级前它们就是 keep 语义）。显式解锁的手动项不保留（仅来源标记）。
+    // P04 修复：收集整个周期并显式携带 weekNo；算法按周次过滤；无法保留项明细反馈。
     const keep = Array.from(beforeRowsMap.value.values())
       .flat()
-      .filter((r) => r.source === 'manual' && schedulableIds.has(r.assistantId))
+      .filter(
+        (r) =>
+          (r.locked === true || (r.source === 'manual' && r.locked === undefined)) &&
+          schedulableIds.has(r.assistantId),
+      )
       .map((r) => ({
         weekNo: r.weekNo,
         dayOfWeek: r.dayOfWeek,
@@ -266,16 +282,32 @@ async function write() {
     // S2（2026-10-26）：全周期单事务原子保存（FE-12）——此前逐周 replaceWeek，
     // 中途失败会留下部分周更新、部分周保持旧方案。预览携带生成时的业务版本，
     // 期间发生过导入/保存/手调（版本前进）则拒绝写入，避免旧预览覆盖新数据。
+    // S3：被保留的安排从重排前的行携带 locked / 短段例外原因，写入不丢失。
     await saveFullCycle(
-      previews.value.map((w) => ({
-        weekNo: w.weekNo,
-        rows: w.assignments.map((a) => ({
-          dayOfWeek: a.dayOfWeek,
-          timeSlot: a.slotKey,
-          assistantId: a.assistantId,
-          source: a.source,
-        })),
-      })),
+      previews.value.map((w) => {
+        const beforeByKey = new Map(
+          (beforeRowsMap.value.get(w.weekNo) ?? []).map((r) => [
+            `${r.dayOfWeek}|${r.timeSlot}|${r.assistantId}`,
+            r,
+          ]),
+        )
+        return {
+          weekNo: w.weekNo,
+          rows: w.assignments.map((a) => {
+            const prev = beforeByKey.get(`${a.dayOfWeek}|${a.slotKey}|${a.assistantId}`)
+            return {
+              dayOfWeek: a.dayOfWeek,
+              timeSlot: a.slotKey,
+              assistantId: a.assistantId,
+              source: a.source,
+              ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
+              ...(prev?.continuityExceptionReason
+                ? { continuityExceptionReason: prev.continuityExceptionReason }
+                : {}),
+            }
+          }),
+        }
+      }),
       previewedRevision.value,
       {
         weekRange: [rules.value.weekStart, rules.value.weekEnd],
@@ -493,17 +525,32 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
     </el-card>
   </template>
 
-  <!-- 已写入的排班表 -->
+  <!-- 已写入的排班表（S3：点击格子手动调整，FE-08） -->
   <el-card class="card">
-    <template #header>第 {{ weekNo }} 周排班表（已写入）</template>
+    <template #header>
+      第 {{ weekNo }} 周排班表（已写入）——点击格子可手动调整
+      <el-tag size="small" type="info" style="margin-left: 8px">手动=老师指定 · 锁定=重排时保持</el-tag>
+    </template>
     <el-empty v-if="storedRows.length === 0" description="本周暂无排班记录" :image-size="60" />
     <el-table v-else :data="storedGrid" border size="small">
       <el-table-column prop="label" label="时段（按节次）" width="180" fixed="left" />
       <el-table-column v-for="d in storedGridDays" :key="d" :label="GRID_DAY_LABELS[d]" min-width="110">
-        <template #default="{ row }">{{ row.cells[d] || '—' }}</template>
+        <template #default="{ row }">
+          <span class="adjust-cell" @click="openAdjust(row.key, row.label, d)">
+            {{ row.cells[d] || '＋' }}
+          </span>
+        </template>
       </el-table-column>
     </el-table>
   </el-card>
+
+  <!-- S3 手动调整对话框 -->
+  <ManualAdjustDialog
+    v-model="adjustVisible"
+    :week-no="weekNo"
+    :context="adjustContext"
+    @changed="onAdjustChanged"
+  />
 </template>
 
 <style scoped>
@@ -511,4 +558,17 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .block { margin-top: 12px; margin-bottom: 8px; }
 .preview-nav { display: flex; align-items: center; gap: 8px; }
+.adjust-cell {
+  cursor: pointer;
+  display: inline-block;
+  min-width: 100%;
+  min-height: 1.4em;
+  border-radius: 3px;
+  padding: 0 4px;
+  transition: background-color 0.15s;
+}
+.adjust-cell:hover {
+  background-color: var(--el-color-primary-light-9);
+  outline: 1px solid var(--el-color-primary-light-7);
+}
 </style>
