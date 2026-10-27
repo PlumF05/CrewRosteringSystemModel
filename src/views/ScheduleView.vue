@@ -21,6 +21,7 @@ import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableS
 import { saveFullCycle } from '../db/scheduleService'
 import { StaleDataError, getDataRevision } from '../db/dataRevision'
 import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
+import { getAdjustHistory, undoRedoAdjust, type AdjustHistory } from '../db/manualAdjustService'
 import { buildScheduleFileBuffer, exportScheduleFile, scheduleFileName, type ExportInput } from '../utils/scheduleExport'
 import { isTauri, saveXlsx } from '../utils/fileAccess'
 import { diffWeekSchedule } from '../utils/scheduleDiff'
@@ -50,6 +51,32 @@ function openAdjust(slotKey: string, label: string, dayOfWeek: number) {
 }
 async function onAdjustChanged() {
   await loadWeek()
+  await loadAdjustHistory()
+}
+
+/** S3 撤销/重做（FE-10）：编辑链状态随刷新恢复；操作走 CAS */
+const adjustHistory = ref<AdjustHistory>({ canUndo: false, canRedo: false, undoLabels: [], redoLabels: [] })
+const undoingRedoing = ref(false)
+async function loadAdjustHistory() {
+  adjustHistory.value = await getAdjustHistory()
+}
+async function undoRedo(direction: 'undo' | 'redo') {
+  undoingRedoing.value = true
+  try {
+    const r = await undoRedoAdjust(direction, await getDataRevision())
+    if (r) ElMessage.success(`${direction === 'undo' ? '已撤销' : '已重做'}：${r.label}`)
+    else ElMessage.info('没有可' + (direction === 'undo' ? '撤销' : '重做') + '的调整（部分历史可能已被重排覆盖并跳过）')
+  } catch (err) {
+    if (err instanceof StaleDataError) {
+      ElMessage.error('数据已被其他窗口修改，请稍后重试')
+      return
+    }
+    ElMessage.error(err instanceof Error ? err.message : '操作失败')
+  } finally {
+    undoingRedoing.value = false
+    await loadWeek()
+    await loadAdjustHistory()
+  }
 }
 const generating = ref(false)
 const exporting = ref(false)
@@ -81,6 +108,8 @@ onMounted(async () => {
   nameById.value = new Map(assistants.map((a) => [a.id!, a.name]))
   phoneById.value = new Map(assistants.map((a) => [a.id!, a.phone ?? '']))
   await loadWeek()
+  // S3：刷新后验证编辑链并恢复撤销/重做按钮（失效条目在实际操作时自动跳过）
+  await loadAdjustHistory()
 })
 
 async function loadWeek() {
@@ -530,6 +559,34 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
     <template #header>
       第 {{ weekNo }} 周排班表（已写入）——点击格子可手动调整
       <el-tag size="small" type="info" style="margin-left: 8px">手动=老师指定 · 锁定=重排时保持</el-tag>
+      <span style="float: right">
+        <el-tooltip
+          :disabled="!adjustHistory.undoLabels.length"
+          :content="adjustHistory.undoLabels.join('\n')"
+          placement="bottom"
+        >
+          <el-button
+            size="small"
+            :disabled="!adjustHistory.canUndo"
+            :loading="undoingRedoing"
+            @click="undoRedo('undo')"
+            >撤销</el-button
+          >
+        </el-tooltip>
+        <el-tooltip
+          :disabled="!adjustHistory.redoLabels.length"
+          :content="adjustHistory.redoLabels.join('\n')"
+          placement="bottom"
+        >
+          <el-button
+            size="small"
+            :disabled="!adjustHistory.canRedo"
+            :loading="undoingRedoing"
+            @click="undoRedo('redo')"
+            >重做</el-button
+          >
+        </el-tooltip>
+      </span>
     </template>
     <el-empty v-if="storedRows.length === 0" description="本周暂无排班记录" :image-size="60" />
     <el-table v-else :data="storedGrid" border size="small">

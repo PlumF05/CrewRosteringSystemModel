@@ -244,7 +244,13 @@ export async function addManualAssignment(
       const diff = diffViolations(before, after)
       if (diff.length > 0) throw new ManualAdjustRejected(diff)
 
-      await db.duty_schedule.add(newRow)
+      const newId = await db.duty_schedule.add(newRow)
+      const name = ctx.assistants.find((a) => a.id === params.assistantId)?.name ?? `#${params.assistantId}`
+      await appendJournal({
+        kind: 'add',
+        row: { ...newRow, id: newId },
+        label: `第${params.weekNo}周 星期${params.dayOfWeek} ${params.timeSlot} 添加「${name}」`,
+      })
       await operationLogRepo.add('schedule.manualAdd', {
         weekNo: params.weekNo,
         dayOfWeek: params.dayOfWeek,
@@ -276,6 +282,12 @@ export async function removeAssignment(rowId: number, expectedRevision: number |
       if (diff.length > 0) throw new ManualAdjustRejected(diff)
 
       await db.duty_schedule.delete(rowId)
+      const name = ctx.assistants.find((a) => a.id === row.assistantId)?.name ?? `#${row.assistantId}`
+      await appendJournal({
+        kind: 'remove',
+        row,
+        label: `第${row.weekNo}周 星期${row.dayOfWeek} ${row.timeSlot} 移除「${name}」`,
+      })
       await operationLogRepo.add('schedule.manualRemove', {
         weekNo: row.weekNo,
         dayOfWeek: row.dayOfWeek,
@@ -317,6 +329,14 @@ export async function moveAssignment(
       if (diff.length > 0) throw new ManualAdjustRejected(diff)
 
       await db.duty_schedule.put(moved)
+      const name = ctx.assistants.find((a) => a.id === row.assistantId)?.name ?? `#${row.assistantId}`
+      await appendJournal({
+        kind: 'move',
+        rowId,
+        from: { dayOfWeek: row.dayOfWeek, timeSlot: row.timeSlot },
+        to,
+        label: `第${row.weekNo}周 移动「${name}」：星期${row.dayOfWeek} ${row.timeSlot} → 星期${to.dayOfWeek} ${to.timeSlot}`,
+      })
       await operationLogRepo.add('schedule.manualMove', {
         weekNo: row.weekNo,
         from: { dayOfWeek: row.dayOfWeek, timeSlot: row.timeSlot },
@@ -337,6 +357,12 @@ export async function setLocked(rowId: number, locked: boolean, expectedRevision
       const row = await db.duty_schedule.get(rowId)
       if (!row) throw new Error('该安排已不存在，请刷新')
       await db.duty_schedule.update(rowId, { locked, updatedAt: now() })
+      await appendJournal({
+        kind: 'lock',
+        rowId,
+        to: locked,
+        label: `第${row.weekNo}周 星期${row.dayOfWeek} ${row.timeSlot} ${locked ? '锁定' : '解锁'}`,
+      })
       await operationLogRepo.add(locked ? 'schedule.lock' : 'schedule.unlock', {
         weekNo: row.weekNo,
         dayOfWeek: row.dayOfWeek,
@@ -366,6 +392,13 @@ export async function setContinuityException(
       if (reason === null) delete next.continuityExceptionReason
       else next.continuityExceptionReason = reason.trim()
       await db.duty_schedule.put(next)
+      await appendJournal({
+        kind: 'exception',
+        rowId,
+        from: row.continuityExceptionReason ?? null,
+        to: reason === null ? null : reason.trim(),
+        label: `第${row.weekNo}周 星期${row.dayOfWeek} ${row.timeSlot} ${reason === null ? '清除' : '登记'}短段例外`,
+      })
       await operationLogRepo.add('schedule.continuityException', {
         weekNo: row.weekNo,
         dayOfWeek: row.dayOfWeek,
@@ -376,6 +409,187 @@ export async function setContinuityException(
     },
   )
   return { revision }
+}
+
+// ---------- 撤销 / 重做（S3 第二片，FE-10，2026-10-26） ----------
+//
+// 每个手调操作在**同一事务**内向 config 键 ADJUST_JOURNAL 追加一条撤销日志
+// （携带逆操作所需的完整信息）；新操作截断 redo 分支；栈深默认 50。
+// 撤销/重做本身也是 CAS 写事务：逆操作先经同一评价器差分校验——
+// 期间输入变化导致逆操作会制造硬违规时拒绝（如撤销例外登记会留下孤立短段），
+// 不倒退 dataRevision、不覆盖其他窗口的新修改。
+
+const ADJUST_JOURNAL_KEY = 'adjustJournal'
+const JOURNAL_MAX = 50
+
+export type JournalEntry =
+  | { kind: 'add'; row: DutySchedule; label: string }
+  | { kind: 'remove'; row: DutySchedule; label: string }
+  | {
+      kind: 'move'
+      rowId: number
+      from: { dayOfWeek: number; timeSlot: string }
+      to: { dayOfWeek: number; timeSlot: string }
+      label: string
+    }
+  | { kind: 'lock'; rowId: number; to: boolean; label: string }
+  | { kind: 'exception'; rowId: number; from: string | null; to: string | null; label: string }
+
+interface JournalState {
+  undo: JournalEntry[]
+  redo: JournalEntry[]
+}
+
+async function readJournal(): Promise<JournalState> {
+  const entry = await db.config.get(ADJUST_JOURNAL_KEY)
+  const v = entry?.value as JournalState | undefined
+  return { undo: v?.undo ?? [], redo: v?.redo ?? [] }
+}
+
+/** 事务内：追加撤销日志（新操作截断 redo），栈深封顶 */
+async function appendJournal(entry: JournalEntry): Promise<void> {
+  const j = await readJournal()
+  j.undo.push(entry)
+  if (j.undo.length > JOURNAL_MAX) j.undo.splice(0, j.undo.length - JOURNAL_MAX)
+  j.redo = []
+  await db.config.put({ key: ADJUST_JOURNAL_KEY, value: j })
+}
+
+/**
+ * 日志条目在该方向上是否仍可执行（按行存在性；刷新/重排后用于自动跳过）：
+ * - add：撤销方向要求行存在（将被删除）；重做方向要求行不存在（将被放回）
+ * - remove：恰好相反
+ * - move/lock/exception：行必须存在
+ */
+async function entryStillValid(e: JournalEntry, which: 'undo' | 'redo'): Promise<boolean> {
+  if (e.kind === 'add' || e.kind === 'remove') {
+    const exists = Boolean(await db.duty_schedule.get(e.row.id!))
+    return which === 'undo' ? (e.kind === 'add' ? exists : !exists) : e.kind === 'add' ? !exists : exists
+  }
+  return Boolean(await db.duty_schedule.get(e.rowId))
+}
+
+export interface AdjustHistory {
+  canUndo: boolean
+  canRedo: boolean
+  /** 最近可撤销步骤的描述（新→旧，最多 5 条，供按钮提示） */
+  undoLabels: string[]
+  redoLabels: string[]
+}
+
+/** 刷新后恢复撤销/重做按钮：只报告，不改数据；失效条目在实际撤销时自动跳过 */
+export async function getAdjustHistory(): Promise<AdjustHistory> {
+  const j = await readJournal()
+  return {
+    canUndo: j.undo.length > 0,
+    canRedo: j.redo.length > 0,
+    undoLabels: [...j.undo].reverse().slice(0, 5).map((e) => e.label),
+    redoLabels: j.redo.slice(0, 5).map((e) => e.label),
+  }
+}
+
+/** 弹出并返回仍可执行的条目；失效条目（行已被重排覆盖等）自动跳过并清理 */
+async function popValidEntry(
+  which: 'undo' | 'redo',
+): Promise<{ entry: JournalEntry; state: JournalState } | null> {
+  const j = await readJournal()
+  const list = which === 'undo' ? j.undo : j.redo
+  while (list.length > 0) {
+    const entry = list[list.length - 1]!
+    if (await entryStillValid(entry, which)) return { entry, state: j }
+    list.pop() // 失效 → 丢弃（不打断后续步骤）
+  }
+  await db.config.put({ key: ADJUST_JOURNAL_KEY, value: j })
+  return null
+}
+
+/**
+ * 撤销最近一步（direction='undo'）或重做（'redo'）。
+ * 逆/正操作先做整周终态差分校验，非法则拒绝并说明；成功后条目在两栈间转移。
+ */
+export async function undoRedoAdjust(
+  direction: 'undo' | 'redo',
+  expectedRevision: number | null,
+): Promise<{ label: string } | null> {
+  let label = ''
+  await withDataRevision(
+    expectedRevision,
+    [db.duty_schedule, db.operation_log, db.assistant, db.course],
+    async () => {
+      const popped = await popValidEntry(direction)
+      if (!popped) return
+      const { entry } = popped
+      label = entry.label
+
+      const applyInverse = direction === 'undo'
+      let target: DutySchedule | undefined
+      let deleteRowId: number | undefined
+      let weekNo: number
+      const e = entry as JournalEntry
+      if (e.kind === 'add') {
+        weekNo = e.row.weekNo
+        if (applyInverse) deleteRowId = e.row.id
+        else target = e.row // 原行原 id 放回
+      } else if (e.kind === 'remove') {
+        weekNo = e.row.weekNo
+        if (applyInverse) target = e.row
+        else deleteRowId = e.row.id
+      } else {
+        const row = await db.duty_schedule.get(e.rowId)
+        if (!row) throw new Error('该安排已不存在（可能已被重排覆盖），请刷新')
+        weekNo = row.weekNo
+        if (e.kind === 'move') {
+          const dest = applyInverse ? e.from : e.to
+          target = { ...row, dayOfWeek: dest.dayOfWeek, timeSlot: dest.timeSlot, updatedAt: now() }
+        } else if (e.kind === 'lock') {
+          target = { ...row, locked: applyInverse ? !e.to : e.to, updatedAt: now() }
+        } else {
+          const value = applyInverse ? e.from : e.to
+          target = { ...row, updatedAt: now() }
+          if (value === null) delete target.continuityExceptionReason
+          else target.continuityExceptionReason = value
+        }
+      }
+
+      const ctx = await loadWeekContext()
+      const rows = await db.duty_schedule.where('weekNo').equals(weekNo).toArray()
+      const before = evaluateSchedule(toEvaluation(ctx, weekNo, rows))
+      const afterRows =
+        deleteRowId !== undefined
+          ? rows.filter((r) => r.id !== deleteRowId)
+          : target && rows.some((r) => r.id === target!.id)
+            ? [...rows.filter((r) => r.id !== target!.id), target]
+            : [...rows, target!]
+      const after = evaluateSchedule(
+        toEvaluation(ctx, weekNo, afterRows, deleteRowId ?? target?.id),
+      )
+      const diff = diffViolations(before, after)
+      if (diff.length > 0) {
+        throw new ManualAdjustRejected(
+          diff.map((v) => ({ ...v, message: `${direction === 'undo' ? '撤销' : '重做'}会产生违规：${v.message}` })),
+        )
+      }
+
+      if (deleteRowId !== undefined) await db.duty_schedule.delete(deleteRowId)
+      else await db.duty_schedule.put(target!)
+
+      // 条目在两栈间转移（结构匹配：重新读出的数组与弹出的条目不是同一引用）
+      const j = await readJournal()
+      const from = direction === 'undo' ? j.undo : j.redo
+      const to = direction === 'undo' ? j.redo : j.undo
+      const key = JSON.stringify(entry)
+      for (let i = from.length - 1; i >= 0; i--) {
+        if (JSON.stringify(from[i]) === key) {
+          from.splice(i, 1)
+          break
+        }
+      }
+      to.push(entry)
+      await db.config.put({ key: ADJUST_JOURNAL_KEY, value: j })
+      await operationLogRepo.add(direction === 'undo' ? 'schedule.undo' : 'schedule.redo', { label: entry.label })
+    },
+  )
+  return label ? { label } : null
 }
 
 export { ManualAdjustRejected, StaleDataError }

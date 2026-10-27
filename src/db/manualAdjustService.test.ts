@@ -12,11 +12,13 @@ import { assistantRepo, courseRepo, configRepo, dutyScheduleRepo } from './repos
 import {
   ManualAdjustRejected,
   addManualAssignment,
+  getAdjustHistory,
   getSlotCandidates,
   moveAssignment,
   removeAssignment,
   setContinuityException,
   setLocked,
+  undoRedoAdjust,
 } from './manualAdjustService'
 import { DEFAULT_RULES, type SchedulingRules } from '../algorithms/types'
 import { StaleDataError, getDataRevision } from './dataRevision'
@@ -211,5 +213,95 @@ describe('并发与遗留问题', () => {
     // a1 在别处的正常手调不应被 a2 的遗留冲突阻塞
     await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
     expect(await dutyScheduleRepo.listByWeek(1)).toHaveLength(2)
+  })
+})
+
+describe('撤销 / 重做（FE-10）', () => {
+  it('添加 → 撤销删除 → 重做原行原 id 回来；栈状态正确', async () => {
+    const { a1 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    const added = (await dutyScheduleRepo.listByWeek(1))[0]
+    let h = await getAdjustHistory()
+    expect(h.canUndo).toBe(true)
+    expect(h.canRedo).toBe(false)
+
+    const undone = await undoRedoAdjust('undo', await getDataRevision())
+    expect(undone?.label).toContain('添加')
+    expect(await dutyScheduleRepo.listByWeek(1)).toHaveLength(0)
+    h = await getAdjustHistory()
+    expect(h.canUndo).toBe(false)
+    expect(h.canRedo).toBe(true)
+
+    await undoRedoAdjust('redo', await getDataRevision())
+    const rows = await dutyScheduleRepo.listByWeek(1)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].id).toBe(added.id) // 原 id 复原（撤销日志携带完整行）
+    expect(rows[0].source).toBe('manual')
+  })
+
+  it('移动 → 撤销回到原位；锁定切换可撤销', async () => {
+    const { a1 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    const id = (await dutyScheduleRepo.listByWeek(1))[0].id!
+
+    await moveAssignment(id, { dayOfWeek: 3, timeSlot: 'c2' }, await getDataRevision())
+    await undoRedoAdjust('undo', await getDataRevision())
+    let row = (await dutyScheduleRepo.listByWeek(1))[0]
+    expect(`${row.dayOfWeek}|${row.timeSlot}`).toBe('1|c1')
+
+    await setLocked(id, false, await getDataRevision())
+    expect((await dutyScheduleRepo.listByWeek(1))[0].locked).toBe(false)
+    await undoRedoAdjust('undo', await getDataRevision())
+    expect((await dutyScheduleRepo.listByWeek(1))[0].locked).toBe(true)
+  })
+
+  it('新操作截断 redo 分支', async () => {
+    const { a1, a2 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await db.assistant.update(a2, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    await undoRedoAdjust('undo', await getDataRevision())
+    expect((await getAdjustHistory()).canRedo).toBe(true)
+    // 新编辑 → redo 分支被截断
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 2, timeSlot: 'c1', assistantId: a2 }, await getDataRevision())
+    expect((await getAdjustHistory()).canRedo).toBe(false)
+  })
+
+  it('撤销会产生违规时被拒（期间课程已变化）', async () => {
+    const { a1 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    const id = (await dutyScheduleRepo.listByWeek(1))[0].id!
+    await moveAssignment(id, { dayOfWeek: 1, timeSlot: 'c3' }, await getDataRevision())
+    // 移动后，原位 c1 新增了课程 → 撤销（回到 c1）会产生课程冲突，必须拒绝
+    await courseRepo.replaceForAssistant(a1, [
+      { assistantId: a1, courseNo: '', courseName: '新课', kind: 'theory', weekRanges: [[1, 17]], dayOfWeek: 1, sectionText: '第一节-第一节', sectionStart: 1, sectionEnd: 1 },
+    ])
+    await expect(undoRedoAdjust('undo', await getDataRevision())).rejects.toThrow(/撤销会产生违规/)
+    expect((await dutyScheduleRepo.listByWeek(1))[0].timeSlot).toBe('c3') // 状态未变
+  })
+
+  it('失效条目（行被重排覆盖）自动跳过并清理', async () => {
+    const { a1 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    // 模拟全周期重排覆盖：直接清库重写（绕过服务，日志未同步）
+    await db.duty_schedule.where('weekNo').equals(1).delete()
+    await db.duty_schedule.add({ weekNo: 1, dayOfWeek: 2, timeSlot: 'c1', assistantId: a1, status: 'normal', source: 'auto' })
+    expect((await getAdjustHistory()).canUndo).toBe(true) // 只报告，不预清理
+    const r = await undoRedoAdjust('undo', await getDataRevision())
+    expect(r).toBeNull() // 唯一日志条目失效 → 跳过后无可撤销
+    expect((await getAdjustHistory()).canUndo).toBe(false)
+  })
+
+  it('撤销也走 CAS：旧版本被拒', async () => {
+    const { a1 } = await seed()
+    await db.assistant.update(a1, { timetableStatus: 'confirmed_empty' })
+    await addManualAssignment({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: a1 }, await getDataRevision())
+    const stale = await getDataRevision()
+    await setLocked((await dutyScheduleRepo.listByWeek(1))[0].id!, true, await getDataRevision())
+    await expect(undoRedoAdjust('undo', stale)).rejects.toBeInstanceOf(StaleDataError)
   })
 })
