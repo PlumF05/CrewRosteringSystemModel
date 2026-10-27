@@ -22,6 +22,7 @@ import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableS
 import { saveFullCycle } from '../db/scheduleService'
 import { StaleDataError, getDataRevision } from '../db/dataRevision'
 import { incrementalSchedule, type DiffEntry } from '../algorithms/incremental'
+import { improveWeek } from '../algorithms/improve'
 import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
 import { getAdjustHistory, undoRedoAdjust, type AdjustHistory } from '../db/manualAdjustService'
 import {
@@ -336,6 +337,20 @@ async function onWeekChange() {
         }))
       previews.value = scheduleAll({ rules: pureRules, assistants, courses, keep })
       rejectedAll = previews.value.flatMap((w) => w.rejectedKeeps)
+      // S4 有界局部改良（FE-14）：在合法基线上按预算爬山，永不劣于基线
+      const improveResults = previews.value.map((w) =>
+        improveWeek({ rules: pureRules, assistants, courses }, w),
+      )
+      previews.value = improveResults.map((r) => r.week)
+      const improvedCount = improveResults.filter((r) => r.improved).length
+      const totalApplied = improveResults.reduce((s, r) => s + r.applied, 0)
+      const budgetStopped = improveResults.filter((r) => r.stopReason !== 'converged').length
+      if (improvedCount > 0) {
+        ElMessage.success(
+          `局部改良：${improvedCount} 周共应用 ${totalApplied} 次优化` +
+            (budgetStopped > 0 ? `（${budgetStopped} 周触及预算上限，已保留当前最佳合法解）` : ''),
+        )
+      }
     }
     previewWeek.value = previews.value[0]?.weekNo
     // 记录预览所基于的业务版本：写入时若版本已前进（期间有导入/保存/手调）则拒绝
