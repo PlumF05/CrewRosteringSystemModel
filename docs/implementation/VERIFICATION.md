@@ -59,6 +59,17 @@
 
 （台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）
 
+## V-017 S4 第一片：增量重排（2026-10-26，F08/FE-13）
+
+- **纯域模块**（新 `src/algorithms/incremental.ts`）`incrementalSchedule(input, baseline, options)`：
+  - **零改动快路径**：inputsUnchanged（调用方以"当前 dataRevision == scheduleWriteRevision"可验证判定）且基准全部周终态合法 → 原样返回，diff 为空；
+  - **基准锚定重算**：目标周内基准行全部作为保留项传入求解——锁定行 source=manual，自动行 source=auto（KeepEntry 增可选 source，greedy 预占沿用，不冒充手动）；非法保留（新课程冲突/容量变化）被 V-009 入口校验拒绝并携带原因，由求解重新安排——变化只发生在约束被迫处；
+  - **范围外周**：基准原样输出（不重算，指标经评价器复算）；
+  - **差异**：按 (weekNo, dayOfWeek, slot, assistantId) 输出 kept/added/removed/replaced 与原因——原因只用可验证信息（拒绝明细/缺员补位/重新求解），不伪造唯一因果；uniform 模式明确拒绝增量。
+- **服务接线**：saveFullCycle 在写事务内记录 `scheduleWriteRevision`（写入完成后的版本）；ScheduleView 增加模式切换（全量/增量 + 目标周次范围），增量结果展示零改动横幅或逐条变动明细（类型/位置/人员/原因）。
+- **测试**（incremental.test.ts，7 例）：零改动原样、新课程只动冲突行（原因含"有课"、其余 kept）、范围外周逐行一致、合法锁定原位且 manual 来源/非法锁定明细拒绝、自动行保留来源仍 auto、uniform 拒绝、范围非法拒绝。**266/266**（22 文件）；build 通过。
+- **边界**：有界局部改良（FE-14）与 Worker（FE-15）属 S4 后续片；GUI 层增量流程点击验证归 S6。
+
 ## V-016 S3 第三片：命名快照与双连接并发（2026-10-26，FE-16/FE-11）
 
 - **命名快照**（新 `src/db/snapshotService.ts`）：创建走**跨表只读事务**取一致视图（整份排班行 + 当时规则 + 人员显示信息，meta.formatVersion=2，自包含——删除人员/改规则后历史快照不损坏）；逐周对比（复用 scheduleDiff）；**受控恢复**——恢复前用独立评价器按**当前**人员/课程/规则复核快照内容，缺人（明细标注"该助理已被删除"）或课程冲突即阻止且数据不动；合法则在单个 CAS 事务替换覆盖周并**重置撤销链**；旧格式快照（无 meta）界面标注限制。UI：排班页新增快照卡片（创建/对比/恢复/删除 + 受控恢复的冲突明细展示）。

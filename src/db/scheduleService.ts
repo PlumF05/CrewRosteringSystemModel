@@ -68,6 +68,10 @@ export async function saveFullCycle(
         action: 'schedule.write',
         detail: { weeks: meta.weekRange, mode: meta.mode, count, atomic: true },
       })
+      // S4：记录"本次写入完成后的业务版本"，增量重排据此判定输入是否变化
+      //（版本一致 = 写入后没有任何导入/改课/保存/手调 → 允许零改动快路径）
+      const cur = ((await db.config.get('dataRevision'))?.value as number | undefined) ?? 0
+      await db.config.put({ key: 'scheduleWriteRevision', value: cur + 1 })
     },
   )
   return revision

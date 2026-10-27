@@ -9,6 +9,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import { assistantRepo, configRepo, courseRepo, dutyScheduleRepo } from '../db/repositories'
 import type { DutySchedule } from '../db/schema'
 import { scheduleAll } from '../algorithms/greedy'
@@ -20,6 +21,7 @@ import {
 import { isSchedulableStatus, timetableStatusOf } from '../algorithms/timetableStatus'
 import { saveFullCycle } from '../db/scheduleService'
 import { StaleDataError, getDataRevision } from '../db/dataRevision'
+import { incrementalSchedule, type DiffEntry } from '../algorithms/incremental'
 import ManualAdjustDialog from '../components/ManualAdjustDialog.vue'
 import { getAdjustHistory, undoRedoAdjust, type AdjustHistory } from '../db/manualAdjustService'
 import {
@@ -50,6 +52,13 @@ const previewWeek = ref<number>()
 /** 本次预览所基于的业务数据版本（写入时 CAS 校验，防旧预览覆盖新数据） */
 const previewedRevision = ref<number>(0)
 const writing = ref(false)
+
+/** S4 重排模式与增量差异（FE-13） */
+const rescheduleMode = ref<'full' | 'incremental'>('full')
+const targetWeekStart = ref(rules.value.weekStart)
+const targetWeekEnd = ref(rules.value.weekEnd)
+const incrementalDiff = ref<DiffEntry[]>([])
+const zeroChange = ref(false)
 
 /** S3 手动调整（FE-08）：点击已写入网格的格子打开调整对话框 */
 const adjustVisible = ref(false)
@@ -269,35 +278,70 @@ async function onWeekChange() {
     for (let w = rules.value.weekStart; w <= rules.value.weekEnd; w++) {
       beforeRowsMap.value.set(w, await dutyScheduleRepo.listByWeek(w))
     }
-    // F08/S3：重排保留项 = **锁定项**（手动默认锁定；旧数据无 locked 字段的 manual
-    // 行按锁定回填——升级前它们就是 keep 语义）。显式解锁的手动项不保留（仅来源标记）。
-    // P04 修复：收集整个周期并显式携带 weekNo；算法按周次过滤；无法保留项明细反馈。
-    const keep = Array.from(beforeRowsMap.value.values())
-      .flat()
-      .filter(
-        (r) =>
-          (r.locked === true || (r.source === 'manual' && r.locked === undefined)) &&
-          schedulableIds.has(r.assistantId),
+
+    // ---- S4：全量 / 增量 两种重排模式（FE-13） ----
+    const pureRules = JSON.parse(JSON.stringify(rules.value))
+    let rejectedAll: { weekNo?: number; dayOfWeek: number; slotKey: string; reason: string }[] = []
+    if (rescheduleMode.value === 'incremental') {
+      if (rules.value.uniformMode) {
+        ElMessage.error('增量重排需要"各周独立"模式：请先到排班规则改为各周独立，或使用全量重排')
+        return
+      }
+      const baseline = Array.from(beforeRowsMap.value.values())
+        .flat()
+        .filter((r) => schedulableIds.has(r.assistantId))
+        .map((r) => ({
+          weekNo: r.weekNo,
+          dayOfWeek: r.dayOfWeek,
+          slotKey: r.timeSlot,
+          assistantId: r.assistantId,
+          source: r.source,
+          locked: r.locked,
+        }))
+      // 零改动判定：写入后无任何业务写入（版本未前进）
+      const cur = await getDataRevision()
+      const writeRev = await configRepo.get<number>('scheduleWriteRevision')
+      const result = incrementalSchedule(
+        { rules: pureRules, assistants, courses },
+        baseline,
+        {
+          inputsUnchanged: writeRev !== undefined && cur === writeRev,
+          targetWeeks: [targetWeekStart.value, targetWeekEnd.value],
+        },
       )
-      .map((r) => ({
-        weekNo: r.weekNo,
-        dayOfWeek: r.dayOfWeek,
-        slotKey: r.timeSlot,
-        assistantId: r.assistantId,
-      }))
-    previews.value = scheduleAll({
-      rules: JSON.parse(JSON.stringify(rules.value)),
-      assistants,
-      courses,
-      keep,
-    })
+      previews.value = result.weeks
+      incrementalDiff.value = result.diff.filter((d) => d.type !== 'kept')
+      zeroChange.value = result.zeroChange
+      rejectedAll = result.rejectedKeeps
+      if (result.zeroChange) {
+        ElMessage.success('输入未变化且当前方案合法：本次增量重排保持零改动')
+      }
+    } else {
+      incrementalDiff.value = []
+      zeroChange.value = false
+      // F08/S3：全量模式的保留项 = 锁定项（手动默认锁定；旧数据 manual 行回填为锁定）。
+      // P04 修复：收集整个周期并显式携带 weekNo；算法按周次过滤；无法保留项明细反馈。
+      const keep = Array.from(beforeRowsMap.value.values())
+        .flat()
+        .filter(
+          (r) =>
+            (r.locked === true || (r.source === 'manual' && r.locked === undefined)) &&
+            schedulableIds.has(r.assistantId),
+        )
+        .map((r) => ({
+          weekNo: r.weekNo,
+          dayOfWeek: r.dayOfWeek,
+          slotKey: r.timeSlot,
+          assistantId: r.assistantId,
+        }))
+      previews.value = scheduleAll({ rules: pureRules, assistants, courses, keep })
+      rejectedAll = previews.value.flatMap((w) => w.rejectedKeeps)
+    }
     previewWeek.value = previews.value[0]?.weekNo
     // 记录预览所基于的业务版本：写入时若版本已前进（期间有导入/保存/手调）则拒绝
     previewedRevision.value = await getDataRevision()
     // P01/P02/P04 的用户反馈面：被拒绝的保留项逐条给出原因，不静默丢弃
-    const rejected = previews.value.flatMap((w) =>
-      w.rejectedKeeps.map((k) => `第${k.weekNo ?? w.weekNo}周 星期${k.dayOfWeek} ${k.slotKey}：${k.reason}`),
-    )
+    const rejected = rejectedAll.map((k) => `第${k.weekNo ?? '?'}周 星期${k.dayOfWeek} ${k.slotKey}：${k.reason}`)
     if (rejected.length > 0) {
       ElMessage.warning(`有 ${rejected.length} 条手动安排无法保留：${rejected[0]}${rejected.length > 1 ? ' 等' : ''}`)
     }
@@ -506,6 +550,22 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
       <el-button type="primary" :loading="generating" @click="generate">
         {{ previews.length ? '重新生成全部周方案' : `一次性生成第 ${rules.weekStart}~${rules.weekEnd} 周方案` }}
       </el-button>
+      <el-radio-group v-model="rescheduleMode" size="small" style="margin-left: 8px">
+        <el-radio-button value="full">全量重排</el-radio-button>
+        <el-radio-button value="incremental">增量重排</el-radio-button>
+      </el-radio-group>
+      <template v-if="rescheduleMode === 'incremental'">
+        <span style="font-size: 12px; color: var(--el-text-color-secondary)">目标周次：</span>
+        <el-input-number v-model="targetWeekStart" size="small" :min="rules.weekStart" :max="rules.weekEnd" style="width: 90px" />
+        <span>~</span>
+        <el-input-number v-model="targetWeekEnd" size="small" :min="rules.weekStart" :max="rules.weekEnd" style="width: 90px" />
+        <el-tooltip
+          content="以已写入方案为基准：锁定项不动，其余安排优先保留，只重算目标周次；输入未变化时保持零改动"
+          placement="bottom"
+        >
+          <el-icon style="color: var(--el-text-color-secondary)"><QuestionFilled /></el-icon>
+        </el-tooltip>
+      </template>
       <el-button
         v-if="previews.length"
         type="success"
@@ -515,6 +575,54 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
         写入全部周排班（共 {{ previews.reduce((s, w) => s + w.assignments.length, 0) }} 条）
       </el-button>
       <el-tag v-if="rules.uniformMode" type="info">模式：各周排班相同</el-tag>
+      <el-alert
+        v-if="previews.length && rescheduleMode === 'incremental'"
+        :type="zeroChange ? 'success' : incrementalDiff.length ? 'warning' : 'success'"
+        :closable="false"
+        class="incr-result"
+        :title="
+          zeroChange
+            ? '增量重排：输入未变化，方案保持零改动'
+            : incrementalDiff.length
+              ? `增量重排：${incrementalDiff.length} 处变动（新增 ${incrementalDiff.filter(d => d.type==='added').length}、移除 ${incrementalDiff.filter(d => d.type==='removed').length}、替换 ${incrementalDiff.filter(d => d.type==='replaced').length}；范围外周保持原样）`
+              : '增量重排：全部安排可保留，无变动'
+        "
+      />
+      <el-table
+        v-if="previews.length && rescheduleMode === 'incremental' && incrementalDiff.length"
+        :data="incrementalDiff"
+        border
+        size="small"
+        max-height="240"
+        class="incr-result"
+      >
+        <el-table-column label="变动" width="80">
+          <template #default="{ row }">
+            <el-tag
+              size="small"
+              :type="row.type === 'added' ? 'success' : row.type === 'removed' ? 'danger' : 'warning'"
+            >
+              {{ row.type === 'added' ? '新增' : row.type === 'removed' ? '移除' : '替换' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="周次" width="80">
+          <template #default="{ row }">第 {{ row.weekNo }} 周</template>
+        </el-table-column>
+        <el-table-column label="位置" width="150">
+          <template #default="{ row }">星期{{ row.dayOfWeek }} 第{{ row.slotKey.slice(1) }}节</template>
+        </el-table-column>
+        <el-table-column label="人员" min-width="150">
+          <template #default="{ row }">
+            <template v-if="row.type === 'replaced'">
+              {{ nameById.get(row.assistantId) ?? `#${row.assistantId}` }} →
+              {{ nameById.get(row.otherAssistantId!) ?? `#${row.otherAssistantId}` }}
+            </template>
+            <template v-else>{{ nameById.get(row.assistantId!) ?? `#${row.assistantId}` }}</template>
+          </template>
+        </el-table-column>
+        <el-table-column prop="reason" label="原因" min-width="240" />
+      </el-table>
       <el-tag v-if="!rules.uniformMode" type="info">模式：各周独立</el-tag>
       <el-divider direction="vertical" />
       <el-tooltip
@@ -797,6 +905,7 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
 
 <style scoped>
 .card { margin-bottom: 14px; }
+.incr-result { width: 100%; margin-top: 12px; }
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .block { margin-top: 12px; margin-bottom: 8px; }
 .preview-nav { display: flex; align-items: center; gap: 8px; }

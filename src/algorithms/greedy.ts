@@ -192,7 +192,7 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
       dayOfWeek: k.dayOfWeek,
       slotKey: k.slotKey,
       assistantId: k.assistantId,
-      source: 'manual',
+      source: k.source ?? 'manual',
     })
     busy.get(k.assistantId)?.add(key)
     keptKeys.add(key)

@@ -357,6 +357,11 @@ export interface KeepEntry {
   dayOfWeek: number
   slotKey: string
   assistantId: number
+  /**
+   * 保留项在输出中的来源标记（S4 增量重排）：增量把基准的自动行也作为保留传入
+   * 以优先保持稳定——其来源应仍记为 auto，而非手动。缺省 = manual。
+   */
+  source?: 'auto' | 'manual'
 }
 
 /** 被拒绝的保留项：entry 原样 + 人可读原因（P01/P02/P04：拒绝必须给明细，不静默丢弃） */
