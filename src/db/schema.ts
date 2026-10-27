@@ -121,4 +121,16 @@ export interface ScheduleSnapshot {
   label: string
   /** 快照时刻的整份排班数据（深拷贝） */
   data: DutySchedule[]
+  /**
+   * 快照元数据（S3，2026-10-26，FE-16）：固定保存当时的规则与人员显示信息，
+   * 使历史快照不因删除人员或改规则而损坏、不被当前配置重新解释。
+   * 缺省（旧快照）= 无元数据，界面按"有限制"展示。
+   */
+  meta?: {
+    formatVersion: number
+    /** 快照时刻的排班规则（SchedulingRules 的序列化形式；消费方经 normalizeRules 归一） */
+    rules: unknown
+    /** 快照时刻的人员显示信息（id+姓名），恢复对比时避免依赖当前名单 */
+    assistants: Array<{ id: number; name: string }>
+  }
 }
