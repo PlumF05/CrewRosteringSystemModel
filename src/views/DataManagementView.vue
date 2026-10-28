@@ -57,15 +57,20 @@ async function onRestoreFile(e: Event) {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  const json = await file.text()
-  const v = validateBackup(json)
-  if (!v.ok) {
-    ElMessage.error(`备份文件无法使用：${v.errors.join('；')}`)
-    return
+  try {
+    const json = await file.text()
+    const v = validateBackup(json)
+    if (!v.ok) {
+      ElMessage.error(`备份文件无法使用：${v.errors.join('；')}`)
+      return
+    }
+    pendingJson.value = json
+    pendingValidation.value = v
+    confirmVisible.value = true
+  } catch (err) {
+    // 兜底：任何未预料的解析异常都不应静默（自查修复 2026-10-26）
+    ElMessage.error(err instanceof Error ? `无法读取备份文件：${err.message}` : '无法读取备份文件')
   }
-  pendingJson.value = json
-  pendingValidation.value = v
-  confirmVisible.value = true
 }
 
 async function doRestore() {

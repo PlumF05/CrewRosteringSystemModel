@@ -160,7 +160,12 @@ async function doToggleLock(row: DutySchedule) {
 }
 
 async function doMove() {
-  if (!moveRowId.value) return
+  if (!moveRowId.value || !props.context) return
+  // 服务端对"移到原位置"是静默无操作——这里前置拦截，避免显示误导性的"已移动"
+  if (moveDay.value === props.context.dayOfWeek && moveSlot.value === props.context.slotKey) {
+    ElMessage.warning('目标位置与当前位置相同')
+    return
+  }
   await run(
     () => moveAssignment(moveRowId.value!, { dayOfWeek: moveDay.value, timeSlot: moveSlot.value }, baseRevision),
     '已移动',

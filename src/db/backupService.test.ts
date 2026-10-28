@@ -46,6 +46,37 @@ describe('备份（FE-19）', () => {
     expect(b.filename).toMatch(/^crsm-backup-\d{8}-\d{4}\.json$/)
   })
 
+  it('自查修复回归：结构不全的备份被拒绝且校验器不抛异常（此前缺 dutySchedule 会 TypeError）', () => {
+    const partial = JSON.stringify({
+      formatVersion: 1,
+      exportedAt: '2026-10-26T00:00:00.000Z',
+      includesPersonalInfo: false,
+      counts: {},
+      content: { assistants: [] }, // 缺 courses/dutySchedule/scheduleSnapshots/config
+      checksum: 'x',
+    })
+    let v: ReturnType<typeof validateBackup> | null = null
+    expect(() => (v = validateBackup(partial))).not.toThrow()
+    expect(v!.ok).toBe(false)
+    expect(v!.errors[0]).toContain('结构不完整')
+
+    // 逐个字段缺失同样拒绝
+    for (const drop of ['courses', 'dutySchedule', 'scheduleSnapshots', 'config'] as const) {
+      const file = {
+        formatVersion: 1,
+        content: {
+          assistants: [],
+          courses: [],
+          dutySchedule: [],
+          scheduleSnapshots: [],
+          config: [],
+          [drop]: undefined,
+        },
+      }
+      expect(validateBackup(JSON.stringify(file)).ok).toBe(false)
+    }
+  })
+
   it('校验拒绝：未知新版本 / 篡改内容 / 非 JSON / 重复学号 / 引用缺失', async () => {
     await seed()
     const b = await createBackup()

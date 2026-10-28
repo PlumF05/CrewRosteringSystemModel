@@ -137,7 +137,18 @@ export function validateBackup(json: string): BackupValidation {
   if (typeof file.formatVersion !== 'number') errors.push('缺少格式版本信息')
   else if (file.formatVersion > BACKUP_FORMAT_VERSION)
     errors.push(`备份来自更新版本的程序（v${file.formatVersion} > 本程序支持 v${BACKUP_FORMAT_VERSION}），请先升级程序再导入`)
-  if (!file.content || !Array.isArray(file.content.assistants)) errors.push('备份结构不完整（缺少助理数据）')
+  // 结构完整性：五个内容字段必须齐全且为数组——缺任一项时后续 .map 会抛异常，
+  // 必须在这里拦截而不是让校验器崩溃（自查修复 2026-10-26：此前只检查了 assistants）
+  if (
+    !file.content ||
+    !Array.isArray(file.content.assistants) ||
+    !Array.isArray(file.content.courses) ||
+    !Array.isArray(file.content.dutySchedule) ||
+    !Array.isArray(file.content.scheduleSnapshots) ||
+    !Array.isArray(file.content.config)
+  ) {
+    errors.push('备份结构不完整（缺少助理/课程/排班/快照/配置数据之一）')
+  }
   if (errors.length > 0) return { ok: false, errors }
 
   const c = file.content
