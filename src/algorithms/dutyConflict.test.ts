@@ -100,10 +100,9 @@ describe('findDutyConflicts（导入课程表后的冲突检测）', () => {
   })
 
   it('与真实仓储联动：按主键删除冲突排班后不再检出', async () => {
-    await dutyScheduleRepo.replaceWeek(1, [
-      { weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: 1 },
-      { weekNo: 1, dayOfWeek: 1, timeSlot: 'c2', assistantId: 1 },
-    ])
+    // 数据准备改用逐条 add（replaceWeek 已在 2026-10-26 自查时移除，避免逐周替换语义复活）
+    await dutyScheduleRepo.add({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c1', assistantId: 1 })
+    await dutyScheduleRepo.add({ weekNo: 1, dayOfWeek: 1, timeSlot: 'c2', assistantId: 1 })
     const rows = await dutyScheduleRepo.listByWeek(1)
     const out = findDutyConflicts({
       rules,

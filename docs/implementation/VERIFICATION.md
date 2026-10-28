@@ -232,6 +232,7 @@
 - **缺陷 2（ManualAdjustDialog）**："移动到原位置"时服务端按设计静默无操作，但界面显示"已移动"成功提示——误导。修复：组件层前置拦截并提示"目标位置与当前位置相同"。
 - **复查确认无恙的高风险路径**：撤销条目转移的结构匹配（JSON 快照比对）、恢复后 scheduleWriteRevision 对齐使增量零改动语义成立、improve 让位搬移经评价器兜底连续段、Dexie 嵌套事务表清单、worker 输入可结构化克隆、备份恢复自增 id 不复用、config 全清后重置键顺序。
 - 结果：`npx vitest run` **299/299**（新增 1 例）；`npm run build` 通过。
+- **第二轮（同日，代码质量轮）**：① 删除 `dutyScheduleRepo.replaceWeek`（审计 §5.2 缺陷来源、生产零引用——保留会诱导逐周替换复活；唯一测试引用改为逐条 add 构造）；② 删除 improve.ts 死代码 `scoreKey`；③ incremental.ts `baselineAsWeek` 的缺口映射改为 `actual = required - short` 恒等推导，去掉循环内重复 `buildSlots` 回查（每周最多 40 次的冗余构建）；④ 复读 scheduleDiff/scheduleGrid/dutyConflict 确认无边界问题（键去重/并集/未知节次语义一致）。`npx vitest run` **299/299**；build 通过。
 
 ## V-005 S0 夹具恢复与测试基线修复（2026-10-26，对应 FE-01）
 

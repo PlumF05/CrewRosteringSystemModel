@@ -95,8 +95,6 @@ function better(a: QualityScore, b: QualityScore): boolean {
   )
 }
 
-const scoreKey = (s: QualityScore) => `${s.emptyDays}|${s.unmetSlots}|${s.belowMinSum}|${s.fairnessVariance}`
-
 /** 确定性伪随机（seed 驱动，用于同分候选的稳定扰动） */
 function makeRng(seed: number): () => number {
   let s = seed >>> 0 || 1
@@ -309,7 +307,6 @@ export function improveWeek(
     })
     .sort((x, y) => x.assistantId - y.assistantId)
 
-  void scoreKey
   return {
     week: {
       ...week,

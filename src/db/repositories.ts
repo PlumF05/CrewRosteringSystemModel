@@ -180,16 +180,10 @@ export const dutyScheduleRepo = {
     await db.duty_schedule.where('weekNo').equals(weekNo).delete()
   },
 
-  /** 整周替换（自动排班/重排的落库语义：清周 + 批量写入，事务保证） */
-  async replaceWeek(weekNo: number, rows: NewDuty[]): Promise<number> {
-    const ts = now()
-    return db.transaction('rw', db.duty_schedule, async () => {
-      await db.duty_schedule.where('weekNo').equals(weekNo).delete()
-      return db.duty_schedule.bulkAdd(
-        rows.map((r) => ({ status: 'normal', source: 'auto', ...r, weekNo, createdAt: ts, updatedAt: ts }) as DutySchedule),
-      )
-    })
-  },
+  // 整周替换 replaceWeek 已于 2026-10-26 自查时删除：它是审计 §5.2
+  // "逐周原子 ≠ 全周期原子"缺陷的来源，且生产代码零引用——全周期保存统一走
+  // scheduleService.saveFullCycle（单事务 + 版本 CAS + 锁定携带），保留此方法
+  // 只会诱导未来调用方重新引入部分更新风险。
 }
 
 export const scheduleSnapshotRepo = {

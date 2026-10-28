@@ -19,7 +19,6 @@ import { evaluateSchedule } from './evaluate'
 import { scheduleAll } from './greedy'
 import {
   assertRulesValid,
-  buildSlots,
   type Assignment,
   type BaseScheduleInput,
   type RejectedKeep,
@@ -98,14 +97,13 @@ function baselineAsWeek(
   for (const g of report.gaps) {
     if (g.type !== 'slot-understaffed') continue
     const m = /缺 (\d+)/.exec(g.evidence ?? '')
-    const slots = buildSlots(input.rules)
-    const slot = slots.find((s) => s.dayOfWeek === g.dayOfWeek && s.key === g.slotKey)
+    const short = m ? Number(m[1]) : input.rules.minPerSlot
     unmetSlots.push({
       dayOfWeek: g.dayOfWeek!,
       slotKey: g.slotKey!,
-      short: m ? Number(m[1]) : input.rules.minPerSlot,
+      short,
       required: input.rules.minPerSlot,
-      actual: slot ? input.rules.minPerSlot - (m ? Number(m[1]) : input.rules.minPerSlot) : 0,
+      actual: input.rules.minPerSlot - short, // 恒等推导，无需回查时段表
       reason: g.message,
     })
   }
