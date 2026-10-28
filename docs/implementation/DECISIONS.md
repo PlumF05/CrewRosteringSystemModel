@@ -10,9 +10,9 @@
 
 ## D-02 git 历史清洗与强推（2026-10-26，用户明确授权）
 
-- **背景**：公开仓库 `PlumF05/CrewRosteringSystemModel` 的 git 历史中残留真实学生数据：`王五.xlsx`、`赵四.xlsx`、`李四.xlsx`、`timeTableForStu12.xlsx`（含 Excel 锁文件）、`test-export.xlsx`（含真实格式手机号与姓名）、`src/algorithms/__fixtures__/regression-3assistants.json`（真实课表 dump），以及 SRS/测试文件与 4 条提交信息中的真实姓名。
+- **背景**：公开仓库 `PlumF05/CrewRosteringSystemModel` 的 git 历史中残留真实学生数据：`真实学生甲.xlsx`、`真实学生乙.xlsx`、`真实学生丁.xlsx`、`timeTableForStu12.xlsx`（含 Excel 锁文件）、`test-export.xlsx`（含真实格式手机号与姓名）、`src/algorithms/__fixtures__/regression-3assistants.json`（真实课表 dump），以及 SRS/测试文件与 4 条提交信息中的真实姓名。
 - **决定**：用户在"转私有 / 清洗历史强推 / 暂不处理"中明确选择**清洗历史并强推**，构成对目标文档"不强推或重写历史"约束的一次性明确豁免（仅限本次隐私清洗，不构成常态）。
-- **执行**：`git filter-repo --force --invert-paths <7 个路径> --replace-text/--replace-message`（庞士豪→示例学生C、王五→示例学生A、赵四→示例学生B、李四→示例学生D）。49 → 41 个提交（8 个变空提交被剪除）。
+- **执行**：`git filter-repo --force --invert-paths <7 个路径> --replace-text/--replace-message`（真实学生丙→示例学生C、真实学生甲→示例学生A、真实学生乙→示例学生B、真实学生丁→示例学生D）。49 → 41 个提交（8 个变空提交被剪除）。
 - **哈希映射**：审查基线 **旧 `38aaa2b` → 新 `f86f6b6`**；`fullstack` 新提交 `9546815` → `9b75973`。所有文档后续引用新哈希。
 - **验证**：历史中 xlsx 仅剩 `samples/示例学生A/B/C.xlsx`；四个真实姓名在全部 blob 与提交信息中零残留；手机号模式仅剩 `13800000001/2`（显式测试假号码）与 Cargo.lock 哈希子串误报。详见 VERIFICATION.md V-002。
 - **本地备份**：清洗前全量 bundle 存于 `C:\Users\pang\AppData\Local\Temp\crsm-pre-sanitize.bundle`（含旧历史，仅本机；确认无误后可自行删除——它是旧数据在本地的最后一份副本）。

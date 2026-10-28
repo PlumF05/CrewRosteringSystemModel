@@ -26,12 +26,12 @@
 
 清洗前侦察（本地执行）：
 
-- 历史含 9 个 xlsx：3 个真实姓名文件（王五/赵四/李四.xlsx）、timeTableForStu12.xlsx(+~$锁文件)、test-export.xlsx（二进制，含真实格式手机号）、samples/示例学生A/B/C.xlsx（脱敏，保留）。
+- 历史含 9 个 xlsx：3 个真实姓名文件（真实学生甲/真实学生乙/真实学生丁.xlsx）、timeTableForStu12.xlsx(+~$锁文件)、test-export.xlsx（二进制，含真实格式手机号）、samples/示例学生A/B/C.xlsx（脱敏，保留）。
 - 回归夹具 `regression-3assistants.json` 为真实课表 dump（仅姓名+课程，无电话/学号字段）。
-- 提交信息 4 条含真实姓名（"Delete 王五/赵四.xlsx"）。
+- 提交信息 4 条含真实姓名（"Delete 真实学生甲/真实学生乙.xlsx"）。
 - 手机号模式扫描：真实格式命中均在 test-export.xlsx（二进制）与 Cargo.lock 哈希子串（误报）；测试源码仅 13800000001/2 假号码。
 
-执行：`git filter-repo --force --invert-paths --path 王五.xlsx --path 赵四.xlsx --path 李四.xlsx --path timeTableForStu12.xlsx --path '~$timeTableForStu12.xlsx' --path test-export.xlsx --path src/algorithms/__fixtures__/regression-3assistants.json --replace-text <规则> --replace-message <规则>`
+执行：`git filter-repo --force --invert-paths --path 真实学生甲.xlsx --path 真实学生乙.xlsx --path 真实学生丁.xlsx --path timeTableForStu12.xlsx --path '~$timeTableForStu12.xlsx' --path test-export.xlsx --path src/algorithms/__fixtures__/regression-3assistants.json --replace-text <规则> --replace-message <规则>`
 
 清洗后验证（全部通过）：
 
@@ -255,7 +255,7 @@
 ## V-005 S0 夹具恢复与测试基线修复（2026-10-26，对应 FE-01）
 
 - **背景**：V-002 历史清洗把 `src/algorithms/__fixtures__/regression-3assistants.json` 从全部历史移除时，工作树中该文件（2026-09-13 的**脱敏重建版**：示例学生A/B/C、131 条课程）也被一并删除，导致 greedy.test.ts 51 个用例无法加载（162→111）。
-- **方式**：从本机备份 bundle（`C:\Users\pang\AppData\Local\Temp\crsm-pre-sanitize.bundle`，D-02 记录）提取 38aaa2b 版夹具；提取后扫描 `庞士豪|王五|赵四|李四|1[3-9][0-9]{9}` **0 匹配**；核对结构（3 助理、131 课程、rules 下午 6~9）与测试期望一致后恢复到工作树。
+- **方式**：从本机备份 bundle（`C:\Users\pang\AppData\Local\Temp\crsm-pre-sanitize.bundle`，D-02 记录）提取 38aaa2b 版夹具；提取后扫描 `真实学生丙|真实学生甲|真实学生乙|真实学生丁|1[3-9][0-9]{9}` **0 匹配**；核对结构（3 助理、131 课程、rules 下午 6~9）与测试期望一致后恢复到工作树。
 - **结果**：`npm test` 11 文件/162 用例全部通过（含 greedy.test.ts 51 项：补位迭代、全周期无课程冲突、第 1 周五天覆盖、均衡守恒、确定性）；`npm run build` 通过（661ms）。
 - **边界**：证明算法基线恢复到清洗前水平；不证明 P01～P08 已修复（那是 S1 的任务，见 FE-03）；临时 bundle 克隆目录已删除，bundle 本体仍含旧历史（见 D-02）。
 
