@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRSM 学习材料汇编</title>
+<style>
+:root{--p:#4f6ef2;--ink:#1f2430;--mut:#6b7280;--bg:#f4f6fa;--card:#fff;--line:#e5e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+.layout{display:flex;min-height:100vh}
+nav{width:292px;flex:none;background:linear-gradient(180deg,#232a4d,#1c2240);color:#c8cdea;padding:22px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+nav .brand{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px}
+nav .brand b{color:#fff;font-size:17px;display:block}
+nav .brand span{font-size:11.5px;opacity:.6}
+nav a{display:block;padding:9px 20px;color:#b6bdd9;text-decoration:none;border-left:3px solid transparent}
+nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+nav a.on{border-left-color:var(--p);background:linear-gradient(90deg,rgba(79,110,242,.35),transparent);color:#fff}
+nav .toc-t{display:block;font-size:13.5px;font-weight:600}
+nav .toc-d{display:block;font-size:11px;opacity:.55;margin-top:2px}
+main{flex:1;padding:34px 44px 90px;max-width:1060px}
+.hero{background:linear-gradient(135deg,#4f6ef2,#7a5cf0);color:#fff;border-radius:16px;padding:30px 34px;margin-bottom:30px;box-shadow:0 10px 30px rgba(79,110,242,.25)}
+.hero h1{margin:0 0 8px;font-size:25px}
+.hero p{margin:4px 0;opacity:.92;font-size:13.5px;line-height:1.8}
+.badge{display:inline-block;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:12px;margin:6px 8px 0 0}
+section{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(30,41,82,.06);padding:30px 36px;margin-bottom:30px}
+section h1{margin:0 0 6px;font-size:22px;color:#232a4d;border-bottom:2px solid var(--p);padding-bottom:10px}
+.sec-desc{color:var(--mut);font-size:13px;margin:10px 0 22px}
+h2{font-size:18px;margin:30px 0 10px;color:#2c3350;border-left:4px solid var(--p);padding-left:10px}
+h3{font-size:15.5px;margin:24px 0 8px;color:#37406b}
+h4{font-size:14px;margin:18px 0 6px}
+p,li{font-size:13.8px;line-height:1.95}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:12.8px}
+th{background:#f0f3fc;text-align:left}
+th,td{border:1px solid var(--line);padding:7px 10px;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfd}
+code{background:#eef1f8;border-radius:4px;padding:1px 6px;font-family:Consolas,monospace;font-size:12.5px;color:#3b49c4}
+pre{background:#20243d;color:#dbe2ff;border-radius:10px;padding:14px 16px;overflow-x:auto}
+pre code{background:none;color:inherit;padding:0}
+blockquote{border-left:4px solid #b9c3f5;background:#f2f4fd;margin:12px 0;padding:8px 14px;border-radius:0 8px 8px 0;color:#41506e}
+hr{border:none;border-top:1px dashed var(--line);margin:22px 0}
+a{color:var(--p)}
+ul,ol{padding-left:24px}
+@media print{nav{display:none}main{padding:0}section{box-shadow:none;border:1px solid var(--line);page-break-inside:avoid}}
+footer{color:var(--mut);font-size:12px;text-align:center;padding:10px 0 40px}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand"><b>CRSM 学习材料汇编</b><span>学院行政办助理排班系统 · 全部学习资源单文件版</span></div>
+  <div style="padding:4px 20px 12px"><input id="q" placeholder="🔍 搜索章节…" style="width:100%;padding:7px 12px;border-radius:8px;border:none;background:rgba(255,255,255,.12);color:#fff;outline:none"></div>
+  <a href="#sec-guide"><span class="toc-t">① 项目指导书</span><span class="toc-d">零基础入口：项目是什么、技术栈白话、…</span></a><a href="#sec-demo"><span class="toc-t">② 十分钟演示脚本</span><span class="toc-d">按六幕演示全部核心能力，每步含预期现…</span></a><a href="#sec-glossary"><span class="toc-t">③ 业务术语表</span><span class="toc-d">排班领域的精确用语与"避免使用"注记…</span></a><a href="#sec-accept"><span class="toc-t">④ 验收矩阵</span><span class="toc-d">FE-01~24 验收状态、原始需求…</span></a><a href="#sec-verify"><span class="toc-t">⑤ 验证台账</span><span class="toc-d">V-001~V-026 每条验证的命…</span></a><a href="#sec-trouble"><span class="toc-t">⑥ 排障手册</span><span class="toc-d">T-001~T-015 真实踩坑：现…</span></a><a href="#sec-adr"><span class="toc-t">⑦ 架构决策记录</span><span class="toc-d">ADR-001 存储/打包选型、AD…</span></a><a href="#sec-learn"><span class="toc-t">⑧ 学习指南（AI 完成后）</span><span class="toc-d">代码地图、五条关键调用链、算法与事务…</span></a>
+</nav>
+<main>
+  <div class="hero">
+    <h1>学院行政办助理排班系统（CRSM）· 学习材料汇编</h1>
+    <p>本页面整合项目全部学习资源：从零基础项目指导书，到验收矩阵、验证台账、排障手册与架构决策。左侧目录按<b>推荐学习顺序</b>排列，点击跳转；顶部搜索框可过滤章节。</p>
+    <span class="badge">304 项测试全绿</span><span class="badge">FE-01~22 已验收</span><span class="badge">P01~P08 已关闭</span><span class="badge">入口包 101KB</span><span class="badge">离线桌面应用</span>
+    <p style="margin-top:10px;font-size:12.5px;opacity:.85">建议路线：先读 ①② 建立全貌 → 跑一遍演示 → 用 ⑧ 的五条调用链跟代码 → 遇到问题查 ⑥ → 想知道"为什么这样设计"读 ⑦ 和 ⑤。</p>
+  </div>
+  <section id="sec-guide"><h1>① 项目指导书</h1><p class="sec-desc">零基础入口：项目是什么、技术栈白话、数据模型、六大流程跟代码、设计思想、逐文件导读、上手任务</p><h2>CRSM 项目指导书（初学者版）</h2>
+<blockquote>目标读者：懂一点后端（数据库、事务、HTTP），但<strong>几乎没写过前端</strong>的你。</blockquote>
+<blockquote>读法：第 1~3 章建立全貌 → 第 4~5 章逐流程跟代码 → 第 6~8 章理解设计思想与逐文件导读。</blockquote>
+<blockquote>所有代码引用都是真实路径与真实行为，可边读边打开对照。术语见 <a href="../GLOSSARY.md" target="_blank" rel="noopener">GLOSSARY</a>。</blockquote>
+<hr>
+<h3>1. 这个项目是什么</h3>
+<p>学院行政办公室每学期要给几十名学生助理排值班表。手工排要避开每个人的上课时间、兼顾人数和工时公平，非常繁琐。本系统把它自动化：</p>
+<pre><code>导入学生课表(Excel) → 一键生成 17 周值班方案 → 手动微调 → 写入 → 导出带格式的 Excel 排班表
+                                                              ↘ 备份/换机交接（一个 JSON 文件）</code></pre>
+<p>它是 <strong>Windows 离线桌面应用</strong>：没有服务器、没有账号、不联网——所有数据存在本机浏览器的 IndexedDB 数据库里，由 Tauri 把网页"装进"一个桌面窗口。</p>
+<h3>2. 技术栈白话解释（后端类比版）</h3>
+<table><thead><tr><th>技术</th><th>是什么</th><th>后端类比</th></tr></thead><tbody>
+<tr><td><strong>Vue 3</strong></td><td>前端界面框架。写"组件"（.vue 文件 = 模板 + 脚本 + 样式三段），数据变了界面自动变</td><td>类似模板引擎 + 自动重新渲染的 JSP/Thymeleaf</td></tr>
+<tr><td><strong>TypeScript</strong></td><td>带类型的 JavaScript，编译期查错</td><td>就是 Java/C# 的类型系统移植到 JS</td></tr>
+<tr><td><strong>Vite</strong></td><td>开发服务器 + 打包器</td><td>类似 spring-boot-devtools 热重载 + Maven package</td></tr>
+<tr><td><strong>Element Plus</strong></td><td>现成 UI 组件库（按钮/表格/弹窗）</td><td>类似 Bootstrap，但组件是"活的"</td></tr>
+<tr><td><strong>Vue Router</strong></td><td>页面切换（URL → 组件），单页应用不刷新</td><td>类似后端路由表，但分发到组件而非 Controller</td></tr>
+<tr><td><strong>Pinia</strong></td><td>跨组件共享状态的库（本项目装了暂未用，页面内状态用 <code>ref</code> 即可）</td><td>类似会话级 Bean</td></tr>
+<tr><td><strong>Dexie</strong></td><td>IndexedDB 的封装（IndexedDB 是浏览器内置的本地 NoSQL 数据库）</td><td>类似一个轻量 ORM，支持事务</td></tr>
+<tr><td><strong>Web Worker</strong></td><td>后台线程。排班计算放进去，界面不卡、可取消</td><td>类似独立线程池任务，靠消息通信</td></tr>
+<tr><td><strong>Tauri</strong></td><td>把网页打包成桌面 exe（用系统自带的 WebView 渲染）</td><td>类似 Electron 但用系统浏览器内核，体积小</td></tr>
+<tr><td><strong>xlsx-js-style</strong></td><td>读写 Excel 文件（支持单元格样式）</td><td>类似 Apache POI</td></tr>
+</tbody></table>
+<h3>3. 跑起来与目录结构</h3>
+<pre><code>npm ci            # 安装依赖（= mvn install）
+npm run dev       # 浏览器开发模式 http://localhost:1420
+npm test          # 304 项测试（Vitest）
+npm run build     # 类型检查 + 打包到 dist/
+npm run tauri dev # 桌面窗口开发模式</code></pre>
+<pre><code>src/
+├─ algorithms/   算法层（★纯函数：不 import Vue/Dexie，Node 里可直接测试）
+├─ db/           数据层（仓储 + 各业务服务：事务/版本/校验都在这）
+├─ workers/      排班计算线程
+├─ templates/    导入/导出模板管理
+├─ views/        页面（路由懒加载：进哪个页才下载哪个页的代码）
+├─ components/   从大页面拆出的组件（手调对话框/快照卡片）
+├─ utils/        工具（课表解析/周次解析/节次轴/导出）
+└─ layouts/      侧边栏 + 顶栏骨架</code></pre>
+<p><strong>一条铁律</strong>（分层纪律）：</p>
+<pre><code>views（页面）→ db/业务服务 → repositories（仓储）→ Dexie（IndexedDB）
+                     ↘ algorithms（纯函数）</code></pre>
+<p>页面永远不直接写数据库；算法永远不知道有界面。找不到一个反例——这是刻意的，好处是每层都能独立测试。</p>
+<h3>4. 数据模型：七张表（<code>src/db/schema.ts</code> + <code>src/db/database.ts</code>）</h3>
+<table><thead><tr><th>表</th><th>存什么</th><th>关键设计</th></tr></thead><tbody>
+<tr><td><code>assistant</code> 助理</td><td>姓名、学号（<strong>唯一索引</strong>）、身份、电话/QQ、个性化节数覆盖、<strong>课表状态</strong>（ready/confirmed_empty/needs_review，缺省=未导入）</td><td>"账号"与"助理"不分家——单机无登录</td></tr>
+<tr><td><code>course</code> 课程</td><td>助理id、课程名、类别、星期、<strong>节次原文</strong>（如"第三节-中课2"）、周次区间</td><td>节次存原文不存数字——数字+中课/晚课混排，原文是唯一真相</td></tr>
+<tr><td><code>duty_schedule</code> 排班</td><td>周、星期、时段(c{节号})、助理id、来源(auto/manual)、<strong>locked 锁定</strong>、<strong>短段例外原因</strong></td><td>复合唯一索引：同周同时段同人不可重复（数据库层兜底）</td></tr>
+<tr><td><code>config</code> 配置</td><td>键值对：排班规则 rules、模板 templates、<strong>dataRevision 业务版本</strong>、撤销日志 adjustJournal</td><td>JSON 结构化存储</td></tr>
+<tr><td><code>operation_log</code> 操作日志</td><td>谁在何时做了什么</td><td>追溯用</td></tr>
+<tr><td><code>schedule_snapshot</code> 命名快照</td><td>整份排班 + <strong>当时规则与人员名单（meta）</strong></td><td>自包含：删人改规则后历史不坏</td></tr>
+<tr><td><code>recovery_backup</code> 恢复副本</td><td>恢复备份前的当前数据</td><td>独立表隔离，最多留 5 份</td></tr>
+</tbody></table>
+<p><strong>schema 版本迁移</strong>（database.ts v1→v4）：Dexie 按版本号顺序执行 upgrade。v2/v3 各有"清空前归档"的历史故事（注释里写了为什么不能逐行平移节次键——会撞唯一索引）；v4 只是加表不动数据。<strong>加非索引字段不需要升版本</strong>（如 locked），只有加表/加索引才要。</p>
+<h3>5. 六大业务流程逐条跟代码</h3>
+<h4>5.1 导入一份课表（原子性 + 自动归档）</h4>
+<p>文件：<code>src/views/CoursesView.vue</code> → <code>src/db/importService.ts</code> → <code>src/utils/courseParser.ts</code></p>
+<pre><code>选文件 → parseTimetableWorkbook(字节, 模板锚点)     ← 纯解析：合并单元格展开、周次"5-17周单周"解析
+      → importTimetableForStudent(解析结果)          ← 一个数据库事务：
+          ① 按学号查助理：有→更新姓名/身份（保留电话QQ）；无→新建
+          ② replaceForAssistant：整体替换该生全部课程（重复导入=幂等）
+          ③ deriveImportStatus：推导课表状态（空课表=确认无课；有无法识别节次=待核对）
+          ④ 写操作日志 ⑤ dataRevision+1
+      → findDutyConflicts / findDutyNeedsReview      ← 影响分析：新课程与已写入排班的冲突/待核对清单</code></pre>
+<p><strong>为什么要一个事务包住①~⑤</strong>：中途失败（如课程写入出错）会留下"建了助理却没有课表"的半成品。Dexie 事务里任何一步抛错，全部回滚——这在测试里用"故意让某一步抛异常"验证过（故障注入）。</p>
+<p><strong>解析器要点</strong>（courseParser.ts，22 个测试）：学院课表是合并单元格的网格，先定位表头行（锚点"节次/星期"，可被导入模板配置），再把合并区域按左上角值展开，逐格拆"（本）课程号-课程名[班次] + 周次"。识别不了的节次<strong>不丢弃</strong>——标记为问题，导入后该生状态变"待核对"。</p>
+<h4>5.2 自动排班：贪心算法（<code>src/algorithms/greedy.ts</code>）</h4>
+<p>一次生成 17 周（<code>scheduleAll</code>），每周独立跑 <code>scheduleOneWeek</code>，五个阶段：</p>
+<pre><code>① 建时段表     工作日 × 上班节次 → 每节一格（key=c{节号}）
+② 算课程占用   每人的课换算到"节次序号轴"（见 6.2），有课的格标忙
+③ keep 预占    锁定项先入座——但必须先过安全校验（有课/超容量/超个人上限 → 拒绝+原因）
+④ 主分配       时段按"候选人数少的先排"（先难后易）；时段内候选按策略排序（见 5.2.1）
+⑤ 收尾         修复⇄撤销迭代（低于下限的补位；孤立短段撤销后再补，最多 4 轮）
+               → 每日均衡（消除"某天无人"：新建块/搬移整块，只动纯自动块）
+               → 终态清理（P08 教训：最后再撤销一次孤立短段，宁缺勿违规）</code></pre>
+<p><strong>5.2.1 候选策略</strong>（types.ts <code>candidateStrategy</code>，配置页可选）——只改排序维度先后，不碰任何约束检查：</p>
+<table><thead><tr><th>策略</th><th>排序</th></tr></thead><tbody>
+<tr><td>default</td><td>延续已有连续块 → 已排节数少 → 空闲稀缺 → id</td></tr>
+<tr><td>scarceFree 稀缺空闲优先</td><td>空闲少的人先拿安排</td></tr>
+<tr><td>identityFirst 身份优先</td><td>本科生先于研究生</td></tr>
+<tr><td>roundRobin 轮换优先</td><td>已排最少者优先（严格轮流）</td></tr>
+</tbody></table>
+<h4>5.3 手动调整与撤销（<code>src/db/manualAdjustService.ts</code>）</h4>
+<p>点排班表格子 → <code>ManualAdjustDialog</code>。每次操作（增/删/移/锁定/例外登记）：</p>
+<pre><code>1. 收集整周当前数据 → toEvaluation() 转成评价器输入
+2. 心算"改完后的整周" → evaluateSchedule() 独立复算
+3. diffViolations(改前, 改后)——只有【新增】的硬违规才拒绝（改前就有的旧问题不背锅）
+4. 拒绝时给出人话原因："星期1 c1 该生有课：「操作系统」（第一节-第二节）"
+5. 通过 → 写入 + 撤销日志（同一事务） + dataRevision+1</code></pre>
+<p><strong>撤销为什么是日志不是快照</strong>：每个操作记录"逆操作所需信息"（新增记整行；移动记来回两个位置）。撤销 = 在新事务里执行逆操作<strong>并再过一次第 3 步校验</strong>——如果这期间课程变了、撤销回去会撞新课，这次撤销被拒绝。快照式 undo 做不到这个。</p>
+<p><strong>CAS（乐观锁）</strong>：所有写操作带 <code>expectedRevision</code>（界面上次看到的版本号）。事务里先比对 <code>config.dataRevision</code>，不一致 → <code>StaleDataError</code>"数据已被其他窗口修改"。两个浏览器窗口同时改同一格，后保存的那个会被拦下——测试里用两条真实数据库连接验证过恰好一个成功。</p>
+<h4>5.4 增量重排（<code>src/algorithms/incremental.ts</code>）</h4>
+<p>对比全量重排（推倒重来），增量以<strong>已写入方案为基准</strong>：</p>
+<ul>
+<li>输入没变（<code>dataRevision == scheduleWriteRevision</code>，可验证）且基准合法 → <strong>零改动</strong>：原样返回，连算都不算；</li>
+<li>输入变了 → 把基准行<strong>全部</strong>作为 keep 传给贪心（锁定的来源记 manual，自动的仍记 auto）；违法的（新课程撞上）被第③步预占校验拒绝并带原因 → 只有被迫的地方变化；</li>
+<li>范围外周直接原样输出；</li>
+<li>差异按（周，星期，时段，人）输出 保留/新增/移除/替换 + 原因——原因来自拒绝明细等<strong>可验证信息</strong>，不编造因果。</li>
+</ul>
+<h4>5.5 导出与隐私（<code>src/utils/scheduleExport.ts</code>）</h4>
+<p>单周/多周（每周一个 sheet）/快照（用快照里固化的姓名与规则）三种导出。三条隐私红线由测试逐单元格扫描保证：</p>
+<ol>
+<li>永不写学号/QQ（导出输入根本没有这两个字段——结构上不可能泄）；</li>
+<li>电话开关关闭后，<strong>所有</strong> sheet 零电话（不只是主表）；</li>
+<li>全部单元格是文本类型——即使有人姓名叫 <code>=SUM(A1)</code> 也不会变成公式。</li>
+</ol>
+<h4>5.6 备份与恢复（<code>src/db/backupService.ts</code>）</h4>
+<pre><code>备份 = 跨表只读事务拿一致快照 → 序列化成一个 JSON（含内容摘要，只用于检错）
+恢复 = 五道校验（JSON？版本不高于本程序？摘要对得上？学号/排班键唯一？引用的人都存在？）
+     → 界面确认数量 → 当前数据先存 recovery_backup 独立表 → 单事务整体替换 → 重数一遍记录数</code></pre>
+<p>换机 = 新机器装应用 → 数据管理页导入这个 JSON。失败（比如文件被改坏）原数据分毫不动。</p>
+<h3>6. 三个值得学会的设计思想</h3>
+<h4>6.1 独立评价器：不信求解器的自述</h4>
+<p><code>src/algorithms/evaluate.ts</code> 是全项目最重要的一块。生成、手调、撤销、恢复、增量——<strong>每个会产出/修改排班的路径，最后都由它复算一遍</strong>：硬违规（课程冲突/超容量/连续段破坏…）存在则不许落库；软缺口（人数不足/低于下限）如实报告但不掩盖。</p>
+<p>为什么？项目历史上有个真实教训（审计 P08）：算法的"修复轮"会把孤立的 1 节值班塞回去凑数，而当时的测试只检查第 1 周——缺陷藏在第 3/10/11/12 周。评价器写完当天就把它抓了出来。<strong>教训：任何"生产者自己说合法"的系统都需要一个独立的终审。</strong></p>
+<h4>6.2 节次序号轴：领域错配的根治（<code>src/utils/sectionOrder.ts</code>）</h4>
+<p>学院课表的节次不是纯数字：<code>1,2,3,4,5,中课1,中课2,6,7,8,9,10,晚课,11,12,13</code>。旧版把排班表下午编成 8~11，与课表的 6~9 错位——同一节课两边编号不同，算法漏判，<strong>把人排进了上课时间</strong>。修复：建立唯一"序号轴"（中课1=第6个…），课程区间与排班时段都在这个轴上比较；且连续段不跨午休（上午最后一节与下午第一节不算连续）。</p>
+<p><strong>教训：两个子系统交换"同一概念"时，先统一坐标系。</strong></p>
+<h4>6.3 版本号 CAS：无锁的并发安全</h4>
+<p>没有服务器，怎么防两个窗口互相覆盖？借数据库乐观锁的思想：<code>config</code> 表存一个只增不减的 <code>dataRevision</code>；每个写事务开头校验"我看到的版本还是当前版本吗"，结尾版本+1。同版本的两个写入，后到的在事务里发现版本已变，拒绝并提示刷新。<strong>不需要锁，因为冲突在提交时才被检测。</strong></p>
+<h3>7. 逐文件导读（改代码从哪下手）</h3>
+<h4>algorithms/（纯函数，改这里不用碰任何界面）</h4>
+<table><thead><tr><th>文件</th><th>讲解</th></tr></thead><tbody>
+<tr><td><code>types.ts</code></td><td>领域字典：<code>SchedulingRules</code>（全部规则字段+注释）、<code>validateRules</code>（严格校验：整数/范围/星期1~7）、<code>normalizeRules</code>（旧配置兼容回填）、<code>buildSlots</code>（时段表）。<strong>加规则字段三件套</strong>：类型里加字段 → DEFAULT_RULES 加默认 → normalizeRules 回填</td></tr>
+<tr><td><code>greedy.ts</code></td><td>见 5.2。读入口 <code>scheduleAll</code> → <code>scheduleOneWeek</code>；keep 预占段（安全校验）、<code>removalPass</code>（撤孤立段）、均衡三策略（<code>moveBlockInto*</code>，只搬纯 auto 块）</td></tr>
+<tr><td><code>evaluate.ts</code></td><td>硬违规/软缺口两级判定 + <code>metrics</code>（覆盖矩阵/空白天/每人节数）。输出全是结构化对象，界面直接展示</td></tr>
+<tr><td><code>incremental.ts</code> / <code>improve.ts</code></td><td>见 5.4 / 计划§5.3。improve 是"双预算爬山"：<code>tryCandidate</code> 只在严格变优时应用——永不劣于基线</td></tr>
+<tr><td><code>timetableStatus.ts</code></td><td>四分类一行一个函数，含旧数据保守回填（有课程记录→ready）</td></tr>
+</tbody></table>
+<h4>db/（所有写库路径）</h4>
+<table><thead><tr><th>文件</th><th>讲解</th></tr></thead><tbody>
+<tr><td><code>repositories.ts</code></td><td>七张表的仓储。惯例：UI 只 import 这里。<code>assistantRepo.remove</code> 里看<strong>级联删除</strong>（课程+排班一并删，事务内）</td></tr>
+<tr><td><code>dataRevision.ts</code></td><td>40 行读完 CAS 全部：<code>withDataRevision(expected, tables, fn)</code></td></tr>
+<tr><td><code>importService.ts</code> / <code>batchImportService.ts</code></td><td>见 5.1。批量版多三件事：字节摘要判同内容重复、学号占用冲突拒绝、数量/大小限额</td></tr>
+<tr><td><code>scheduleService.ts</code></td><td><code>saveFullCycle</code>：17 周一个事务写入 + 锁定/例外携带 + 记录 scheduleWriteRevision（增量的零改动判定依据）</td></tr>
+<tr><td><code>manualAdjustService.ts</code></td><td>五个操作 + 撤销日志（<code>appendJournal</code>/<code>undoRedoAdjust</code>）+ 候选原因（<code>getSlotCandidates</code>）</td></tr>
+<tr><td><code>snapshotService.ts</code> / <code>backupService.ts</code></td><td>见 5.6；快照恢复多了"按当前人员课程复核，缺人/冲突阻止"</td></tr>
+<tr><td><code>courseService.ts</code></td><td>课程手动编辑：校验（周次文本走 parseWeekList）→ 事务写 → 状态重算 → 影响分析</td></tr>
+</tbody></table>
+<h4>workers/ 三个文件</h4>
+<p><code>scheduleJob.ts</code> 是纯计算内核（生成→改良→评价三阶段，发进度回调）；<code>scheduleWorker.ts</code> 是薄壳（收 run 消息、回 progress/result，<strong>不 import 任何 db</strong>）；<code>scheduleClient.ts</code> 管生命周期：jobId 递增 + 闭包 done 标志双重防迟到消息、取消=terminate、超时自动取消、环境不支持时回退主线程同一内核。</p>
+<h4>utils/ 四个工具</h4>
+<p><code>courseParser.ts</code>（解析，被模板参数化：三个锚点可配）；<code>weekParser.ts</code>（"1-4周,5-17周单周"→区间数组）；<code>sectionOrder.ts</code>（序号轴，见 6.2）；<code>scheduleExport.ts</code>（见 5.5，版式受导出模板控制：标题{week}占位/列宽/简洁打印）。</p>
+<h4>views/ 七个页面</h4>
+<p>仪表盘（可行动信息：缺课表/缺口/违规，点击直达）、助理管理（四分类状态列+确认按钮）、课程表管理（批量导入+手动编辑+冲突面板）、排班配置（全部规则+策略下拉）、排班表（预览/写入/增量/手调/撤销/快照/导出，项目最重组件）、模板管理、数据管理。</p>
+<h3>8. 测试体系（304 项怎么读）</h3>
+<table><thead><tr><th>测试文件</th><th>在验什么</th><th>初学者先读</th></tr></thead><tbody>
+<tr><td><code>algorithms/*.test.ts</code></td><td>算法不变量：无课程冲突/容量/连续段；策略/增量/改良语义</td><td>★ evaluate.test——看懂评价器就看懂了全项目的质量观</td></tr>
+<tr><td><code>db/*.test.ts</code></td><td>事务原子性（故障注入）、CAS、批量导入、备份校验、双连接并发</td><td>★ dataRevision.test——40 行 CAS 的全部语义</td></tr>
+<tr><td><code>utils/courseParser.test.ts</code></td><td>用仓库里三个<strong>脱敏真实课表</strong>做集成测试</td><td>理解"学院格式"长什么样</td></tr>
+<tr><td><code>concurrency.test.ts</code></td><td>两条真实数据库连接抢同一版本</td><td>感受 CAS 生效</td></tr>
+</tbody></table>
+<p>跑单项：<code>npx vitest run src/db/backupService.test.ts</code>。</p>
+<h3>9. 上手任务（由易到难）</h3>
+<ol>
+<li><strong>改文案</strong>：<code>src/utils/dict.ts</code> 里身份标签；跑测试确认没破坏。</li>
+<li><strong>加一条规则校验</strong>：在 <code>validateRules</code> 里禁止"最少节数 &gt; 周期×每天节数"（明显不可达），在 types.test.ts 加用例。</li>
+<li><strong>给仪表盘加一个统计</strong>：最近一次备份时间（读 <code>operation_log</code> 里 <code>backup.restore</code> 之前的…想清楚：导出备份不写日志！这题的答案是先补一条日志——这就是真实工作的样子）。</li>
+<li><strong>体验并发</strong>：开两个 <code>npm run dev</code> 窗口，同时手动调整同一格。</li>
+<li><strong>读一个缺陷的修复</strong>：git log 找 "P08"，读那个提交的 diff 与测试。</li>
+</ol>
+<h3>10. 常见问题</h3>
+<ul>
+<li><strong>为什么排不满 40 个时段？</strong> 3 人×上限 6 节=18 人节 &lt; 40——缺口如实报告（未满足清单），绝不超上限硬填。</li>
+<li><strong>为什么有人不参与排班？</strong> 课表状态是"未导入"或"待核对"（助理管理页看得到、可确认）。</li>
+<li><strong>手动加的人会被重排冲掉吗？</strong> 手动默认锁定；解锁的才会被视为可重新安排。锁定的位置若撞上新课程，重排时会被<strong>拒绝保留</strong>并给原因——锁定不豁免安全约束。</li>
+<li><strong>数据在哪？</strong> WebView 用户目录下的 IndexedDB（应用名 crsm）。安装到 D 盘不会搬数据；换机用备份文件。</li>
+<li><strong>两台电脑会同步吗？</strong> 不会——离线应用，备份导入后就是两个独立副本。</li>
+</ul>
+<hr>
+<p>配套阅读：[十分钟演示脚本（回退暂存中）] ｜ <a href="implementation/VERIFICATION.md" target="_blank" rel="noopener">VERIFICATION 验证台账</a> ｜ <a href="implementation/ACCEPTANCE.md" target="_blank" rel="noopener">ACCEPTANCE 验收矩阵</a> ｜ <a href="troubleshooting.md" target="_blank" rel="noopener">排障手册</a> ｜ <a href="adr/" target="_blank" rel="noopener">ADR 架构决策</a></p></section><section id="sec-demo"><h1>② 十分钟演示脚本</h1><p class="sec-desc">按六幕演示全部核心能力，每步含预期现象——演示即验收</p><p>（源文件缺失）</p></section><section id="sec-glossary"><h1>③ 业务术语表</h1><p class="sec-desc">排班领域的精确用语与"避免使用"注记（例如节次≠节次序号）</p><h2>CRSM 业务术语</h2>
+<p>本文件统一学院行政办助理排班的业务用语。标有“规划”的词条描述本次完善计划中的目标业务概念，不表示当前版本已经实现。</p>
+<p>2026-10-26 范围调整：当前目标保留原纯前端架构。本轮使用“当前排班、方案预览、命名快照”；下文当期参与记录、正式发布修订等旧 Web 方案规划词条不构成本轮必交付。</p>
+<h3>本轮方案与数据交接</h3>
+<p><strong>当前排班（规划）</strong>：用户当前保存、用于日常查看和导出的排班安排。</p>
+<p><strong>方案预览（规划）</strong>：尚未替换当前排班的候选安排，可以比较、修改或舍弃。</p>
+<p><strong>命名快照（规划）</strong>：用户固定保存的一份排班及其当时的规则、人员显示信息和输入依据，用于历史查看、对比、导出与受控恢复。</p>
+<p>_Avoid_：在线发布版本。</p>
+<p><strong>完整备份（规划）</strong>：能够恢复助理、课程、规则、安排及相关记录的一份业务数据副本，不等同于用于分发的排班表。</p>
+<p><strong>数据交接（规划）</strong>：通过备份或业务文件把资料转移到另一台电脑；交接后两台电脑的数据副本独立存在。</p>
+<p>_Avoid_：实时同步。</p>
+<h3>人员与时间</h3>
+<p><strong>助理</strong>：参加行政办值班的学生，具有学生身份、联系方式和课程安排；不是登录账号的同义词。</p>
+<p>_Avoid_：用户、账号。</p>
+<p><strong>当期参与记录（规划）</strong>：一名助理在一个学期内参加排班的资格、状态及个人值班要求。</p>
+<p>_Avoid_：永久工时配置、跨学期名单。</p>
+<p><strong>学期（规划）</strong>：一段具有确定教学日历的教学周期，是课程、排班规则和排班结果的归属范围。</p>
+<p><strong>排班周期</strong>：一次生成方案所覆盖的周次范围；可以是一个学期的全部或部分周次。</p>
+<p>_Avoid_：每周工时周期。</p>
+<p><strong>周次</strong>：某一天或某项安排在所属学期教学日历中的周序号。</p>
+<p><strong>节次</strong>：学院课程表中可辨认的教学时段，包括数字节次、中课和晚课。</p>
+<p>_Avoid_：节次序号。</p>
+<p><strong>节次序号</strong>：所有节次在一天内按实际先后排列的位置；数字节次的号码不一定等于该位置。</p>
+<p>_Avoid_：节号。</p>
+<p><strong>值班节数</strong>：分配给助理的值班量，以排班节次计数。现有算法的个人上下限实际按每周分别计算。</p>
+<p>_Avoid_：小时数、全周期累计工时。</p>
+<h3>约束与求解</h3>
+<p><strong>课程占用</strong>：一名助理在有效周次、星期和节次上因课程而不可值班的状态。</p>
+<p><strong>连续值班段</strong>：同一助理在同一天、同一工作区段内实际连续的一组值班节次。</p>
+<p>_Avoid_：数字节号相邻。</p>
+<p><strong>覆盖缺口</strong>：某一排班时段实际值班人数低于要求下限的差额。</p>
+<p>_Avoid_：硬约束冲突。</p>
+<p><strong>手动安排</strong>：由排班老师指定的人与时段关系，表示安排的来源。</p>
+<p>_Avoid_：锁定项。</p>
+<p><strong>锁定项（规划）</strong>：在明确周次和时段上要求求解过程保持不变的安排；锁定不能使课程冲突等不可豁免条件变为合法。</p>
+<p>_Avoid_：所有手动安排、全周期保留项。</p>
+<p><strong>增量重排</strong>：以已有方案为基准，保留有效锁定并优先减少变动，对受输入变化影响的安排重新计算。</p>
+<p>_Avoid_：直接覆盖全部旧排班。</p>
+<h3>方案与协作（规划）</h3>
+<p><strong>排班方案</strong>：针对确定学期和排班周期的一套候选工作安排。</p>
+<p><strong>排班草稿</strong>：尚未发布、可在权限和校验约束下编辑的候选安排。</p>
+<p><strong>输入快照</strong>：生成某个方案时实际采用的课程、人员资格、规则、节次和可用性条件的固定集合。</p>
+<p>_Avoid_：当前实时配置。</p>
+<p><strong>发布版本</strong>：正式对助理生效的一次完整排班修订；发布后作为历史依据保留。</p>
+<p>_Avoid_：可直接覆盖的当前表。</p>
+<p><strong>新修订</strong>：基于已有方案产生的后续候选或正式安排，不改变原发布版本的历史含义。</p>
+<p><strong>调班申请</strong>：助理请求改变已发布值班安排的业务请求；提交申请本身不使新安排生效。</p>
+<p>_Avoid_：直接修改已发布排班。</p></section><section id="sec-accept"><h1>④ 验收矩阵</h1><p class="sec-desc">FE-01~24 验收状态、原始需求 F01~F08 映射、基线缺陷 P01~P08 核销</p><h2>CRSM 原架构完善验收台账</h2>
+<p>当前依据：<a href="../plans/CRSM-FRONTEND-IMPROVEMENT-PLAN.md" target="_blank" rel="noopener">原架构完善计划</a> §13 与当前 CRSM-ZCODE-GOAL.md。旧 Web A01～A32 已归档，不再作为当前目标。</p>
+<p>原始 F01～F08 必须全部完成；P01～P08 必须按新语义复核关闭。状态 pending 不表示功能已实现；verified 必须链接 VERIFICATION.md 的真实证据。</p>
+<table><thead><tr><th>编号</th><th>验收摘要</th><th>状态</th><th>证据</th></tr></thead><tbody>
+<tr><td>FE-01</td><td>合成夹具恢复算法测试，全量测试/构建通过</td><td>verified</td><td>V-005：脱敏夹具恢复，162/162 + build 通过</td></tr>
+<tr><td>FE-02</td><td>严格规则、周次/节次和课表状态</td><td>verified</td><td>V-008（P06/P07 严格校验）+ V-010（四分类与确认入口）</td></tr>
+<tr><td>FE-03</td><td>P01～P08 修复后验证与独立终态评价</td><td>verified</td><td>V-007/008/009/010：八项全部关闭，含独立评价器与全周评价</td></tr>
+<tr><td>FE-04</td><td>缺口、均衡取舍、策略说明</td><td>verified</td><td>V-025：四策略预设（构造场景+全策略过评价器）+ 空白天列；缺口/均衡取舍见 V-007/V-023</td></tr>
+<tr><td>FE-05</td><td>批量混合结果、去重/重试、归属冲突</td><td>verified</td><td>V-013：混合批次逐项正确、同内容跳过、同号冲突拒绝</td></tr>
+<tr><td>FE-06</td><td>导入与课程修改原子回滚</td><td>verified</td><td>V-011（导入故障注入全回滚）+ V-012（课程编辑单事务）</td></tr>
+<tr><td>FE-07</td><td>课程手改、实验分批与影响分析</td><td>verified</td><td>V-012：增改删+状态重算+冲突/待核对影响闭环</td></tr>
+<tr><td>FE-08</td><td>手调增删移动、安全检查、短段例外</td><td>verified</td><td>V-014：五操作+候选冲突解释+例外登记（服务/测试）；GUI 实测归 S6 E2E</td></tr>
+<tr><td>FE-09</td><td>按周锁定、均衡保护、uniform 冲突</td><td>verified</td><td>V-009（算法层）+ V-014（锁定贯穿重排与 UI）</td></tr>
+<tr><td>FE-10</td><td>undo/redo 持久、版本递增与陈旧操作拒绝</td><td>verified</td><td>V-015：编辑链持久、截断、逆操作校验、CAS、失效跳过</td></tr>
+<tr><td>FE-11</td><td>双 Dexie 连接竞争时无丢失更新</td><td>verified</td><td>V-016：真实双连接并发，恰好一个成功</td></tr>
+<tr><td>FE-12</td><td>全周期保存原子</td><td>verified</td><td>V-011：saveFullCycle 单事务 + 故障注入全回滚 + 旧预览拒绝</td></tr>
+<tr><td>FE-13</td><td>增量少改动、范围与差异正确</td><td>verified</td><td>V-017：零改动快路径/范围外保持/锁定与来源语义/带原因差异</td></tr>
+<tr><td>FE-14</td><td>有界改良/小实例/确定性与合法基线比较</td><td>verified</td><td>V-018：不劣于基线/保留最佳/双预算/固定 seed 稳定</td></tr>
+<tr><td>FE-15</td><td>原生 Worker、取消/超时/迟到消息无落库</td><td>verified</td><td>V-019：协议语义全测 + worker chunk 打包实测；桌面包实测归 FE-23</td></tr>
+<tr><td>FE-16</td><td>快照自包含、历史导出与受控恢复</td><td>verified</td><td>V-016：自包含元数据、对比、受控恢复（缺人/冲突阻止）；历史导出归 S5</td></tr>
+<tr><td>FE-17</td><td>导入/导出双模板管理与版本</td><td>verified</td><td>V-020：受控字段/试解析/版本化恢复/两套内置导出版式</td></tr>
+<tr><td>FE-18</td><td>单周/多周/历史导出、隐私和文本边界</td><td>verified</td><td>V-021：全 sheet 隐私/公式断言 + 快照固定信息导出</td></tr>
+<tr><td>FE-19</td><td>一致备份、版本/关联/摘要与保存取消</td><td>verified</td><td>V-022：只读事务一致快照+摘要检错+五类校验拒绝；取消保存不提示成功</td></tr>
+<tr><td>FE-20</td><td>恢复回滚、独立恢复副本与跨机恢复</td><td>verified</td><td>V-022：注入回滚/副本隔离/空库恢复（模拟第二台机器）；物理跨机归 FE-23</td></tr>
+<tr><td>FE-21</td><td>schema3 无损升级、旧版本保全与未知格式拒绝</td><td>verified</td><td>V-022（v3→v4 无损 + 未知备份版本拒绝）+ 既有 v1~v3 迁移测试</td></tr>
+<tr><td>FE-22</td><td>性能/包体、可行动首页与异常界面</td><td>verified</td><td>V-023：1250ms≤5s/9ms≤3s/入口-22%/主页可行动项/CI；页面秒表复核归 S7</td></tr>
+<tr><td>FE-23</td><td>干净机器断网安装到首次完整流程</td><td>pending</td><td></td></tr>
+<tr><td>FE-24</td><td>文档、演示和学习资料真实，无必需网络服务</td><td>pending</td><td></td></tr>
+</tbody></table>
+<table><thead><tr><th>原始需求</th><th>对应当前验收</th></tr></thead><tbody>
+<tr><td>F01</td><td>FE-02/03/04/14/15</td></tr>
+<tr><td>F02</td><td>FE-02/06/16</td></tr>
+<tr><td>F03</td><td>FE-02/04/09</td></tr>
+<tr><td>F04</td><td>FE-08/09/10/11/16</td></tr>
+<tr><td>F05</td><td>FE-05/17/18</td></tr>
+<tr><td>F06</td><td>FE-06/07</td></tr>
+<tr><td>F07</td><td>FE-17/18</td></tr>
+<tr><td>F08</td><td>FE-09/12/13/14</td></tr>
+</tbody></table>
+<table><thead><tr><th>基线缺陷</th><th>状态</th><th>证据</th></tr></thead><tbody>
+<tr><td>P01 keep 绕过课程冲突</td><td><strong>closed（算法层）</strong></td><td>V-009 入口校验 + V-007 评价器独立复核</td></tr>
+<tr><td>P02 keep 绕过时段上限</td><td><strong>closed（算法层）</strong></td><td>V-009</td></tr>
+<tr><td>P03 均衡搬移手动项</td><td><strong>closed（算法层）</strong></td><td>V-009（纯 auto 块才可搬）</td></tr>
+<tr><td>P04 keep 缺周次跨周传播</td><td><strong>closed</strong></td><td>V-009（KeepEntry.weekNo + 视图全周期构造）</td></tr>
+<tr><td>P05 未知节次空冲突=安全</td><td><strong>closed</strong></td><td>V-010：算法保守占用 + 评价器 needs-review + 冲突页待核对展示</td></tr>
+<tr><td>P06 validateRules 接受非法组合</td><td><strong>closed</strong></td><td>V-008（整数/范围/星期 1~7）</td></tr>
+<tr><td>P07 normalize 改写自定义 8~11</td><td><strong>closed</strong></td><td>V-008（不改写 + 待核对警告）</td></tr>
+<tr><td>P08 修复轮残留孤立单节</td><td><strong>closed（算法层）</strong></td><td>V-007（终态清理 + 全周评价）</td></tr>
+</tbody></table>
+<p>旧记录：<a href="archive/ACCEPTANCE-WEB-2026-10-26.md" target="_blank" rel="noopener">Web 验收台账归档</a>。保留其历史，不把旧状态挪作当前通过证据。</p></section><section id="sec-verify"><h1>⑤ 验证台账</h1><p class="sec-desc">V-001~V-026 每条验证的命令、结果与边界——所有"已完成"的证据链</p><h2>验证记录（VERIFICATION）</h2>
+<h3>V-026 项目检查与针对性修复（2026-10-28）</h3>
+<ul>
+<li>范围、每项缺陷的证据、修改前失败结果、最终命令及边界见 <a href="../reviews/2026-10-28-audit.md" target="_blank" rel="noopener">完整检查记录</a>。开始工作区干净，HEAD 为 276a8bf；未提交、部署或操作用户业务数据库。</li>
+<li>最终锁文件在独立目录 <code>npm ci</code> 成功（149 包）；Vite 8.3.3 / Vitest 5.0.3 下 <code>npm test</code> <strong>28 文件 / 326 项通过</strong>，<code>npm run build</code>（含类型检查）通过。原目录旧测试工具下同为 326 项通过；由于原有 Vite 占用 Rolldown，原目录需结束该服务后 <code>npm ci</code> 才能同步新依赖。</li>
+<li><code>npm run bench</code> 成功；最后一次正例为生成/改良/评价 <strong>1739 ms</strong>、合法、缺口 0/680，解析 <strong>9 ms</strong>。缺样例负例按预期退出 1，样例仅在隔离副本暂移并已还原。</li>
+<li><code>cargo check --locked</code> 与 NSIS 调试打包成功；WebView2 安装方式已改为 offlineInstaller，并核对生成脚本。最终再次使用新依赖生成的前端产物完成打包。<strong>FE-23 不因此关闭</strong>：没有干净机器断网安装/升级/卸载证据，桌面测试窗口的 GUI 自动化读取受限。</li>
+<li>浏览器实测：三份脱敏课表共 131 门课程；真实 Worker 生成并保存 17 周共 585 条安排；全量备份换到新源空库后恢复为 4 名助理/131 课程/585 排班；Excel 读回为 17 张周表 + 17 张明细；快照创建和模板复制/刷新通过；双窗口修改人员后旧预览被拒绝。最终新浏览器页捕获的 error/warn 日志为空。</li>
+<li>官方 registry 的完整锁文件 audit 退出 0、报告 0 项漏洞；不代表仍在运行的旧开发进程已更新，也不等于全面安全证明。未配置/运行 ESLint；大分块警告仍在。</li>
+</ul>
+<h3>历史目标与基线（2026-10-26）</h3>
+<p>当前执行目标已改为纯前端原架构完善，见 CRSM-FRONTEND-IMPROVEMENT-PLAN.md。下面早期 Web 目标的环境阻塞和依赖计划只保留历史，不是当前完成条件。</p>
+<ul>
+<li>复核 HEAD：3d3a44e。</li>
+<li>实际执行 npm test：10 个测试文件/111 个用例通过；greedy.test.ts 因 regression-3assistants.json 缺失而无法加载，整条测试命令退出 1。此时不能声称全部 162 个用例通过。</li>
+<li><strong>2026-10-26 更新（V-005）</strong>：缺失夹具已按计划用脱敏数据恢复，npm test <strong>11 文件/162 用例全部通过</strong>；npm run build 复验通过（661ms，大分块警告仍在）。</li>
+<li>实际执行 npm run build：类型检查与 Vite 构建通过；仍有大分块警告，fileAccess 约 866 kB、入口约 1024 kB（压缩前）。</li>
+<li>本轮功能、Tauri 安装包、原生 Worker、数据库升级和跨机恢复尚未实现或验证；新 FE-01～FE-24 均保持 pending。</li>
+<li>本次产物为方案、执行目标、台账重定向与历史归档，没有修改应用源码或安装数据库。</li>
+</ul>
+<blockquote>每条验证记录：编号、日期、内容、命令/方式、结果、结论边界（能证明什么/不能证明什么）。</blockquote>
+<blockquote>台账规则：ACCEPTANCE.md 中标 verified 的项必须能指回本文件的条目。</blockquote>
+<h3>V-001 环境探测（2026-10-24）</h3>
+<ul>
+<li>Python 3.12.4（<code>D:\python\python.exe</code>）；<code>py</code> 启动器另有 3.14.0；uv 可用（0.x）。</li>
+<li><strong>Docker 不在 PATH，PostgreSQL 未安装</strong> → PG 并发/部署/恢复类验收（A20/A21/A23/A29/A31 部署侧）暂列环境阻塞，不得用 SQLite 冒充通过。</li>
+<li>Node v24.18.0、npm 11.16.0。</li>
+<li>前端基线：162 用例通过（原 38aaa2b，现 f86f6b6，见 D-02 映射）。</li>
+<li>边界：仅证明探测当日 PATH 可见性，不证明机器绝无安装。</li>
+</ul>
+<h3>V-002 git 历史清洗与强推（2026-10-26，对应 DECISIONS.md D-02）</h3>
+<p>清洗前侦察（本地执行）：</p>
+<ul>
+<li>历史含 9 个 xlsx：3 个真实姓名文件（真实学生甲/真实学生乙/真实学生丁.xlsx）、timeTableForStu12.xlsx(+~$锁文件)、test-export.xlsx（二进制，含真实格式手机号）、samples/示例学生A/B/C.xlsx（脱敏，保留）。</li>
+<li>回归夹具 <code>regression-3assistants.json</code> 为真实课表 dump（仅姓名+课程，无电话/学号字段）。</li>
+<li>提交信息 4 条含真实姓名（"Delete 真实学生甲/真实学生乙.xlsx"）。</li>
+<li>手机号模式扫描：真实格式命中均在 test-export.xlsx（二进制）与 Cargo.lock 哈希子串（误报）；测试源码仅 13800000001/2 假号码。</li>
+</ul>
+<p>执行：<code>git filter-repo --force --invert-paths --path 真实学生甲.xlsx --path 真实学生乙.xlsx --path 真实学生丁.xlsx --path timeTableForStu12.xlsx --path '~$timeTableForStu12.xlsx' --path test-export.xlsx --path src/algorithms/__fixtures__/regression-3assistants.json --replace-text &lt;规则&gt; --replace-message &lt;规则&gt;</code></p>
+<p>清洗后验证（全部通过）：</p>
+<table><thead><tr><th>检查</th><th>命令（摘要）</th><th>结果</th></tr></thead><tbody>
+<tr><td>xlsx 残留</td><td><code>git log --all --name-only</code> + grep xlsx</td><td>仅 samples/示例学生A/B/C.xlsx</td></tr>
+<tr><td>真实姓名</td><td><code>git log -S</code> + <code>--grep</code> 四个名字（blob+信息）</td><td>零命中</td></tr>
+<tr><td>手机号</td><td><code>git grep -oE '1[3-9][0-9]{9}'</code> 全历史</td><td>仅 13800000001/2 与 Cargo.lock 哈希误报</td></tr>
+<tr><td>工作区</td><td><code>git status</code></td><td>干净，文件内容零变化</td></tr>
+<tr><td>提交数</td><td><code>git rev-list --all --count</code></td><td>49 → 41（空提交剪除）</td></tr>
+</tbody></table>
+<p>推送：<code>git push origin --force --all</code> + <code>--force --tags</code> 成功；远端 main=f86f6b6、fullstack=9b75973、feat-schedule-rules-hardening=390835c、tag v0.1.0=f86f6b6（<code>git ls-remote</code> 复核）。</p>
+<p>边界：不证明 GitHub 服务端旧对象立即消失（GC 前仍可能按 SHA 访问，见 D-02 残余风险）；不证明无人曾 clone。</p>
+<h3>V-003 后端依赖锁定与冒烟（M0.3，已因目标重定向终止）</h3>
+<p>2026-10-26 实际执行与结果：</p>
+<ul>
+<li><code>uv init --bare</code> 完成（backend/pyproject.toml、.python-version=3.12）；用户级 <code>UV_CACHE_DIR=D:\uv\cache</code>、<code>UV_PYTHON_INSTALL_DIR=D:\uv\python</code>（D 盘约束，旧缓存 330K 已迁移）。</li>
+<li><code>uv add django==5.2.18 ... or-tools ...</code> 两次失败：报 "or-tools was not found in the package registry"（清缓存后仍复现；git-filter-repo 等小包可正常安装，原因未定位）。此时先前的 pip 版 venv 已删除，<strong>backend/.venv 现为 uv 创建的空环境，Django 不再在其中</strong>。</li>
+<li>边界：仅记录 Web 目标终止时的环境事实；新目标（纯前端）不依赖这些组件，不再追查 or-tools 解析问题。</li>
+</ul>
+<h3>V-004 → 由 V-005 承接（编号保留说明）</h3>
+<p>（台账切换期间 V-004 编号被并行会话预留又未落文；为避免歧义，夹具恢复证据直接使用 V-005。）</p>
+<h3>V-023 S6：性能实测、包体优化、主页可行动信息、页面拆分与 CI（2026-10-26，FE-22）</h3>
+<ul>
+<li><strong>性能基准</strong>（新 <code>scripts/perf-bench.ts</code>，固定 seed=20261026 可复现，Node v24.18.0）：</li>
+<li>① 50 助理 × 17 周 × 5 天 × 8 节（600 门随机课/680 时段）：生成 59ms + 逐周有界改良 1178ms + 独立终态评价 13ms = <strong>合计 1250ms ≤ 5000ms 口径 PASS</strong>（合法=true，0 缺口）；</li>
+<li>② 标准课表解析（脱敏样例 A.xlsx，42 门课）：<strong>9ms ≤ 3000ms PASS</strong>（预热后计测）。</li>
+<li><strong>包体实测与优化</strong>（先测后改，未调高警告阈值）：基线入口 1004KB → 引入 unplugin-auto-import/components + ElementPlusResolver 按需引入（移除 7 个视图的显式 ElMessage 导入，模板 slot 类型补断言，声明文件纳入 tsconfig 并随仓库分发）→ <strong>入口 783KB（gzip ~250KB，-22%）</strong>；xlsx 重依赖（854KB chunk）确认<strong>不在首屏</strong>（课程/排班页懒加载）；桌面应用为本地资源加载。构建大分块警告保留如实。</li>
+<li><strong>主页可行动信息</strong>（DashboardView 重写）：缺课表人数、待核对人数、最近周排班缺口数、硬违规数、"输入已变化建议复核"（dataRevision≠scheduleWriteRevision）、无排班引导——逐项点击直达对应页；统计卡 + 操作日志补全全部动作文案。</li>
+<li><strong>页面拆分</strong>：快照管理从 ScheduleView 抽出为 <code>ScheduleSnapshotsCard.vue</code>（自包含加载/对话框，restored 事件通知父层刷新）——ScheduleView 含此前 ManualAdjustDialog 共完成两处拆分。</li>
+<li><strong>CI 基础</strong>（<code>.github/workflows/ci.yml</code>）：push/PR 触发，windows-latest + Node 22，npm ci → npm test → npm run build → 性能基准回归（超口径即失败）。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>298/298</strong>；<code>npm run build</code> 通过。</li>
+<li><strong>边界</strong>：常用页面"可交互 ≤2 秒"在桌面本地资源下由架构保证（无网络依赖），未做逐页秒表录屏——S7 安装验收时以真实桌面包复核；E2E 浏览器自动化脚本未引入（FE-22 未强制），主流程人工核验记录归 S7 演示。</li>
+</ul>
+<h3>V-022 S5 第三片：备份恢复与升级兼容（2026-10-26，F05/FE-19/20/21）</h3>
+<ul>
+<li><strong>schema v4</strong>（database.ts）：仅新增 <code>recovery_backup</code> 表（恢复前副本，与主数据隔离），不动存量数据——升级无损。</li>
+<li><strong>备份</strong>（新 <code>src/db/backupService.ts</code>）：跨表<strong>只读事务</strong>取一致快照（助理/课程/排班/命名快照/规则与模板配置；派生键 dataRevision/adjustJournal/scheduleWriteRevision 不入备份）→ 事务外序列化 + 内容摘要（FNV，仅检错）；<code>includesPersonalInfo</code> 明确标注（电话/QQ 存在即 true）；文件名 <code>crsm-backup-YYYYMMDD-HHmm.json</code>；不含原始 xlsx（界面说明）。</li>
+<li><strong>校验</strong>：非 JSON/未知更新版本（拒绝并提示升级程序）/摘要不一致（篡改检测）/学号与排班复合键唯一/课程排班引用完整性——任一不过拒绝恢复；纯数据 JSON，不执行任何代码。</li>
+<li><strong>受控恢复</strong>：校验 → UI 展示范围数量与个人资料警示 → ①当前数据先存 recovery_backup 独立副本（保留最近 5 份，不随主数据清空）→ ②单写事务整体替换（保留原 id）+ 撤销链重置 + dataVersion 前进 + 来源日志 → ③重载校验记录数一致。②失败 → Dexie 回滚，原数据保持（故障注入已验）。</li>
+<li><strong>UI</strong>：新「数据管理」页（/data + 菜单）——导出备份（Tauri 另存为/浏览器下载；取消不提示成功）与从备份恢复（校验摘要确认对话框 → 恢复 → 整页重载）。</li>
+<li><strong>测试</strong>（backupService.test.ts，6 例）：一致备份与摘要复验、五类拒绝、恢复成功（替换/撤销链重置/版本前进/副本含恢复前脏数据）、注入失败回滚原数据完整、<strong>空库（第二台机器）恢复一致</strong>、v3 数据经 v4 新连接打开无损 + recovery_backup 可用。<strong>298/298</strong>（26 文件）；build 通过。</li>
+<li><strong>边界</strong>：恢复副本的"还原恢复副本"操作未做 UI（副本可通过开发者工具/后续版本导出）——已记录为已知限制；真实断网跨机物理演练归 FE-23。</li>
+<li><strong>边界补充（2026-10-26 自查）</strong>：快照恢复的"复核"与"替换"是两步（复核在事务外）——两者之间发生并发写入的竞态窗口在桌面单用户场景下可接受，不引入额外锁；备份恢复同理由校验前置+单事务保证失败安全。</li>
+</ul>
+<h3>V-021 S5 第二片：多周/历史导出与隐私断言（2026-10-26，F05/FE-18）</h3>
+<ul>
+<li><strong>多周工作簿</strong>（scheduleExport.ts 增 <code>buildMultiWeekWorkbook/FileBuffer</code>）：每周一个 sheet（「第N周」网格 + 含电话时「第N周值班明细」），版式沿用启用中的导出模板；UI：排班页「导出多周工作簿」（按当前周期已写入数据，Tauri 另存为/浏览器下载回退）。</li>
+<li><strong>历史快照导出</strong>（snapshotService 增 <code>buildSnapshotExportBuffer</code>）：行/规则/姓名全部取自快照 meta <strong>固定信息</strong>（人员已删除仍显示原名、不被当前规则重解释）；快照不含联系方式 → 导出永不含电话；UI：快照表「导出」动作。</li>
+<li><strong>隐私与文本边界断言</strong>（测试覆盖，全部 sheet 全部单元格扫描）：关电话 → 电话零出现且明细 sheet 不生成；开电话 → 电话仅出现在姓名格与明细表；两种模式下学号样式数字（/20\d{8}/）零出现；全部单元格 type≠'f'（文本按文本写出，不执行公式）——含以 <code>=</code> 开头的恶意姓名仍为文本的边界用例。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>292/292</strong>（25 文件，新增多周/隐私/文本边界 4 例 + 快照固定信息 1 例）；<code>npm run build</code> 通过。</li>
+<li><strong>边界</strong>：打印版式的视觉抽检（纸质可读性）归 FE-22/S6 人工检查项；导出日期正确性由系统时间函数保证（scheduleFileName 既有测试）。</li>
+</ul>
+<h3>V-020 S5 第一片：双模板管理（2026-10-26，F07/FE-17）</h3>
+<ul>
+<li><strong>受控字段模型</strong>（新 <code>src/templates/types.ts</code>）：导入模板 = 解析器三锚点（表头/学生标识正则/学期正则），导出模板 = 标题模板({week} 占位)/表头首列/两档列宽/简洁打印开关——<strong>有限配置集</strong>，不做通用解析器/脚本（计划红线）。校验：正则可编译、占位符与列宽范围。</li>
+<li><strong>服务</strong>（新 <code>src/templates/templateService.ts</code>）：config 键持久化；<strong>内置模板</strong>（学院标准导入 + 学院默认版/简洁打印版两套导出）不可改不可删、随代码升级重建；自定义模板保存即 <strong>formatVersion+1 并入版本历史</strong>（上限 20，恢复历史=按快照生成新版本，不改写历史）；启用切换即时生效（失效 id 自动回退内置）；<strong>试解析</strong>用真实文件跑启用映射、给出归属/课程预览/警告且零写入。</li>
+<li><strong>参数化</strong>：<code>parseTimetableWorkbook(data, mapping?)</code>（非法正则安全回退默认）与 <code>buildScheduleWorkbook(input, style?)</code>（compact=无底色/无灰字）均向后兼容（40 项旧测试全绿）。</li>
+<li><strong>接线</strong>：单文件/批量导入使用启用中的导入模板映射；排班导出使用启用中的导出模板样式。新页面 <strong>模板管理</strong>（路由 /templates + 菜单）：双 Tab 表格（启用单选/版本/内置标记）、编辑对话框、版本历史恢复、试解析对话框（选文件→预览前 5 条课程）。</li>
+<li><strong>测试</strong>：templateService.test.ts 8 例（内置齐备、版本化/恢复链、内置保护、回退、受控校验、试解析真实样例零写入+错误锚点失败不抛）+ scheduleExport 增 1 例（自定义标题/表头/列宽生效、简洁版式无填充、无模板默认行为不变）。<strong>287/287</strong>（25 文件）；build 通过。</li>
+<li><strong>边界</strong>：历史快照导出使用快照固定信息归 S5-2；GUI 点击流程归 S6。</li>
+</ul>
+<h3>V-019 S4 第三片：排班 Web Worker（2026-10-26，FE-15）</h3>
+<ul>
+<li><strong>计算内核</strong>（新 <code>src/workers/scheduleJob.ts</code>，纯函数）：生成（scheduleAll）→ 逐周有界改良（improveWeek）→ 独立终态评价（evaluateAllWeeks）三阶段，带百分比进度回调；Worker 与主线程回退路径共用同一实现。</li>
+<li><strong>Worker</strong>（新 <code>src/workers/scheduleWorker.ts</code>）：消息协议 run/progress/result/error，均携带 jobId；<strong>只计算不 import 任何 db 模块</strong>（不写 IndexedDB 红线）。</li>
+<li><strong>客户端</strong>（新 <code>src/workers/scheduleClient.ts</code>）：jobId 单调递增；<strong>旧 jobId 迟到消息丢弃 + 闭包级 done 标志</strong>（终结后忽略一切消息，覆盖 terminate 竞态）；取消 = terminate（当前排班零改动）；超时（默认 30s）自动取消；Worker 不可用时回退主线程同一实现（协议不变）。</li>
+<li><strong>UI</strong>：全量生成改经 Worker——进度条 + 阶段文案 + 「取消计算」按钮；取消/超时明确提示"当前排班未受影响"；结果经独立校验不合法则放弃并报错（防御性，不应触发）。</li>
+<li><strong>构建证据</strong>：<code>npm run build</code> 产出独立 <code>scheduleWorker-*.js</code> chunk（dist/assets 实测存在）。</li>
+<li><strong>测试</strong>（scheduleClient.test.ts，6 例，假 Worker 注入）：内核进度单调+合法、正常流转回收、取消即终止且迟到结果丢弃、旧 jobId 丢弃、超时自动取消、回退路径结果一致。<strong>278/278</strong>（24 文件）；build 通过。</li>
+<li><strong>边界</strong>：浏览器/Node 层协议语义已测；<strong>桌面生产包（Tauri WebView）内 Worker 实际运行</strong>与断网取消实测归 FE-23/S7 安装验收。</li>
+</ul>
+<h3>V-018 S4 第二片：有界局部改良（2026-10-26，F01/FE-14）</h3>
+<ul>
+<li><strong>纯域模块</strong>（新 <code>src/algorithms/improve.ts</code>）<code>improveWeek(input, week, options)</code>：在<strong>合法基线</strong>上做带预算爬山——① 缺员/空白天补位（空白天优先）② 低于下限者补位 ③ 无空可补时从高负载者<strong>让位搬移</strong>。每个候选先经独立评价器复算，按质量优先级（空白天→覆盖缺口→个人不足→公平方差）<strong>严格变优才应用</strong>——结果永不劣于基线、保留最佳合法解；操作数（默认 200）与耗时（默认 1500ms）双预算，触发预算如实记录 attempts/applied/stopReason（converged/operation-budget/time-budget）；确定性（固定遍历序 + seed 扰动），同输入同 seed 同预算结果一致。基线非法时原样返回不改良。</li>
+<li><strong>接线</strong>：ScheduleView 全量生成后逐周应用改良；汇总提示"N 周共应用 M 次优化（X 周触及预算上限，已保留当前最佳合法解）"。</li>
+<li><strong>测试</strong>（improve.test.ts，6 例）：不劣于基线+终态合法（含夹具 17 周全周期与连续段）、手工次优基线的补位改良、让位搬移（受限者可达上限的改善）、零预算不改动、确定性、夹具合法。<strong>272/272</strong>（23 文件）；build 通过。</li>
+<li><strong>边界</strong>：不虚称最优（爬山非完备）；桌面生产包内 Worker 场景属 FE-15。</li>
+</ul>
+<h3>V-017 S4 第一片：增量重排（2026-10-26，F08/FE-13）</h3>
+<ul>
+<li><strong>纯域模块</strong>（新 <code>src/algorithms/incremental.ts</code>）<code>incrementalSchedule(input, baseline, options)</code>：</li>
+<li><strong>零改动快路径</strong>：inputsUnchanged（调用方以"当前 dataRevision == scheduleWriteRevision"可验证判定）且基准全部周终态合法 → 原样返回，diff 为空；</li>
+<li><strong>基准锚定重算</strong>：目标周内基准行全部作为保留项传入求解——锁定行 source=manual，自动行 source=auto（KeepEntry 增可选 source，greedy 预占沿用，不冒充手动）；非法保留（新课程冲突/容量变化）被 V-009 入口校验拒绝并携带原因，由求解重新安排——变化只发生在约束被迫处；</li>
+<li><strong>范围外周</strong>：基准原样输出（不重算，指标经评价器复算）；</li>
+<li><strong>差异</strong>：按 (weekNo, dayOfWeek, slot, assistantId) 输出 kept/added/removed/replaced 与原因——原因只用可验证信息（拒绝明细/缺员补位/重新求解），不伪造唯一因果；uniform 模式明确拒绝增量。</li>
+<li><strong>服务接线</strong>：saveFullCycle 在写事务内记录 <code>scheduleWriteRevision</code>（写入完成后的版本）；ScheduleView 增加模式切换（全量/增量 + 目标周次范围），增量结果展示零改动横幅或逐条变动明细（类型/位置/人员/原因）。</li>
+<li><strong>测试</strong>（incremental.test.ts，7 例）：零改动原样、新课程只动冲突行（原因含"有课"、其余 kept）、范围外周逐行一致、合法锁定原位且 manual 来源/非法锁定明细拒绝、自动行保留来源仍 auto、uniform 拒绝、范围非法拒绝。<strong>266/266</strong>（22 文件）；build 通过。</li>
+<li><strong>边界</strong>：有界局部改良（FE-14）与 Worker（FE-15）属 S4 后续片；GUI 层增量流程点击验证归 S6。</li>
+</ul>
+<h3>V-016 S3 第三片：命名快照与双连接并发（2026-10-26，FE-16/FE-11）</h3>
+<ul>
+<li><strong>命名快照</strong>（新 <code>src/db/snapshotService.ts</code>）：创建走<strong>跨表只读事务</strong>取一致视图（整份排班行 + 当时规则 + 人员显示信息，meta.formatVersion=2，自包含——删除人员/改规则后历史快照不损坏）；逐周对比（复用 scheduleDiff）；<strong>受控恢复</strong>——恢复前用独立评价器按<strong>当前</strong>人员/课程/规则复核快照内容，缺人（明细标注"该助理已被删除"）或课程冲突即阻止且数据不动；合法则在单个 CAS 事务替换覆盖周并<strong>重置撤销链</strong>；旧格式快照（无 meta）界面标注限制。UI：排班页新增快照卡片（创建/对比/恢复/删除 + 受控恢复的冲突明细展示）。</li>
+<li><strong>FE-11 双连接并发</strong>（新 <code>concurrency.test.ts</code>）：<code>new CrsmDatabase()</code> 建同名库第二条真实连接；两连接基于同一旧版本<strong>并发</strong>提交"检查+写入+递增"事务——恰好一个成功、另一连接 StaleDataError、版本只前进一次、失败方零写入（无丢失更新）；串行交错场景同验。</li>
+<li><strong>测试</strong>：snapshotService.test.ts 6 例 + concurrency.test.ts 2 例。<strong>259/259</strong>（21 文件）；build 通过。</li>
+<li><strong>边界</strong>：快照的历史导出（用其固定信息渲染 xlsx）归 S5 多周/历史导出；GUI 层点击流程验证归 S6 E2E；备份恢复的撤销链重置策略与快照恢复一致（S5）。</li>
+</ul>
+<h3>V-015 S3 第二片：撤销 / 重做编辑链（2026-10-26，FE-10）</h3>
+<ul>
+<li><strong>撤销日志</strong>：每个手调操作在<strong>同一 CAS 事务</strong>内向 config 键 <code>adjustJournal</code> 追加条目（add/remove 携带完整行——重做按原 id 复原；move/lock/exception 携带前后值）；栈深上限 50；新操作截断 redo 分支。</li>
+<li><strong>撤销/重做</strong>（<code>undoRedoAdjust(direction, expectedRevision)</code>）：逆/正操作先经同一评价器差分校验——<strong>期间输入变化使逆操作会产生硬违规时拒绝</strong>（如课程新增后撤销移动会排进有课时段）；撤销同样递增业务版本（不倒退计数、不覆盖其他窗口写入，CAS 拒绝已验证）；失效条目（行被重排覆盖）按方向语义校验行存在性后<strong>自动跳过并清理</strong>（add 撤销要求行存在、重做要求行不存在，remove 相反）。</li>
+<li><strong>UI</strong>：排班表卡片头部 撤销/重做 按钮（tooltip 列最近 5 步描述）；刷新/进入页面恢复编辑链状态；调整对话框操作后同步刷新。</li>
+<li><strong>测试</strong>：+6 例——添加→撤销→重做原 id 复原、移动/锁定撤销、redo 截断、逆操作违规拒绝且状态不变、失效条目自动跳过、撤销 CAS 拒绝。<strong>251/251</strong>（19 文件）；build 通过。</li>
+<li><strong>边界</strong>：命令快照（FE-16）与双 Dexie 连接全量并发（FE-11）属 S3 第三片；撤销链在"恢复备份"后的重置策略随 S5 备份恢复一并处理。</li>
+</ul>
+<h3>V-014 S3 第一片：手动调整基础（2026-10-26，F04/FE-08 核心 + FE-09 算法面）</h3>
+<ul>
+<li><strong>schema</strong>：DutySchedule 增非索引字段 <code>locked?</code>（锁定与来源分离；旧 manual 行按锁定回填）与 <code>continuityExceptionReason?</code>（短段例外原因，只豁免连续性）。</li>
+<li><strong>服务</strong>（新 <code>src/db/manualAdjustService.ts</code>）：</li>
+<li><code>getSlotCandidates</code>——逐人候选与<strong>不可排原因</strong>（已在时段/未导课表/待核对/有课含课程名/未知节次保守阻断/时段已满/个人周上限），界面直接展示；</li>
+<li>五个原子操作（addManual 默认锁定 / remove / move / setLocked / setContinuityException），每个都是 CAS 写事务；</li>
+<li><strong>终态校验复用独立评价器</strong>：改后整周 evaluate 与改前做差，新增硬违规即拒绝并给明细——遗留旧问题不阻塞无关操作；手动短段无例外原因被拒、登记后放行且原因可追溯。</li>
+<li>事务表清单含 assistant/course（Dexie 事务范围教训：漏列即 TransactionInactiveError）。</li>
+<li><strong>评价器增强</strong>：course-conflict 消息带课程名（CourseInput 增可选 courseName 透传）。</li>
+<li><strong>UI</strong>：新组件 <code>ManualAdjustDialog.vue</code>——当前值班（来源/锁定/例外标签 + 锁定切换/移动/例外登记清除/移除）、候选选择 + 不可排原因列表、移动子表单（星期×节次）；ScheduleView 已写入网格格子可点击（悬停高亮，空格显示 ＋）；StaleDataError 提示刷新。</li>
+<li><strong>锁定链路贯穿重排</strong>：generate 的 keep = 锁定项（旧 manual 回填为锁定）；saveFullCycle 写入行携带 locked/例外原因不丢失（ScheduleView 从重排前行按 周天时段人 匹配携带）。</li>
+<li><strong>测试</strong>：manualAdjustService.test.ts 10 例（候选原因、添加各拒绝路径、短段例外语义、移动原子、字段维护、CAS、遗留不阻塞）+ scheduleService 增锁定持久化 1 例。<strong>245/245</strong>（19 文件）；build 通过。</li>
+<li><strong>边界</strong>：undo/redo 与编辑链版本（FE-10）、命名快照（FE-16）、双连接并发全量验证（FE-11）属 S3 后续片；GUI 点击流程的浏览器自动化验证归 S6 E2E。</li>
+</ul>
+<h3>V-013 S2 第三片：批量导入逐项结果（2026-10-26，F05/FE-05）</h3>
+<ul>
+<li><strong>服务</strong>（新 <code>src/db/batchImportService.ts</code>）：<code>importTimetableBatch</code>——逐文件顺序处理（读取即释放）；同内容重复（FNV 字节摘要）→ skipped；不同内容争同一学号 → 后者 failed 明确报冲突（先到者生效，不按先后覆盖）；文件数（&gt;50）与单文件大小（&gt;10MB）超限整批拒绝；每项落库沿用 V-011 单事务原子语义。</li>
+<li><strong>UI</strong>（CoursesView）：文件选择支持多选（浏览器 <code>input multiple</code> + Tauri <code>openXlsxMultiple</code> 新增于 fileAccess.ts）；&gt;1 文件走批量路径，惰性逐个读取；结果对话框逐项展示 文件/结果标签/归属(姓名+学号)/说明；汇总提示 成功/失败/跳过。</li>
+<li><strong>测试</strong>（batchImportService.test.ts，4 例，使用仓库脱敏样例）：3 合法 + 1 损坏（随机字节）+ 1 同内容重复 → ok×3/failed/skipped 各自正确且只建 3 档；<strong>同号不同内容</strong>（合法文件尾部追加 1 字节构造：摘要变、归属不变）→ 后者明确冲突不覆盖；结果携带归属与课程数；超限整批拒绝。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>234/234</strong>（18 文件）；<code>npm run build</code> 通过（690ms）。</li>
+<li><strong>边界</strong>：批次内冲突拒绝后"用户人工核对选择保留哪份"的交互 = 直接重导单个文件（现有单文件路径支持）；GUI 层多文件对话框在桌面端的实测归 FE-22/S7 安装验收。</li>
+</ul>
+<h3>V-012 S2 第二片：课程手动编辑与影响分析（2026-10-26，F06/FE-07）</h3>
+<ul>
+<li><strong>服务</strong>（新 <code>src/db/courseService.ts</code>）：addCourse / updateCourse / removeCourse——校验（课程名/星期 1~7/节次原文/周次文本经 parseWeekList 解析，单双周合法）→ 单写事务（写课程行 + <strong>重算课表状态</strong> + 日志 + 版本递增）。状态重算规则：含无法识别节次 → needs_review；删到 0 条 → confirmed_empty；否则 ready。</li>
+<li><strong>影响分析</strong> <code>analyzeCourseImpact</code>：课程变化后对已写入排班跑与导入路径同一套冲突 + 待核对判定。</li>
+<li><strong>UI</strong>（CoursesView）：已存储课程表加类别/操作列与「新增课程」；声明式编辑对话框（课程名/号/类别/星期/节次原文/周次/地点，含"无法识别会转待核对"提示）与删除确认；保存/删除后自动刷新课程、助理列表（状态列）并重跑影响分析（复用既有冲突/待核对警报，含"删除冲突排班/去重排"入口——F06 影响闭环）。</li>
+<li><strong>测试</strong>（courseService.test.ts，11 例）：校验边界、状态重算三态、周次展开、冲突/待核对影响、无误报。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>230/230</strong>（17 文件）；<code>npm run build</code> 通过（677ms）。</li>
+<li><strong>边界</strong>：实验分批/单双周"不丢失"由 parseWeekList + 整体替换语义保障（解析层已有测试）；批量导入（FE-05）属 S2 第三片。</li>
+</ul>
+<h3>V-011 S2 第一片：dataRevision 版本协议 + 导入/全周期保存原子化（2026-10-26）</h3>
+<ul>
+<li><strong>版本原语</strong>（新 <code>src/db/dataRevision.ts</code>）：config key <code>dataRevision</code> 单调递增；<code>withDataRevision(expected, tables, fn)</code> 把"版本校验 → 业务写入 → 版本+1"放进<strong>同一个 Dexie 读写事务</strong>（CAS）；<code>StaleDataError</code> 携带期望/实际版本。</li>
+<li><strong>导入原子化（FE-06）</strong>：importTimetableForStudent 全部动作（建档/改名、课程整体替换、课表状态、两条操作日志、版本递增）收进单事务；解析/推导在事务外。故障注入测试：课程替换失败 → 助理/课程/日志/版本<strong>全部回滚</strong>；更新分支改名后状态写失败 → 姓名保持原样、旧课表未清空。</li>
+<li><strong>全周期原子保存（FE-12）</strong>（新 <code>src/db/scheduleService.ts</code>）：<code>saveFullCycle(weeks, expectedRevision, meta)</code> 单事务替换全部周 + 日志 + 版本递增；ScheduleView.write() 从逐周 replaceWeek 切换至此，并携带预览生成时的版本——期间发生过导入/保存则拒绝并提示重新生成（StaleDataError 专项提示）。故障注入测试：第 2 周写入失败 → 两周全回滚、版本不动。</li>
+<li><strong>CAS 测试</strong>：同旧版本连续提交第二次被拒（FE-11 的基础语义；真实双连接验证在 S3 手调提交接入后补充）。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>219/219</strong>（16 文件，新增 dataRevision.test.ts 7 例 + scheduleService.test.ts 3 例）；<code>npm run build</code> 通过。</li>
+<li><strong>边界</strong>：手调提交/撤销链的版本携带（FE-10）与真实双 Dexie 连接并发（FE-11 全量）随 S3 落地；批量导入（FE-05）与课程编辑（FE-07）属 S2 后续片。</li>
+</ul>
+<h3>V-010 S1.5 课表状态四分类与 P05 待核对展示（2026-10-26）</h3>
+<ul>
+<li><strong>四分类语义</strong>（新 <code>src/algorithms/timetableStatus.ts</code>，纯函数）：ready（已导入且节次全部可识别）/ confirmed_empty（确认无课）/ needs_review（存在无法识别节次）/ missing（从未导入）。旧数据保守回填：无标记但有课程记录 → ready，否则 missing。"未提交课表≠全天空闲"：仅 ready 与 confirmed_empty 可参与自动排班。</li>
+<li><strong>导入接线</strong>：importTimetableForStudent 落库后推导并持久化 <code>assistant.timetableStatus</code>（空课表→confirmed_empty、含未知节次→needs_review、否则 ready），结果与操作日志均携带状态；schema 加非索引可选字段，无需升库。</li>
+<li><strong>排班入口</strong>（ScheduleView）：missing/needs_review 助理被排除且逐人给出原因（warning），全部不可排时给可行动错误提示；keep 同步过滤到可排人员。</li>
+<li><strong>确认入口</strong>（AssistantsView）：课表状态列（标签）；missing→「确认无课」、needs_review→「已核对」行内动作，写操作日志。</li>
+<li><strong>P05 UI 面</strong>：<code>findDutyNeedsReview</code>（dutyConflict.ts）——未知节次课程 × 同日排班进入"待核对"清单；CoursesView 导入后以 warning 警报展示"无法自动判定是否冲突，请人工核对"，与冲突清单并列（空冲突清单≠安全）。</li>
+<li><strong>测试</strong>：timetableStatus.test.ts（8 例：回填/可排班/推导）、dutyConflict.test.ts 增 3 例（待核对判定与排除分支）、importService.test.ts 增 1 例（状态持久化）。<code>npx vitest run</code> <strong>209/209</strong>（14 文件）；<code>npm run build</code> 通过（755ms）。</li>
+<li><strong>边界</strong>：手动建助理未导课表者现被排除出自动排班（语义变更，按计划 FE-02 执行），确认入口已提供；needs_review 的"核对后修改课表节次原文"编辑能力属 S2 课程编辑。</li>
+</ul>
+<h3>V-009 S1.4 保留项（keep）安全校验与周次语义（2026-10-26，P01/P02/P03/P04）</h3>
+<ul>
+<li><strong>P01/P02（入口校验）</strong>：greedy 预占阶段对每条 keep 依次校验——时段合法、人员存在、课程冲突（含未知节次的保守全天占用）、时段上限、重复、个人上限；任一不过即拒绝并携带原因进入输出 <code>rejectedKeeps</code>（新字段，ScheduleOutput 扩展），不再"手动来源豁免"。合法 keep 照常保留为 manual。</li>
+<li><strong>P03（均衡不搬手动）</strong>：<code>moveBlockInto</code> / <code>moveBlockIntoForce</code> 的候选块必须是<strong>纯 auto 块</strong>——含 manual 的块（含混合块）整体不参与搬移；兜底让位同样受此约束。</li>
+<li><strong>P04（周次语义）</strong>：<code>KeepEntry</code> 增加可选 <code>weekNo</code>（缺省=全周，兼容旧调用）；greedy 按周过滤；uniform 模式下指向非模板周的保留项按明细拒绝（原因含"各周相同模式…请改用各周独立"）。<strong>ScheduleView 修复</strong>：keep 构造从"当前查看周、丢周次"改为"整个周期各周手动记录 + 显式 weekNo"（此前第 N 周手动安排会传播到全部周）；生成后聚合 <code>rejectedKeeps</code> 以 warning 反馈用户。</li>
+<li><strong>回归用例</strong>：greedy.test.ts 新增 5 例，逐一对齐审计 P01（保留有课）、P02（保留爆容量）、P03（审计原场景：两天/上限一人/手动集中第一天，断言手动原位、缺口如实）、P04（第 1 周保留不传播到第 2 周）、uniform 周外拒绝。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>197/197</strong>（13 文件）；<code>npm run build</code>（含 vue-tsc）通过（673ms）。</li>
+<li><strong>边界</strong>：P01~P04 在<strong>算法层与生成入口</strong>关闭；评价器（V-007）作为第二道独立防线。手调 UI 的锁定/解锁交互与例外登记属 S3（FE-08/09 的 UI 面尚 pending）；P05 的冲突页展示属 S1.5。</li>
+</ul>
+<h3>V-008 S1.3 严格规则校验与 8~11 歧义处理（2026-10-26，P06/P07）</h3>
+<ul>
+<li><strong>P06</strong>：<code>validateRules</code> 收紧——全部数值字段（周期/个人上下限/时段人数/连续节数）必须整数且在语义范围内（负数/小数被拦）；工作日必须为 1~7 整数（星期 0/8 被拦）；节次区间端点必须整数（小数节次被拦）。<code>src/algorithms/types.ts</code> + 新增 <code>src/algorithms/types.test.ts</code>（11 用例逐一覆盖审计反例）。</li>
+<li><strong>P07</strong>：<code>normalizeRules</code> <strong>删除</strong>"下午 8~11 → 6~9"静默改写；新增 <code>rulesDataWarnings(saved)</code> 对歧义 8~11 返回"待核对"提示；<code>ScheduleConfigView</code> 载入时以警告条展示（用户确认后自行保存，不代为猜测）。</li>
+<li><strong>旧行为断言更新</strong>：greedy.test.ts 中"存量配置迁移自动对齐"用例改为断言<strong>不改写 + 警告</strong>（计划要求不把旧行为固化为期望）；周期报错文案随整数校验更新。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>192/192</strong>（13 文件）；<code>npm run build</code> 通过（650ms）。</li>
+<li><strong>边界</strong>：P06 关闭范围是算法/配置共用校验函数（UI 输入框本身已有范围限制，服务侧口径即此函数）；P07 关闭"静默改写"，存量歧义配置的用户确认闭环依赖配置页警告条（已接入），无自动迁移日志（按计划不猜测）。</li>
+</ul>
+<h3>V-007 S1.1/S1.2 独立评价器 + P08 修复（2026-10-26）</h3>
+<ul>
+<li><strong>新增 <code>src/algorithms/evaluate.ts</code></strong>：单周/多周独立终态评价器。硬违规（课程冲突/重复/时段超上限/个人超上限/非法时段/未知人员/连续段破坏/锁定被破坏或越界）与软缺口（时段缺员/个人低于下限/未知节次待核对）分级；锁定与手动安排进入同一校验（不豁免课程/容量）；连续性按节次序号轴且不跨工作区段；未知节次产出 needs-review 缺口（P05 语义）；带 <code>continuityExceptions</code>（手动短段例外只豁免连续性）与带周次 <code>LockEntry</code>（P04 数据形态）。</li>
+<li><strong>测试 <code>src/algorithms/evaluate.test.ts</code>（19 用例）</strong>：各违规/缺口语义、锁定语义、uniformMode 占用、跨午休不连续、auto 短段不豁免、夹具 17 周集成、P08 审计合成场景。</li>
+<li><strong>评价器立刻抓到真实缺陷</strong>：对夹具 17 周输出诊断出 W3/W10/W11/W12 助理 #9 存在 auto 孤立单节（c6/c8）——即审计 P08（旧测试只查第 1 周，漏掉其余周）。</li>
+<li><strong>修复（greedy.ts）</strong>：修复/撤销迭代后与每日均衡后各加一次"只撤销、不再补"的终态清理（<code>removalPass()</code>），孤立 auto 短段不再残留；缺口由 belowMin/unmetSlots 如实报告。</li>
+<li><strong>结果</strong>：诊断脚本违规数 <code>{}</code>（0）；<code>npx vitest run</code> <strong>181/181</strong>（12 文件）；<code>npm run build</code> 通过（756ms）。</li>
+<li><strong>边界</strong>：证明算法层 P08 关闭（含全部周次）；P01~P04 的 greedy/UI 集成路径与 P06/P07 校验仍待 S1.3/S1.4；评价器尚未接入保存/发布链路（S2/S3）。</li>
+</ul>
+<h3>V-006 S0 Worker/离线安装包可行性检查（2026-10-26）</h3>
+<ul>
+<li><strong>Tauri 构建</strong>：<code>npx tauri info</code> 全绿——rustc/cargo 1.95.0（stable-msvc）、MSVC 2022 生成工具、WebView2 运行时 155.0.4283.62、tauri 🦀 2.11.5（@tauri-apps/cli 2.11.4）、fs/dialog 插件就位，build-type bundle。<strong>NSIS 离线打包能力具备</strong>。</li>
+<li><strong>WebView2 安装方式现状</strong>：<code>src-tauri/tauri.conf.json</code> 未配置 <code>webviewInstallMode</code> → Tauri 默认 downloadBootstrapper（<strong>依赖网络</strong>）。S7 前需改为 <code>bundle.windows.webviewInstallMode = { "type": "offlineInstaller" }</code> 并将 WebView2 离线安装器（MicrosoftEdgeWebView2RuntimeInstallerX64.exe，约 100+ MB）放至 Tauri 约定路径随包分发；embedBootstrapper 不满足断网首装。</li>
+<li><strong>Web Worker</strong>：项目用 rolldown-vite，支持 <code>new Worker(new URL('./x.ts', import.meta.url), { type: 'module' })</code> 标准写法；Node 测试环境无法真实运行 Worker，真实冒烟推迟到 S4（FE-15：桌面生产包内 Worker 可用为最终门槛）。S0 结论：方案可行，无阻塞性配置。</li>
+<li><strong>版本注</strong>：tauri 全家桶有可用更新（2.12.x），不阻塞本期；是否升级在 S7 打包时一并决定。</li>
+<li>边界：以上证明"能打包/能配离线"，不等于已产出安装包或断网机器验收（那是 FE-23）。</li>
+</ul>
+<h3>V-026 界面美化与第四轮代码优化（2026-10-28）</h3>
+<ul>
+<li><strong>重大修复（包体真凶）</strong>：<code>main.ts</code> 仍在全量 <code>app.use(ElementPlus)</code> + 全量 CSS——与 S6 按需配置冲突并使其失效。移除后<strong>入口 783KB → 101KB（-87%，gzip 36KB）</strong>；顺带清理 AssistantForm 最后一处显式 ElMessage 导入。全库 grep 确认无全局注册残留。</li>
+<li><strong>全局主题</strong>（新 <code>src/assets/theme.css</code>，main.ts 引入）：Element CSS 变量统一色系（主色靛蓝 #4f6ef2 全阶/语义色调柔/圆角基调/页面底色）；卡片轻阴影 hover 微升、表头底色+行 hover、对话框圆角、按钮统一圆角、细滚动条、页面切换过渡（fade-slide）、:focus-visible 无障碍焦点环。<strong>按需组件样式晚于主题加载的同级覆盖问题以 body 前缀提权 + 官方变量（--el-box-shadow-light）双路径解决</strong>——浏览器实测计算样式确认生效（圆角 12px/新阴影/主按钮 rgb(79,110,242)）。</li>
+<li><strong>布局与仪表盘</strong>：侧边栏深蓝渐变 + 品牌块（渐变徽标"排"+主副标题）+ 菜单圆角激活渐变高亮；页头加副题（"数据仅存本机 · 无网络传输"）；仪表盘四统计卡加彩色渐变图标块。</li>
+<li><strong>浏览器实测</strong>（dev + IAB）：首页/配置页/排班页 DOM 快照结构完整、主题计算样式逐项验证；发现并修复样式加载顺序缺陷（见上）。</li>
+<li><strong>结果</strong>：<code>npx vitest run</code> <strong>304/304</strong>；<code>npm run build</code> 通过，入口 101KB。</li>
+</ul>
+<h3>V-025 计划符合性审计与补齐（2026-10-26，F03/FE-04）</h3>
+<p>对照计划 §3/§5.3/§12 逐条核对已完成阶段，发现两项<strong>已完成阶段范围内的漏项</strong>（验收矩阵中 FE-04 一直保持 pending、未冒充完成），本轮补齐：</p>
+<ul>
+<li><strong>候选策略预设</strong>（计划 §5.3"策略只提供有限预设"）：<code>SchedulingRules.candidateStrategy</code> 四枚举——default（延续块→负载→稀缺→id，与补齐前行为逐字节一致）/ scarceFree（稀缺空闲优先）/ identityFirst（本科生优先）/ roundRobin（已排最少者轮换优先）。<strong>只改变主分配候选排序的维度顺序，约束闸门与评价器完全不感知策略</strong>（不得绕过硬约束——四种策略输出全部通过独立评价器的测试断言）。配置页下拉选择 + 说明；<code>normalizeRules</code> 缺省回填 default；<code>validateRules</code> 对缺省宽容（存量数据/夹具兼容）、显式非法值拦截。</li>
+<li><strong>质量报告"空白日"列</strong>（计划 §5.3 明列项）：预览汇总表新增每周空白天数（绿/红标签，定义与评价器 metrics.emptyDays 一致）。</li>
+<li><strong>测试</strong>：+5（身份优先构造场景、稀缺优先构造场景、轮换均衡断言、四策略输出全合法含连续段约束、枚举校验+缺省回填）。<strong>304/304</strong>；build 通过；默认策略路径行为不变（夹具 17 周回归原样通过）。</li>
+</ul>
+<p><strong>审计其余结论</strong>：GOAL 关键约束 1~11/13/14 与计划 §6~§10 各条款逐条核对一致（详见提交说明）；未完成项 = FE-23（离线安装包，环境受限已声明）、FE-24 收尾材料（已写好随 S7 回退暂存）。</p>
+<h3>V-024 自查修复（2026-10-26，交付审计轮）</h3>
+<ul>
+<li><strong>缺陷 1（backupService.validateBackup）</strong>：结构校验只查了 <code>assistants</code> 数组——损坏备份缺 <code>courses/dutySchedule/scheduleSnapshots/config</code> 任一字段时，校验器内部 <code>.map</code> 抛未捕获 TypeError（校验器崩溃而非返回错误），界面层无兜底静默无反馈。修复：五字段结构完整性前置检查 + DataManagementView 读取文件 try/catch 兜底 + 回归测试（逐字段缺失断言拒绝且不抛）。</li>
+<li><strong>缺陷 2（ManualAdjustDialog）</strong>："移动到原位置"时服务端按设计静默无操作，但界面显示"已移动"成功提示——误导。修复：组件层前置拦截并提示"目标位置与当前位置相同"。</li>
+<li><strong>复查确认无恙的高风险路径</strong>：撤销条目转移的结构匹配（JSON 快照比对）、恢复后 scheduleWriteRevision 对齐使增量零改动语义成立、improve 让位搬移经评价器兜底连续段、Dexie 嵌套事务表清单、worker 输入可结构化克隆、备份恢复自增 id 不复用、config 全清后重置键顺序。</li>
+<li>结果：<code>npx vitest run</code> <strong>299/299</strong>（新增 1 例）；<code>npm run build</code> 通过。</li>
+<li><strong>第二轮（同日，代码质量轮）</strong>：① 删除 <code>dutyScheduleRepo.replaceWeek</code>（审计 §5.2 缺陷来源、生产零引用——保留会诱导逐周替换复活；唯一测试引用改为逐条 add 构造）；② 删除 improve.ts 死代码 <code>scoreKey</code>；③ incremental.ts <code>baselineAsWeek</code> 的缺口映射改为 <code>actual = required - short</code> 恒等推导，去掉循环内重复 <code>buildSlots</code> 回查（每周最多 40 次的冗余构建）；④ 复读 scheduleDiff/scheduleGrid/dutyConflict 确认无边界问题（键去重/并集/未知节次语义一致）。<code>npx vitest run</code> <strong>299/299</strong>；build 通过。</li>
+</ul>
+<h3>V-005 S0 夹具恢复与测试基线修复（2026-10-26，对应 FE-01）</h3>
+<ul>
+<li><strong>背景</strong>：V-002 历史清洗把 <code>src/algorithms/__fixtures__/regression-3assistants.json</code> 从全部历史移除时，工作树中该文件（2026-09-13 的<strong>脱敏重建版</strong>：示例学生A/B/C、131 条课程）也被一并删除，导致 greedy.test.ts 51 个用例无法加载（162→111）。</li>
+<li><strong>方式</strong>：从本机备份 bundle（<code>C:\Users\pang\AppData\Local\Temp\crsm-pre-sanitize.bundle</code>，D-02 记录）提取 38aaa2b 版夹具；提取后扫描 <code>真实学生丙|真实学生甲|真实学生乙|真实学生丁|1[3-9][0-9]{9}</code> <strong>0 匹配</strong>；核对结构（3 助理、131 课程、rules 下午 6~9）与测试期望一致后恢复到工作树。</li>
+<li><strong>结果</strong>：<code>npm test</code> 11 文件/162 用例全部通过（含 greedy.test.ts 51 项：补位迭代、全周期无课程冲突、第 1 周五天覆盖、均衡守恒、确定性）；<code>npm run build</code> 通过（661ms）。</li>
+<li><strong>边界</strong>：证明算法基线恢复到清洗前水平；不证明 P01～P08 已修复（那是 S1 的任务，见 FE-03）；临时 bundle 克隆目录已删除，bundle 本体仍含旧历史（见 D-02）。</li>
+</ul></section><section id="sec-trouble"><h1>⑥ 排障手册</h1><p class="sec-desc">T-001~T-015 真实踩坑：现象→根因→解决→教训</p><h2>排错手册（troubleshooting）</h2>
+<blockquote>按步骤书 0.3 节，项目中有价值的坑位记录于此。格式：现象 → 根因 → 解决 → 教训。</blockquote>
+<hr>
+<h3>T-001 字体安装后 VS Code 不生效</h3>
+<ul>
+<li><strong>现象</strong>：按 JetBrains Mono 扩展的字体包设置 <code>editor.fontFamily</code>，编辑器字体不变。</li>
+<li><strong>根因</strong>：用命令行注册用户字体时路径拼接少了一个反斜杠（<code>...\Windows\FontsJetBrainsMono-Regular.ttf</code>），字体从未真正注册，VS Code 静默回退到备选字体 Consolas，无任何报错。</li>
+<li><strong>解决</strong>：清理错误注册表项（<code>HKCU\...\Fonts</code> 下 <code>JetBrains Mono *</code>），用 PowerShell 脚本以 <code>Join-Path</code> 拼路径重新复制+注册，并调用 <code>AddFontResource</code> + 广播 <code>WM_FONTCHANGE</code>；随后<strong>完全退出</strong> VS Code 再启动（Electron 进程只在启动时枚举字体，Reload Window 不够）。</li>
+<li><strong>教训</strong>：① 字体"静默回退"不报错，排查必须查 GDI 注册结果而不是只看配置；② 跨 shell 拼 Windows 路径时用脚本文件而不是内联命令，避免多层转义；③ 用户字体注册在 <code>HKCU</code>，系统级在 <code>HKLM</code>，前者无需管理员。</li>
+</ul>
+<h3>T-002 Rust 侧重命名需要三处同步</h3>
+<ul>
+<li><strong>现象</strong>：把脚手架 <code>scaffold-tmp</code> 改名为 <code>crsm</code> 时，若只改 <code>Cargo.toml</code> 的 package name，<code>main.rs</code> 里的 <code>scaffold_tmp_lib::run()</code> 编译报"找不到 crate"。</li>
+<li><strong>根因</strong>：Tauri 项目 <code>Cargo.toml</code> 中 <code>[lib] name</code>（如 <code>crsm_lib</code>）与 <code>main.rs</code> 的调用点、<code>tauri.conf.json</code> 的 productName/identifier 是三组独立标识。</li>
+<li><strong>解决</strong>：package/lib name、lib 调用、productName（安装包名）、identifier（应用唯一 ID）、窗口标题全部同步改。</li>
+<li><strong>教训</strong>：Rust 编译器会拦住不一致，所以这类问题必现必报——比前端"静默 undefined"友好；改名后先 <code>cargo check</code> 再继续。</li>
+</ul>
+<h3>T-003 Vue 模板模板编译错误的定位方式</h3>
+<ul>
+<li><strong>现象</strong>：<code>npm run build</code> 失败在 <code>vue-tsc</code> 阶段，报错行号指向编译产物。</li>
+<li><strong>解决</strong>：先单独跑 <code>npx vue-tsc --noEmit</code> 拿到 .vue 源文件级别的报错行号，再修；不要直接读 vite 打包日志。</li>
+<li><strong>教训</strong>：前端构建链分"类型检查（vue-tsc）→ 转译打包（vite）"两层，分别排查。</li>
+</ul>
+<h3>T-004 Dexie <code>delete()</code> 后实例不会自动重开</h3>
+<ul>
+<li><strong>现象</strong>：单测 <code>beforeEach</code> 中 <code>await db.delete()</code> 后，首个数据库操作抛 <code>DatabaseClosedError: Database has been closed</code>，全部用例连挂。</li>
+<li><strong>根因</strong>：原以为 Dexie 实例在 delete 后的下次操作会自动重开（autoOpen），实测（fake-indexeddb 环境，探针验证）delete 后实例保持 closed，autoOpen 不触发。</li>
+<li><strong>解决</strong>：<code>await db.delete()</code> 之后显式 <code>await db.open()</code>。</li>
+<li><strong>教训</strong>：对库的行为假设要用最小探针验证（10 行代码），而不是凭印象写 12 个用例再全挂；探针法把 30 分钟排查压缩成 1 次 15ms 的运行。</li>
+</ul>
+<h3>T-005 管道吞掉命令退出码，带病提交</h3>
+<ul>
+<li><strong>现象</strong>：<code>npm run build | tail -3 &amp;&amp; git commit</code> 在构建失败（TS6196 未使用类型）时依然执行了提交。</li>
+<li><strong>根因</strong>：bash 管道的退出码默认取最后一个命令（tail 总是成功），<code>&amp;&amp;</code> 判断失真。</li>
+<li><strong>解决</strong>：验证类命令要么单独跑，要么 <code>set -o pipefail</code>；提交前以"重新单独运行验证"为准。</li>
+<li><strong>教训</strong>：自动化脚本里，<code>命令 | 美化输出 &amp;&amp; 后续动作</code> 是经典陷阱；验证与提交必须解耦。</li>
+</ul>
+<h3>T-006 弹窗表单残留上次数据（watch prop 失效）</h3>
+<ul>
+<li><strong>现象</strong>：GUI 走查发现，连续两次打开"新增助理"弹窗，第二次的表单里残留上一次填写（或编辑）的手机号、班级。</li>
+<li><strong>根因</strong>：表单初始化写在 <code>watch(() =&gt; props.assistant)</code> 里。连续新增时该 prop 一直是 <code>null</code>，引用未变 → watch 不触发 → 表单不复位。</li>
+<li><strong>解决</strong>：改为 <code>watch(visible)</code>（监听弹窗打开动作）在打开瞬间按 <code>props.assistant</code> 重置表单，并 <code>clearValidate()</code> 清除上次校验痕迹。</li>
+<li><strong>教训</strong>：<code>watch</code> 依赖的是"值的变化"，<code>null → null</code> 不算变化；"打开容器"这类事件语义的状态（布尔量）才是正确的触发源。父组件必须保证先改 <code>assistant</code> 再改 <code>visible</code>。</li>
+</ul>
+<h3>T-007 GUI 自动化中的"僵尸页面"：HMR 与浏览器缓存的混合劣化</h3>
+<ul>
+<li><strong>现象</strong>：开发服务器多次 HMR 后，浏览器内自动化（IAB）出现大面积诡异：Playwright 点击全部 actionability 超时、CUA 键盘事件（Enter/Ctrl+F5）不到达、截图失败、按钮原生 .click() 后 Vue 处理函数不执行、页面运行的模块版本落后于服务端。</li>
+<li><strong>根因</strong>：长时间会话中 HMR 多次热替换 + guest 页面缓存，导致"服务端代码 / 页面运行代码 / 输入事件通道"三方不一致。表现为任何单一角度的排查都自相矛盾（编辑按钮好用、删除按钮不好用）。</li>
+<li><strong>解决</strong>：完全重启 Vite（注意 git-bash 的 kill 杀不掉 Windows 进程，要用 <code>taskkill //F //PID</code>）→ 浏览器新开标签页 → 加临时 console.log 探针确认运行的代码版本 → 全绿。</li>
+<li><strong>教训</strong>：① 排查"灵异问题"前先确认三方版本一致（服务器/页面/事件通道）；② <code>console.log</code> 探针是判定"代码版本"的最快手段；③ git-bash 下杀 Windows 进程用 taskkill；④ 将 ElMessageBox（命令式服务）替换为声明式 el-dialog 后，确认框行为一致且在该环境下可测——命令式服务在自动化环境中更脆弱。</li>
+</ul>
+<h3>T-008 响应式 Proxy 对象写入 IndexedDB 抛 DataCloneError</h3>
+<ul>
+<li><strong>现象</strong>：导入课程确认入库时报 <code>Failed to execute 'add' on 'IDBObjectStore': [object Array] could not be cloned</code>。</li>
+<li><strong>根因</strong>：解析结果存入 Vue <code>ref</code> 后变成响应式 Proxy（深层），IndexedDB 的 structuredClone 不能克隆 Proxy 对象。spread 展开（<code>{...c}</code>）只是浅拷贝，嵌套的 <code>weekRanges</code> 仍是 Proxy。</li>
+<li><strong>解决</strong>：在数据落库边界<strong>逐字段构造纯对象</strong>（含把嵌套数组显式重建），或用 Vue 的 <code>toRaw()</code> 后深拷贝。</li>
+<li><strong>教训</strong>：① "Vue 状态 ≠ 纯数据"——跨出响应式系统的边界（IndexedDB、fetch body、Web Worker postMessage）必须先脱壳；② 这类错误只在运行时暴露，把落库操作放在仓储层并配集成测试才能尽早拦截。</li>
+</ul>
+<h3>T-009 两套节次编号不一致导致"在上课时间排班"</h3>
+<ul>
+<li><strong>现象</strong>：排班结果把助理排在了他有课的时间段里。用户从界面上发现"导入的课程表和排班表的节次显示不一致"：课程表里下午刚开始的两节课是"第6节、第7节"，而排班表把它们标为"第8节、第9节"。</li>
+<li><strong>根因</strong>：<strong>同一节真实课程在两处编号不同</strong>。实测课程表 A 列时段块得到全天的节次序列是"数字节次 + 命名节次"混排：上午 1~5、中课1/中课2、下午 6~10、晚课、晚上 11~13；而排班表的上班节次默认写成"上午 1~4、下午 8~11"。占用判定原本直接比较<strong>节号区间</strong>，于是课程"第六节-第八节"（真实占下午前三节）只会与排班"第8节"相交，排班"第9、10节"被判定为空闲 → 在这些节次上排班，正好落在课前两节里。更隐蔽的是：因为偏移是 2 而不是"整体错位"，判定结果是"部分相交"，既不会报错也不易被察觉，只会表现为局部错排。</li>
+<li><strong>解决</strong>：① 排班表上班节次编号改为与课程表一致（上午 1~4、下午 6~9）；② 占用判定不再比较节号，而是<strong>先统一换算到"当日先后序号"</strong>再比较，序号轴集中定义在 <code>src/utils/sectionOrder.ts</code>（<code>SECTION_SEQUENCE</code>），解析器与算法共用同一换算；③ 迁移存量：<code>normalizeRules</code> 把旧默认 [1-4]+[8-11] 对齐为 [1-4]+[6-9]（只迁移与旧默认完全一致的区间），数据库升到 version 3 把 <code>duty_schedule.timeSlot</code> 的 c8~c11 就地平移为 c6~c9；④ 回归夹具用三份真实课程表重建，补齐节次原文。</li>
+<li><strong>教训</strong>：① <strong>同一实体在两处被各自编码，就必须建立显式的换算层</strong>——只要比较的是"编号"而不是"含义"，错配就只是时间问题；② 偏移型错配比整体错位更危险，因为它产生"部分正确"的结果，测试若只覆盖粗粒度场景（如"有课就不排"）很容易漏过；③ "非数字标签一律保守按整天占用"这类兜底虽然安全，但会掩盖真实结构——先花时间把数据摸清（本次靠 A 列时段块 7 个标签就把序列还原出来了），再决定是精确计算还是保守退化；④ 遇到"用户说 A 表和 B 表对不上"的反馈，先做<strong>同一份数据在两处的对照样例</strong>，比读代码猜更快。</li>
+</ul>
+<h3>T-010 版本升级里"平移索引键"引发 ConstraintError，整库不可用</h3>
+<ul>
+<li><strong>现象</strong>：导入课程表时报 <code>Error modifying one or more objects. Errors: ConstraintError: Unable to add key to index '[weekNo+dayOfWeek+timeSlot+assistantId]': at least one key does not satisfy the uniqueness requirements.</code> 报错发生在"导入"动作上，看起来像导入逻辑的 bug。</li>
+<li><strong>根因</strong>：<strong>报错根本不在导入路径上</strong>。<code>Error modifying one or more objects</code> 是 Dexie 升级事务里 <code>Collection.modify()</code> 的固定措辞，而那个索引属于 <code>duty_schedule</code> 表。真实链路是：页面首次访问数据库 → Dexie 执行 v3 升级（把下午节次键从 8~11 平移为 6~9）→ 库中同时存在旧标签行与新标签行（先前的中间版本已按新编号写过排班）→ <code>c8→c6</code> 撞上已有的 <code>c6</code> 行 → 复合唯一索引报错 → <strong>整个升级事务回滚，数据库版本不提升且保持不可用</strong>，于是任何写操作（第一个动作恰好是导入）都失败。导入本身完全无辜。</li>
+</ul>
+<p>更深一层：这个"平移"从语义上就不成立——<strong>同一个键在两套编号下含义不同</strong>（<code>c8</code> 旧=下午第一节、新=下午第三节），逐行平移即使不撞键也会把下午节次静默改错。</p>
+<ul>
+<li><strong>解决</strong>：① 先修"何时升级"——不要在界面已按新编号写入数据之后才补迁移；编号相关的改动要把<strong>默认值、算法、持久化迁移</strong>作为一次原子变更一起发布。② 迁移本身改为<strong>不猜测</strong>：把旧排班归档进 <code>schedule_snapshot</code>（留痕）并记一条 <code>schedule.migrate</code> 日志，然后清空 <code>duty_schedule</code>，由"生成排班"按 (课程表, 规则) 重算——排班是纯函数结果，可完整重建，与 v2 时段键格式变更时的清空策略一致。③ 补 <code>src/db/migration.test.ts</code>：用一个"只声明到 version 2"的 Dexie 实例伪造旧库（含<strong>旧新标签并存</strong>的混合态）再触发真实升级，锁定"不抛错 + 归档 + 清空 + 其他表保留"。</li>
+<li><strong>教训</strong>：① <strong>唯一索引 + 键重映射 = 事务级炸弹</strong>：单行合法、批量非法，失败点还不在调用方以为的地方；凡是升级里要改带唯一约束的键，必须先按"最终键"整体规划并去重，而不是就地逐行改。② <strong>键当且仅当语义稳定时才可以重用</strong>：同一编号在不同版本下换了含义，就应视为新键，旧的必须显式迁移或废弃。③ 用户报"某个按钮出错"时，先看错误措辞属于哪一层（这里是 Dexie 升级事务，而非业务代码），再决定排查方向——否则会在导入逻辑里白找很久。④ 伪造旧版本库来测试迁移，比在真实库上试错安全得多。</li>
+</ul>
+<h3>T-011 删除实体只清理了"直接附属"，漏了"派生引用"</h3>
+<ul>
+<li><strong>现象</strong>：删除一名助理后，排班表与导出文件里出现 <code>#7</code> 这样的条目（本应是姓名）。</li>
+<li><strong>根因</strong>：<code>assistantRepo.remove</code> 的事务里只级联删除了 <code>course</code>（直接附属数据），漏掉了 <code>duty_schedule</code>（<strong>引用</strong>该助理的派生数据）。IndexedDB 没有外键约束，引用完整性完全靠应用层自觉。</li>
+<li><strong>解决</strong>：事务扩到三张表，按 <code>assistantId</code> 一并删除排班记录；并用"删除后他人排班保留、本人排班清零"的用例锁死。</li>
+<li><strong>教训</strong>：① 删除一个实体前，先列出<strong>所有</strong>含其外键的表，逐一对账——无外键约束的存储（IndexedDB/localStorage/文档库）尤其如此；② "级联删除"应该是一个完整清单而不是"想到哪写到哪"。</li>
+</ul>
+<h3>T-012 派生视图按"当前配置"渲染，会和历史数据脱节</h3>
+<ul>
+<li><strong>现象</strong>：已写入排班（上午 1~2 节）后，把上班节次改成"下午 6~9 节"，再看排班表/导出文件——数据还在库里，但表格里<strong>所有格子都是 —</strong>，像是被清空了。</li>
+<li><strong>根因</strong>：网格/导出的行与列完全由<strong>当前规则</strong>推导，而数据行存的是<strong>写入当时</strong>的节次键。配置一变，视图与数据的坐标系就不再对齐。用户改配置后直接导出，交出去的是一张空表。</li>
+<li><strong>解决</strong>：行列骨架改为「当前规则 ∪ 已写入数据」的<strong>并集</strong>（<code>src/utils/scheduleGrid.ts</code>）——规则内的节次照常带时间标注，数据里多出来的节次也会显示（只显示节号/无时间标注的写法），任何已写入数据都可见；排班表页面与导出模块共用同一推导，避免两处口径再漂移。</li>
+<li><strong>教训</strong>：① 凡是"视图按配置推导、数据按历史快照存储"的组合，都要问一句：配置变了之后，旧数据还能不能被看见？② 用并集而不是"以配置为准"或"以数据为准"，是因为两者各有正确的场景（空表需要配置行、旧数据需要数据行）；③ 该修复顺带消除了"网格列顺序依赖对象整型键升序"的脆弱写法（改为显式传入天数组、按键取值）。</li>
+</ul>
+<h3>T-013 xlsx 脱敏：跨文本 run 的敏感串替换会漏改，且整串检测查不出来</h3>
+<ul>
+<li><strong>现象</strong>：对课程表做个人信息脱敏时，按"文本片段"做子串替换后，残留检测显示"无残留"，但打开文件发现<strong>学号仍在</strong>（如 <code>学生：示例学生A(10240052</code> 后面还跟着 <code>54)</code>）。</li>
+<li><strong>根因</strong>：OOXML 中同一单元格的文本可以按字体/字符集被 Excel <strong>拆成多个 <code>&lt;t&gt;</code> run</strong>。实测三份课表中，两份的表头被拆成三段：</li>
+</ul>
+<p><code>学生：示例学生A(20260000</code> + <code>01</code> + <code>)　　</code>——目标串 <code>2026000001</code> 在任何单个 run 中都不完整存在，因此<strong>替换命中不了</strong>；而残留检测若按原始字节查找整串，同样查不到，形成<strong>假阴性</strong>。第三份文件恰为单 run，顺利替换，反而掩盖了问题。</p>
+<ul>
+<li><strong>解决</strong>：改为<strong>按单元格（<code>&lt;si&gt;</code>）处理</strong>——拼接该单元格全部 run 文本 → 做整体替换 → <strong>按原 run 长度重新切分回填</strong>（run 数与各 run 的 <code>&lt;rPr&gt;</code> 样式得以保留，仅文本位移）。残留检测同步改为基于"拼接后的单元格文本"，并补充"10 位学号式数字"扫描，防止同类漏网。</li>
+<li><strong>教训</strong>：① 凡对 OOXML 文本做查找替换，<strong>必须以单元格为单位</strong>，不要把解析粒度等同于文本 run；② <strong>负向断言（"文件里不该有 X"）在替换前就要设计好检测方法</strong>，否则"替换失败 + 检测漏报"会同时发生，让人以为已经干净；③ 样本里只要有一份文件"侥幸通过"，就必须对<strong>全部样本</strong>逐一验证，而不是抽样；④ 脱敏必须覆盖三层——表头姓名学号、<code>上课教师</code> 字段、<strong>以及 <code>docProps/core.xml</code> 的 <code>cp:lastModifiedBy</code> 元数据</strong>（元数据里存着制作人真名，是最容易漏的一层）；⑤ 结构完整性可用"仅 <code>sharedStrings.xml</code> 与 <code>core.xml</code> 变化、其余部件字节级一致、合并单元格数量不变"作为判据。</li>
+</ul>
+<h3>T-014 批量替换版本号误伤 <code>Cargo.lock</code> 中的同名第三方依赖</h3>
+<ul>
+<li><strong>现象</strong>：执行"把项目版本从 1.0.0 改为 0.1.0"的批量文本替换后，<code>git diff</code> 显示 <code>src-tauri/Cargo.lock</code> <strong>有两处</strong>改动，而本项目的包只有一个。</li>
+<li><strong>根因</strong>：<code>Cargo.lock</code> 是<strong>所有依赖的版本清单</strong>，其中 <code>defmt-parser</code> 恰好也发布过 1.0.0，被无差别替换成 0.1.0。锁文件一旦被改坏，<code>cargo</code> 会认为锁定版本与 registry 不符，轻则报错、重则静默重写锁文件造成依赖漂移。</li>
+<li><strong>解决</strong>：替换锚点必须是<strong>包名 + 版本</strong>的组合（<code>name = "crsm"\nversion = "1.0.0"</code>）而非孤立的版本字符串；替换后立即用 <code>git diff</code> 核对改变行数（本次应为 1 行），并用 <code>cargo metadata --no-deps --offline</code> 验证锁文件仍可解析。其他文件同理：<code>package.json</code> 的 <code>version</code> 字段唯一，但 <code>package-lock.json</code> 同样包含大量依赖版本（如 <code>"@types/estree": "^1.0.0"</code>），需按缩进/上下文精确匹配。</li>
+<li><strong>教训</strong>：① <strong>锁定文件与清单文件里的"版本"不是同一个概念</strong>——前者是依赖矩阵，后者是自身版本，批量替换前必须先分清；② 任何批量替换都要<strong>先看命中了多少处</strong>，命中数超出预期就停下来核对，而不是直接写回；③ 版本号这类"元信息"改动最好用脚本 + 断言（期望命中次数），把"改对了几处"变成可验证的检查项；④ 项目版本号需同步的位置固定为六处：<code>package.json</code>、<code>package-lock.json</code>（两处 <code>version</code> 字段）、<code>src-tauri/Cargo.toml</code>、<code>src-tauri/Cargo.lock</code>（crsm 条目）、<code>src-tauri/tauri.conf.json</code>、<code>src/meta.ts</code>（界面展示 <code>v0.1</code>），外加 <code>README.md</code> 与 <code>CHANGELOG.md</code> 的文档描述。</li>
+</ul>
+<h3>T-015 每日均衡阶段误用全局上限，突破"个性化值班节数"</h3>
+<ul>
+<li><strong>现象</strong>：给某助理设置了较小的"个性化值班节数上限"（如 1 节），最终排班却给他排了 3 节，超出其上限。汇总表里 <code>实际 &gt; 上限</code>，属静默产出错误结果。</li>
+<li><strong>根因</strong>：算法里"每人工时上限"的解析被收敛到 <code>maxSectionsOf(a)</code>（个性化覆盖优先），主分配、keep 预占、工时修复、汇总共 4 处都用了它；<strong>唯独"每日均衡"阶段新建连续块时仍写死 <code>rules.maxSectionsPerAssistant</code></strong>，于是用全局上限算出的"剩余额度"成了实际闸门。之所以能一路通过，是因为该阶段唯一的守卫 <code>canPlaceBlock</code> 只校验节次存在、课程占用与同时段人数上限，<strong>不校验工时</strong>——缺口正好落在这里。</li>
+<li><strong>解决</strong>：改为 <code>maxSectionsOf(a)</code>；补注释点明"此处是本阶段唯一的工时闸门"；新增两条用例锁定——① 全局 3 / 个人 1 时必须只排 1 节（修复前实测 3 节）；② 反向保护：个人上限大于全局时仍能突破全局值，防止"把上限一律夹到全局值"的过度纠正。同时把 <code>checkInvariants</code> 的口径从全局上限改为<strong>生效上限</strong>（<code>s.maxSections</code>），否则不变量校验本身与个性化语义矛盾。</li>
+<li><strong>教训</strong>：① <strong>"同一规则多处实现"是这类缺陷的唯一温床</strong>——本次正确的解析散落在 4 处、错误的一处却逃过了所有既有用例；引入个性化覆盖这类"同字段多种取值来源"的需求时，应当先找出该字段的<strong>全部读取点</strong>再动手，而不是改到哪算哪。② 守卫函数的职责边界要写清：<code>canPlaceBlock</code> 名字像"能不能放"的完整判定，实际不含工时限，这种"名字比行为更宽"的函数最容易被误当作兜底。③ 回归测试必须<strong>先证明它能捕获缺陷</strong>（本次先在未修代码上跑出 8 例越限）——否则很容易写出"写了就通过"的空洞用例；本次第一版探针容量充足、根本没触发均衡路径，属空洞用例，靠打印的触发计数才发现。</li>
+</ul></section><section id="sec-adr"><h1>⑦ 架构决策记录</h1><p class="sec-desc">ADR-001 存储/打包选型、ADR-002 框架/算法/撤销选型、ADR-0001 保留前端架构</p><h3>ADR-0001 保留纯前端业务与本地桌面架构（2026-10-26）</h3>
+<h2>保留纯前端业务与本地桌面架构</h2>
+<p>状态：已采纳的范围决定；功能实现待完成。日期：2026-10-26。</p>
+<p>用户明确取消整体重构，选择沿用 Vue/TypeScript、Dexie/IndexedDB 和 Tauri，只做功能完善与优化。因此本轮在原架构内完成 F01～F08、约束正确性、增量重排、Worker 响应性、备份恢复及离线安装，不再实施 Python/Web 服务端或内置 Python 后端。</p>
+<p>曾考虑集中式 Django/MySQL 和内置 Python/SQLite：前者要求服务端运行，后者增加运行时与进程打包维护；这些取舍不符合本轮保留原技术方案的决定。已有 Python、MySQL 和 backend 文件保留，但不作为当前产品依赖。</p>
+<p>项目深度以可验证的排班优化、事务完整性、陈旧写入保护、文件兼容与离线交付体现。多人在线协作和独立数据副本自动同步不在本轮范围。详细依据见 <a href="../plans/CRSM-FRONTEND-IMPROVEMENT-PLAN.md" target="_blank" rel="noopener">原架构完善计划</a>。</p>
+<h3>ADR-001 技术选型与架构决策（2026-09-10）</h3>
+<h2>ADR-001: 技术选型与架构决策</h2>
+<h3>文档信息</h3>
+<table><thead><tr><th>字段</th><th>内容</th></tr></thead><tbody>
+<tr><td><strong>ADR编号</strong></td><td>ADR-001</td></tr>
+<tr><td><strong>标题</strong></td><td>数据存储方案与应用打包方案选型</td></tr>
+<tr><td><strong>状态</strong></td><td>已采纳</td></tr>
+<tr><td><strong>创建日期</strong></td><td>2026-09-10</td></tr>
+<tr><td><strong>项目</strong></td><td>学院行政办助理排班系统（CRSM）</td></tr>
+<tr><td><strong>关联</strong></td><td>ADR-002（前端框架、排班算法与撤销/重做机制选型）</td></tr>
+</tbody></table>
+<hr>
+<h3>一、决策背景</h3>
+<p>本项目为软件工程课程项目——学院行政办助理排班系统。系统面向学院行政办，用于管理学生助理的排班工作。项目约束条件为：</p>
+<ul>
+<li><strong>无服务器环境</strong>：项目不涉及后端服务器部署</li>
+<li><strong>单机使用</strong>：由行政办老师在本地电脑使用</li>
+<li><strong>数据持久化</strong>：数据需在本地持久保存，不因关闭应用而丢失</li>
+<li><strong>导入导出</strong>：支持课程表导入和排班表导出（Excel格式）</li>
+</ul>
+<p>基于以上约束，需要决策两个核心问题：</p>
+<ol>
+<li><strong>数据存储方案</strong>：在浏览器本地存储与后端数据库之间如何选择？</li>
+<li><strong>应用打包方案</strong>：如何包装为可在电脑上直接打开的应用？</li>
+</ol>
+<hr>
+<h3>二、数据存储方案</h3>
+<h4>2.1 方案A：localStorage</h4>
+<p><strong>描述</strong>：利用浏览器内置的 <code>localStorage</code> API 存储键值对数据。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>零配置，API 简单（<code>setItem</code> / <code>getItem</code>）</li>
+<li>同步读写，开发门槛低</li>
+<li>无需额外依赖库</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>容量限制严格（通常 5MB 以下）</li>
+<li>仅支持字符串存储，复杂数据结构需手动序列化</li>
+<li>无法建立索引，查询性能随数据量增长急剧下降</li>
+<li>不适合存储结构化表格数据（如课程表、排班表）</li>
+</ul>
+<p><strong>适用场景</strong>：系统配置、用户偏好等小量简单数据。</p>
+<h4>2.2 方案B：IndexedDB（已采纳）</h4>
+<p><strong>描述</strong>：浏览器内置的结构化数据库，支持存储对象、数组等复杂数据结构，支持索引和事务。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>容量大（无硬性上限，通常数百MB起步）</li>
+<li>支持结构化数据查询（类似数据库的索引和事务）</li>
+<li>异步操作，不阻塞主线程</li>
+<li>数据持久化，关闭应用后数据不丢失</li>
+<li>可通过封装库（如 Dexie.js）简化 API 调用</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>原生 API 较复杂（回调地狱），需封装库降低使用门槛</li>
+<li>不支持 SQL 查询，复杂关联查询需应用层实现</li>
+<li>数据孤岛，不同设备间不互通</li>
+</ul>
+<p><strong>封装库选择</strong>：</p>
+<table><thead><tr><th>库名</th><th>特点</th><th>选择理由</th></tr></thead><tbody>
+<tr><td><strong>Dexie.js</strong></td><td>基于 IndexedDB 的 Promise 封装，API 简洁，支持表定义和索引</td><td>推荐，学习成本低，文档完善</td></tr>
+<tr><td>localForage</td><td>localStorage 的异步封装，API 极简</td><td>功能较单一，不适合复杂查询场景</td></tr>
+</tbody></table>
+<p><strong>最终选择</strong>：<strong>IndexedDB + Dexie.js</strong></p>
+<p><strong>数据表设计</strong>（2026-09-10 修订：补充周次、学号、来源标记、操作日志与快照表，修订依据见 ADR-002 第五节）：</p>
+<table><thead><tr><th>表名</th><th>说明</th><th>核心字段</th></tr></thead><tbody>
+<tr><td><code>assistant</code></td><td>助理信息</td><td>id, 姓名, <strong>学号（唯一）</strong>, 电话, QQ, 班级, 身份类型(本科/研究生)</td></tr>
+<tr><td><code>course</code></td><td>课程表</td><td>id, assistant_id, 课程编号, 课程名, <strong>上课周次（如 [[1,4],[6,17]]）</strong>, 星期, 节次(起止), 上课地点, 教师</td></tr>
+<tr><td><code>duty_schedule</code></td><td>排班表</td><td>id, <strong>周次</strong>, 星期, 时段, assistant_id, 状态, <strong>来源(auto/manual)</strong></td></tr>
+<tr><td><code>config</code></td><td>系统配置</td><td>key, value（排班规则、人数限制等）</td></tr>
+<tr><td><code>operation_log</code></td><td>操作日志</td><td>id, 操作时间, 操作类型, 操作详情（满足 SRS 4.2 追溯要求）</td></tr>
+<tr><td><code>schedule_snapshot</code></td><td>排班快照</td><td>id, 创建时间, 标签, 排班数据(JSON)（支撑撤销/重做与重排对比）</td></tr>
+</tbody></table>
+<h4>2.3 方案C：后端数据库（SQLite / MySQL）</h4>
+<p><strong>描述</strong>：搭建后端 API 服务 + 关系型数据库，采用前端→后端→数据库的三层架构。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>数据持久化且安全，不依赖浏览器</li>
+<li>支持多端同步和多人协作</li>
+<li>数据完整性有保障（事务、约束、索引）</li>
+<li>可扩展性强</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>需要搭建后端服务（Flask/FastAPI/Express），开发成本高</li>
+<li>需要服务器环境部署，不符合本项目"无服务器"约束</li>
+<li>学习曲线陡，需掌握后端框架、数据库 SQL、API 设计等</li>
+</ul>
+<p><strong>最终选择</strong>：<strong>不采用</strong>。本项目为课程简易项目，无服务器环境，不满足多端协作需求，采用此方案过度设计。</p>
+<h4>2.4 数据存储方案对比总结</h4>
+<table><thead><tr><th>对比维度</th><th>localStorage</th><th>IndexedDB（已采纳）</th><th>后端数据库</th></tr></thead><tbody>
+<tr><td>开发难度</td><td>低</td><td>中</td><td>中高</td></tr>
+<tr><td>数据容量</td><td>小（~5MB）</td><td>大（无硬性上限）</td><td>无限制</td></tr>
+<tr><td>数据结构支持</td><td>仅字符串</td><td>结构化对象</td><td>关系型表</td></tr>
+<tr><td>查询能力</td><td>弱（仅键查找）</td><td>中（索引+事务）</td><td>强（SQL）</td></tr>
+<tr><td>多端同步</td><td>不支持</td><td>不支持</td><td>支持</td></tr>
+<tr><td>部署难度</td><td>零</td><td>零</td><td>中高</td></tr>
+<tr><td>适用场景</td><td>简单配置</td><td>结构化本地数据</td><td>生产级应用</td></tr>
+</tbody></table>
+<hr>
+<h3>三、应用打包方案</h3>
+<h4>3.1 方案A：Electron 打包</h4>
+<p><strong>描述</strong>：使用 Electron 框架将 Web 技术（HTML/CSS/JS）打包为桌面应用程序。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>生态成熟，社区资源丰富，教程多</li>
+<li>拥有完整的 Node.js 能力，可自由访问本地文件系统</li>
+<li>打包产物为独立 <code>.exe</code>（Windows）/ <code>.dmg</code>（Mac），用户体验好</li>
+<li>支持文件对话框、系统通知等桌面能力</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>打包体积大（约 80-150MB），因为捆绑了 Chromium 浏览器引擎</li>
+<li>内存占用较高</li>
+<li>启动速度相对较慢</li>
+</ul>
+<p><strong>打包产物</strong>：一个 <code>.exe</code> 安装包，双击安装后在桌面生成快捷方式。</p>
+<h4>3.2 方案B：Tauri 打包（已采纳）</h4>
+<p><strong>描述</strong>：使用 Tauri 框架，前端用 Web 技术编写，后端用 Rust 实现，调用系统自带的 WebView2 渲染页面。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>打包体积极小（约 3-10MB），不捆绑浏览器引擎</li>
+<li>内存占用低，性能优秀</li>
+<li>调用系统自带 WebView2（Windows 10/11 自带），无需额外安装浏览器</li>
+<li>同样支持本地文件读写，导入导出功能完整</li>
+<li>Rust 后端提供内存安全保证</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>需要用户系统为 Windows 10 以上（Tauri v2 依赖 WebView2）</li>
+<li>社区生态相比 Electron 较小，部分插件可能不兼容</li>
+<li>学习曲线稍陡（需了解 Rust 基础概念）</li>
+</ul>
+<p><strong>打包产物</strong>：一个轻量级 <code>.exe</code> 安装包（约 3-10MB），双击即可运行。</p>
+<p><strong>最终选择</strong>：<strong>Tauri</strong></p>
+<p>选择理由：本项目为课程项目，打包体积小更便于分发和提交作业；性能足够满足排班系统的功能需求；Rust 后端的学习本身也是软件工程课程的良好实践。</p>
+<h4>3.3 方案C：直接双击 HTML 文件</h4>
+<p><strong>描述</strong>：不打包，直接将 <code>.html</code> 文件双击用系统默认浏览器打开使用。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>零打包，开发调试最直接</li>
+<li>无需安装任何运行时环境</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>现代浏览器对 <code>file://</code> 协议有严格的安全限制</li>
+<li><code>localStorage</code> 和 <code>IndexedDB</code> 在 <code>file://</code> 下可能无法正常使用或数据不持久</li>
+<li>部分浏览器会阻止本地文件读取操作</li>
+<li>用户体验差（地址栏显示文件路径，无独立窗口）</li>
+</ul>
+<p><strong>最终选择</strong>：<strong>不采用</strong>。体验不稳定，不满足工程交付标准。</p>
+<h4>3.4 应用打包方案对比总结</h4>
+<table><thead><tr><th>对比维度</th><th>Electron</th><th>Tauri（已采纳）</th><th>直接HTML</th></tr></thead><tbody>
+<tr><td>打包体积</td><td>大（80-150MB）</td><td>小（3-10MB）</td><td>无</td></tr>
+<tr><td>内存占用</td><td>高</td><td>低</td><td>低</td></tr>
+<tr><td>本地文件访问</td><td>支持</td><td>支持</td><td>受限</td></tr>
+<tr><td>系统要求</td><td>任意</td><td>Windows 10+</td><td>任意</td></tr>
+<tr><td>用户体验</td><td>好（独立窗口）</td><td>好（独立窗口）</td><td>差（浏览器标签页）</td></tr>
+<tr><td>开发难度</td><td>中</td><td>中偏高</td><td>低</td></tr>
+<tr><td>适用场景</td><td>大型桌面应用</td><td>轻量级桌面应用</td><td>原型演示</td></tr>
+</tbody></table>
+<hr>
+<h3>四、导入导出功能设计</h3>
+<h4>4.1 课程表导入流程</h4>
+<pre><code>用户点击"选择课程表文件"按钮
+    → 弹出系统文件选择对话框
+    → 用户选择 Excel 文件（.xlsx）
+    → 前端使用 xlsx.js 解析文件内容
+    → 读取表头"学生：姓名(学号)"；缺失则报错中止（不写入任何数据）
+    → 按学号查 assistant 表
+        ├ 已存在 → 更新该助理的姓名与身份类型（电话 / QQ / 班级保留不动）
+        └ 不存在 → 直接新建助理（身份由（本）/（研）标记推导）
+    → 解析结果映射为内部数据模型，整体替换该助理的课程表（幂等）
+    → 展示导入结果报告（动作=新建/更新、课程明细、行级警告）</code></pre>
+<blockquote>2026-09-13 修订：归档改为全自动（去掉人工确认与归属选择），两条分支收口到同一个替换动作，保证结果一致；分支逻辑实现于 <code>src/db/importService.ts</code>，可独立单测。</blockquote>
+<p><strong>核心依赖库</strong>：</p>
+<table><thead><tr><th>库名</th><th>用途</th></tr></thead><tbody>
+<tr><td><strong>xlsx.js（SheetJS）</strong></td><td>浏览器端解析/生成 Excel 文件</td></tr>
+<tr><td><strong>Dexie.js</strong></td><td>IndexedDB 封装，数据持久化存储</td></tr>
+</tbody></table>
+<h4>4.2 排班表导出流程</h4>
+<pre><code>用户点击"导出第 N 周排班"按钮（工具栏"含电话"开关默认开启）
+    → 从 IndexedDB 读取该周排班数据
+    → 使用 xlsx.js 生成工作表：
+        排班表格子文案 =「姓名（电话）」（开关关闭时仅姓名，且不生成明细表）
+        同时生成"值班明细"表（周次/星期/节次/姓名/电话）
+    → 调用 xlsx.js 的 writeFile 方法触发下载
+    → 用户选择保存位置
+    → 提示导出成功</code></pre>
+<blockquote>2026-09-13 修订：导出只携带"电话"这一项个人信息（学号 / QQ 不再写入），电话默认自动填充；取消导出选项对话框，改为即点即导。</blockquote>
+<h4>4.3 导入导出文件格式说明</h4>
+<ul>
+<li><strong>导入格式</strong>：仅支持 <code>.xlsx</code> 格式课程表文件（学院原始 Word 课程表转换而来，格式定义见 SRS 附录A）；<strong>不支持</strong> <code>.doc/.docx</code> 等 Word 格式的直接解析，需先另存/转换为 <code>.xlsx</code>（项目附转换指引）</li>
+<li><strong>导出格式</strong>：生成 <code>.xlsx</code> 格式的排班表文件，兼容 Microsoft Excel 和 WPS；个人信息<strong>仅含值班人电话</strong>（默认自动填入），学号与 QQ 不写入</li>
+<li><strong>样例文件</strong>：<code>timeTableForStu12.xlsx</code>（项目根目录）为标准输入格式的实际样例，含合并单元格与多行课程单元格，解析器设计以此为基准</li>
+</ul>
+<hr>
+<h3>五、技术栈总览</h3>
+<table><thead><tr><th>层级</th><th>技术选型</th><th>说明</th></tr></thead><tbody>
+<tr><td><strong>前端框架</strong></td><td>Vue 3 + TypeScript</td><td>组件化开发，响应式 UI（选型见 ADR-002）</td></tr>
+<tr><td><strong>UI 组件库</strong></td><td>Element Plus</td><td>快速构建表单、表格等界面（见 ADR-002）</td></tr>
+<tr><td><strong>本地数据库</strong></td><td>IndexedDB（via Dexie.js）</td><td>结构化本地数据存储</td></tr>
+<tr><td><strong>Excel 处理</strong></td><td>xlsx-js-style（SheetJS 分支）</td><td>浏览器端 Excel 读写，支持单元格样式</td></tr>
+<tr><td><strong>排班算法</strong></td><td>贪心启发式</td><td>自动排班核心（见 ADR-002）</td></tr>
+<tr><td><strong>撤销/重做</strong></td><td>快照栈</td><td>支撑手动调整与重排对比（见 ADR-002）</td></tr>
+<tr><td><strong>应用打包</strong></td><td>Tauri</td><td>轻量级桌面应用打包</td></tr>
+<tr><td><strong>后端运行时</strong></td><td>Rust（Tauri 内置）</td><td>系统级能力调用</td></tr>
+<tr><td><strong>版本管理</strong></td><td>Git + GitHub</td><td>代码托管与协作</td></tr>
+<tr><td><strong>工程文档</strong></td><td>Markdown</td><td>ADR、SRS 等文档</td></tr>
+</tbody></table>
+<blockquote><strong>2026-09-13 修订：Excel 库由 SheetJS 社区版切换为 <code>xlsx-js-style</code>。</strong></blockquote>
+<blockquote></blockquote>
+<blockquote><strong>触发原因</strong>：需求要求导出排班表中助理"姓名与电话上下两行显示"，并提升版式美观度。实测确认社区版 SheetJS <strong>无法写入任何单元格样式</strong>——其 <code>write_cellXfs</code> 只序列化 <code>numFmtId</code>（<code>get_cell_style</code> 生成的 xf 恒为 <code>fontId/fillId/borderId:0</code>），产物 <code>xl/styles.xml</code> 中既无 <code>alignment</code> 也无 <code>wrapText</code>，工作表单元格也不带 <code>s</code> 属性，因此"上下两行"在 Excel/WPS 中不会生效。</blockquote>
+<blockquote></blockquote>
+<blockquote><strong>方案对比</strong>：① 手工改写 OOXML（解压 xlsx → 注入 styles.xml 与单元格 <code>s</code> 属性 → 重新打包）：需自行实现 zip 读写、deflate 与 CRC32，约 200 行且需在 WebView2 中验证 <code>CompressionStream</code> 可用性，维护风险高；② 使用支持样式写入的库：<code>xlsx-js-style</code> 是 SheetJS 0.18.5 的直系分支，<strong>读写 API 完全兼容</strong>，仅额外支持 <code>cell.s</code>（字体/边框/对齐/填充），切换到它只需替换 import，课程表解析器等既有读取路径零改动（9 项解析测试原样通过）。</blockquote>
+<blockquote></blockquote>
+<blockquote><strong>决策</strong>：采用方案 ②，并<strong>移除原 <code>xlsx</code> 依赖</strong>，全项目只保留一个 Excel 库，避免重复打包。代价说明：该分支的 dist 体积大于社区版，共享 chunk 由约 420 KB 增至约 864 KB（gzip 后约 +150 KB）。因本项目为 Tauri 单机桌面应用（本地加载、不走网络），且该 chunk 随路由懒加载、不在首屏关键路径上，此代价可接受。风险 R04（大文件解析性能）结论不变：读取路径与社区版同一实现。</blockquote>
+<hr>
+<h3>六、风险与缓解措施</h3>
+<table><thead><tr><th>风险编号</th><th>风险描述</th><th>影响等级</th><th>缓解措施</th></tr></thead><tbody>
+<tr><td>R01</td><td>IndexedDB 在不同运行环境中实现可能存在差异</td><td>中</td><td>使用 Dexie.js 统一封装；应用固定运行于 Tauri WebView2（Windows 10+），环境一致性好</td></tr>
+<tr><td>R02</td><td>Tauri 要求 Windows 10 以上系统</td><td>中</td><td>明确最低系统要求并在 README 中说明；如需兼容旧系统可回退 Electron</td></tr>
+<tr><td>R03</td><td>清除应用数据可能导致数据丢失</td><td>中</td><td>提供数据导出备份功能，引导用户定期导出备份；在首次使用时提示数据重要性</td></tr>
+<tr><td>R04</td><td>xlsx.js 处理大文件时性能下降</td><td>低</td><td>设置文件大小上限提示；对超大文件分批处理</td></tr>
+<tr><td>R05</td><td>Tauri 生态插件不如 Electron 丰富</td><td>低</td><td>核心功能（文件读写、数据库）Tauri 均原生支持；必要时可通过 Rust crate 扩展</td></tr>
+<tr><td>R06</td><td>学生课程表格式不统一导致导入失败</td><td>高</td><td>提供标准课程表模板文件供用户填写；导入时做格式校验并给出行级错误提示；Word 格式统一转换为 xlsx 后导入</td></tr>
+</tbody></table>
+<hr>
+<h3>七、后续演进路径</h3>
+<h4>阶段一：MVP（最小可行产品）</h4>
+<ul>
+<li>纯前端 + IndexedDB 实现核心排班逻辑</li>
+<li>Tauri 打包为桌面应用</li>
+<li>支持课程表导入、自动排班、手动调整、排班表导出</li>
+</ul>
+<h4>阶段二：功能完善</h4>
+<ul>
+<li>增加排班规则配置（最短/最长上班时间、同时段人数限制等）</li>
+<li>增加助理信息管理（姓名、电话、QQ、班级等）</li>
+<li>增加排班冲突检测与提醒</li>
+<li>可选：将排班算法升级为最小费用最大流以提升解质量</li>
+</ul>
+<h4>阶段三：云端协作（可选）</h4>
+<ul>
+<li>如有需要，可逐步接入后端服务（FastAPI + SQLite/MySQL）</li>
+<li>实现多端数据同步和多人协作</li>
+<li>此阶段需重新评估架构，可能引入后端框架</li>
+</ul>
+<h4>演进原则</h4>
+<p>采用<strong>迭代开发策略</strong>：先做出可运行的原型验证核心逻辑，再逐步增强功能和完善工程规范。这种"先原型后正式"的做法是软件工程中常见的敏捷开发实践。</p>
+<hr>
+<h3>八、决策记录</h3>
+<table><thead><tr><th>决策项</th><th>选择</th><th>理由</th></tr></thead><tbody>
+<tr><td>数据存储</td><td>IndexedDB + Dexie.js</td><td>容量大、支持结构化数据、零后端、符合项目约束</td></tr>
+<tr><td>应用打包</td><td>Tauri</td><td>体积小、性能好、适合课程项目分发</td></tr>
+<tr><td>导入导出</td><td>SheetJS (xlsx.js)</td><td>浏览器端 Excel 读写标准库，兼容性好</td></tr>
+<tr><td>后端方案</td><td>暂不采用</td><td>项目无服务器环境，过度设计</td></tr>
+<tr><td>前端框架</td><td>Vue 3 + TypeScript + Element Plus</td><td>中文生态友好、组件匹配度高（详见 ADR-002）</td></tr>
+<tr><td>排班算法</td><td>贪心启发式</td><td>满足性能要求，F04 手动调整兜底（详见 ADR-002）</td></tr>
+<tr><td>撤销/重做</td><td>快照栈</td><td>实现简单，支撑 F08 差异对比（详见 ADR-002）</td></tr>
+</tbody></table>
+<hr>
+<h3>附录</h3>
+<h4>A. 相关文档索引</h4>
+<table><thead><tr><th>文档</th><th>路径</th><th>说明</th></tr></thead><tbody>
+<tr><td>软件需求规格说明书</td><td><code>docs/SRS.md</code></td><td>系统功能需求完整定义</td></tr>
+<tr><td>架构决策记录（本文档）</td><td><code>docs/ADR-001.md</code></td><td>数据存储与打包选型</td></tr>
+<tr><td>架构决策记录</td><td><code>docs/ADR-002.md</code></td><td>框架、算法与撤销机制选型及数据模型修订</td></tr>
+<tr><td>README</td><td><code>README.md</code></td><td>项目介绍、快速开始、运行截图</td></tr>
+</tbody></table>
+<h4>B. 术语表</h4>
+<table><thead><tr><th>术语</th><th>英文</th><th>说明</th></tr></thead><tbody>
+<tr><td>ADR</td><td>Architecture Decision Record</td><td>架构决策记录，记录重要技术决策及其理由</td></tr>
+<tr><td>IndexedDB</td><td>IndexedDB</td><td>浏览器内置的结构化数据库</td></tr>
+<tr><td>Tauri</td><td>Tauri</td><td>轻量级桌面应用框架，Rust 后端 + Web 前端</td></tr>
+<tr><td>Electron</td><td>Electron</td><td>跨平台桌面应用框架，Chromium + Node.js</td></tr>
+<tr><td>MVP</td><td>Minimum Viable Product</td><td>最小可行产品，具备核心功能的最简版本</td></tr>
+<tr><td>SRS</td><td>Software Requirements Specification</td><td>软件需求规格说明书</td></tr>
+<tr><td>WebView2</td><td>Microsoft WebView2</td><td>Windows 10/11 内置的浏览器渲染引擎</td></tr>
+<tr><td>Dexie.js</td><td>Dexie.js</td><td>IndexedDB 的 Promise 封装库</td></tr>
+<tr><td>贪心启发式</td><td>Greedy Heuristic</td><td>每步选取当前最优选择的算法策略，不保证全局最优</td></tr>
+<tr><td>快照栈</td><td>Snapshot Stack</td><td>通过保存完整数据快照实现撤销/重做的机制</td></tr>
+</tbody></table>
+<h3>ADR-002 前端框架、排班算法与撤销/重做机制选型（2026-09-10）</h3>
+<h2>ADR-002: 前端框架、排班算法与撤销/重做机制选型</h2>
+<h3>文档信息</h3>
+<table><thead><tr><th>字段</th><th>内容</th></tr></thead><tbody>
+<tr><td><strong>ADR编号</strong></td><td>ADR-002</td></tr>
+<tr><td><strong>标题</strong></td><td>前端框架、排班算法与撤销/重做机制选型，及数据模型修订</td></tr>
+<tr><td><strong>状态</strong></td><td>已采纳</td></tr>
+<tr><td><strong>创建日期</strong></td><td>2026-09-10</td></tr>
+<tr><td><strong>项目</strong></td><td>学院行政办助理排班系统（CRSM）</td></tr>
+<tr><td><strong>关联</strong></td><td>ADR-001（数据存储方案与应用打包方案选型）</td></tr>
+</tbody></table>
+<hr>
+<h3>一、决策背景</h3>
+<p>ADR-001 完成了数据存储（IndexedDB + Dexie.js）与应用打包（Tauri）的选型，但遗留以下待定项与缺口：</p>
+<ol>
+<li>前端框架在 ADR-001 技术栈表中标记为"Vue 3 / React（待定）"；</li>
+<li>SRS 的核心功能 F01（自动排班）未约定具体算法；</li>
+<li>SRS 的 F04（撤销/重做）与 F08（重排差异对比）未约定实现机制；</li>
+<li>ADR-001 初版数据表缺少 SRS 明确要求的字段（课程周次、学号、排班来源标记），将直接导致空闲时间计算错误与重排功能失效。</li>
+</ol>
+<p>本文档对以上问题逐一决策，并同步修订 ADR-001 与 SRS 的对应章节。</p>
+<hr>
+<h3>二、前端框架选型</h3>
+<h4>2.1 候选方案对比</h4>
+<table><thead><tr><th>对比维度</th><th>Vue 3 + TS + Element Plus（已采纳）</th><th>React + TS + Ant Design</th><th>原生 JS（无框架）</th></tr></thead><tbody>
+<tr><td>学习曲线</td><td>模板语法直观，上手快</td><td>JSX 心智负担略高</td><td>无框架学习成本，但样板代码多</td></tr>
+<tr><td>组件生态</td><td>Element Plus 表格/表单/日期组件齐全，中文文档完善</td><td>Ant Design 组件质量高</td><td>需手写或拼装零散库</td></tr>
+<tr><td>与本项目匹配度</td><td>周视图排班表格、CRUD 表单均为其强项</td><td>匹配度相当</td><td>6 类页面 + 复杂周视图，手写 DOM 成本高</td></tr>
+<tr><td>团队匹配</td><td>课程项目主流，中文资料丰富</td><td>生态最大，但团队无既有经验</td><td>-</td></tr>
+</tbody></table>
+<h4>2.2 最终选择</h4>
+<p><strong>Vue 3 + TypeScript + Element Plus</strong>。</p>
+<p>理由：中文资料与组件库对本项目最友好；表格与表单密集型界面正是 Element Plus 的强项；TypeScript 提供类型安全，降低排班数据结构出错的风险。</p>
+<hr>
+<h3>三、排班算法选型（SRS F01）</h3>
+<h4>3.1 问题建模</h4>
+<p>自动排班本质是一个<strong>约束满足问题（CSP）</strong>：将"助理-时段"视为二分图匹配，约束包括同时段人数上下限、每人工时上下限，目标是生成无冲突且覆盖完整的排班方案。</p>
+<h4>3.2 候选方案对比</h4>
+<table><thead><tr><th>对比维度</th><th>贪心启发式（已采纳）</th><th>回溯搜索（CSP）</th><th>最小费用最大流</th></tr></thead><tbody>
+<tr><td>基本思路</td><td>约束最紧的时段优先分配，候选按剩余空闲时间排序，冲突时局部修复</td><td>系统性搜索 + 剪枝求可行解</td><td>工时上下限建模为图论费用</td></tr>
+<tr><td>时间复杂度</td><td>O(n×m)，50人×约百时段毫秒级</td><td>最坏指数级，依赖剪枝质量</td><td>多项式级，但实现复杂</td></tr>
+<tr><td>解的质量</td><td>非全局最优</td><td>可行性保证强</td><td>解质量有理论保证</td></tr>
+<tr><td>实现难度</td><td>低</td><td>高</td><td>高</td></tr>
+<tr><td>兜底手段</td><td>F04 手动调整即为设计好的兜底</td><td>-</td><td>-</td></tr>
+</tbody></table>
+<h4>3.3 最终选择</h4>
+<p><strong>贪心启发式</strong>。</p>
+<p>理由：SRS 4.1 要求 50 人 5 秒内完成排班，贪心算法毫秒级即可满足；解不保证全局最优，但 F04 的手动调整功能本就是流程的一部分，最优性要求可以放宽。升级路径：若后续对解质量有更高要求，可在阶段二引入最小费用最大流替换核心分配器，对外接口不变。</p>
+<h4>3.4 算法流程约定</h4>
+<ol>
+<li>计算每位助理的空闲时间矩阵（课程表取反，按周次过滤）；</li>
+<li>对排班时段按"约束紧度"排序（要求人数多、可用人少的时段优先）；</li>
+<li>对每个时段，从候选人中按剩余可用工时/空闲度排序依次分配，直至满足人数要求；</li>
+<li>全部分配后校验每人工时上下限，违反者触发局部调整（在可交换的时段间调换）；</li>
+<li>输出排班结果及未满足时段清单，交由手动调整处理。</li>
+</ol>
+<hr>
+<h3>四、撤销/重做机制选型（SRS F04、F08）</h3>
+<h4>4.1 候选方案对比</h4>
+<table><thead><tr><th>对比维度</th><th>快照栈（已采纳）</th><th>命令模式</th></tr></thead><tbody>
+<tr><td>基本思路</td><td>每次改动序列化整份排班数据入栈，撤销=弹栈恢复</td><td>每个操作记录其逆操作</td></tr>
+<tr><td>实现复杂度</td><td>低</td><td>高</td></tr>
+<tr><td>内存开销</td><td>本项目规模（50人×17周）单份快照约几十 KB，可忽略</td><td>极小</td></tr>
+<tr><td>对 F08 的支撑</td><td>重排前后差异对比 = diff 两份快照，几乎零额外成本</td><td>需额外实现差异计算</td></tr>
+</tbody></table>
+<h4>4.2 最终选择</h4>
+<p><strong>快照栈</strong>。</p>
+<p>理由：数据规模小，快照成本可忽略；实现简单可靠；F08 的"重排前后对比"直接基于快照 diff 实现。快照持久化存储于 IndexedDB 的 <code>schedule_snapshot</code> 表，应用重启后仍可恢复历史。</p>
+<hr>
+<h3>五、数据模型修订</h3>
+<h4>5.1 缺口与影响</h4>
+<table><thead><tr><th>缺口</th><th>影响</th><th>修订</th></tr></thead><tbody>
+<tr><td><code>course</code> 表缺少上课周次</td><td>空闲时间计算错误（"1-4周有课"会被当成全学期有课）</td><td>增加结构化字段：<code>week_ranges</code>（JSON 数组，如 <code>[[1,4],[6,17]]</code>）、<code>day_of_week</code>、<code>section_start/end</code></td></tr>
+<tr><td><code>assistant</code> 表缺少学号</td><td>SRS 5.3 要求学号唯一；导出与 F08 对比依赖学号</td><td>增加 <code>student_no</code>（唯一索引）</td></tr>
+<tr><td><code>duty_schedule</code> 缺少周次与来源标记</td><td>无法按周排班；F08"保留手动调整"无从实现</td><td>增加 <code>week_no</code>、<code>source</code>（auto/manual）</td></tr>
+<tr><td>操作日志无落点</td><td>SRS 4.2 要求修改可追溯</td><td>新增 <code>operation_log</code> 表</td></tr>
+</tbody></table>
+<h4>5.2 修订后的数据表定义</h4>
+<table><thead><tr><th>表名</th><th>字段</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>assistant</code></td><td>id (PK), student_no (唯一), name, phone, qq, class, identity (undergrad/graduate), created_at, updated_at</td><td>助理信息</td></tr>
+<tr><td><code>course</code></td><td>id (PK), assistant_id (外键→assistant), course_no, course_name, week_ranges (JSON), day_of_week (1-7), section_text, section_start, section_end, location, teacher, note</td><td>课程；week_ranges 决定课程在哪些周生效。2026-09-11 修订：实际样例中节次含非数字标签（中课/晚课），新增 section_text 保留原文，section_start/end 允许 null；实验课批次信息存 note</td></tr>
+<tr><td><code>duty_schedule</code></td><td>id (PK), week_no, day_of_week, time_slot, assistant_id (外键), status, source (auto/manual), created_at, updated_at</td><td>排班结果；source 标记手动调整项，重排时予以保留</td></tr>
+<tr><td><code>config</code></td><td>key (PK), value (JSON)</td><td>排班规则、时段定义、人数限制等</td></tr>
+<tr><td><code>operation_log</code></td><td>id (PK), operated_at, action, detail (JSON)</td><td>操作日志，满足 SRS 4.2 追溯要求</td></tr>
+<tr><td><code>schedule_snapshot</code></td><td>id (PK), created_at, label, data (JSON)</td><td>排班快照，支撑撤销/重做与 F08 差异对比</td></tr>
+</tbody></table>
+<p>该定义已同步更新至 ADR-001 第 2.2 节。</p>
+<hr>
+<h3>六、决策记录</h3>
+<table><thead><tr><th>决策项</th><th>选择</th><th>理由</th></tr></thead><tbody>
+<tr><td>前端框架</td><td>Vue 3 + TypeScript + Element Plus</td><td>中文生态友好、组件匹配度高、课程项目主流</td></tr>
+<tr><td>排班算法</td><td>贪心启发式</td><td>满足性能要求、实现复杂度低，F04 手动调整兜底；阶段二可升级最小费用流</td></tr>
+<tr><td>撤销/重做</td><td>快照栈</td><td>实现简单，天然支撑 F08 差异对比</td></tr>
+<tr><td>数据模型</td><td>补充周次/学号/来源标记/操作日志</td><td>修复会导致排班错误与功能失效的缺口</td></tr>
+</tbody></table>
+<hr>
+<h3>七、修订记录（2026-09-11，新增需求驱动）</h3>
+<ol>
+<li><strong>排班模式</strong>：新增"各周排班相同"（uniform）模式——以周期内任一周有课即占用，生成一份方案复制到全部周次；默认"各周独立"。算法 API 由单周 <code>scheduleWeek</code> 调整为 <code>scheduleAll</code>（内部逐周或统一计算）。</li>
+<li><strong>课程占用过滤</strong>：Course 表新增 <code>kind</code> 字段（theory/experiment，由样例标记（本）/（实）推导），规则可配置两类课程是否计入占用；数据库升级至 version 2 做存量回填。</li>
+<li><strong>上班时间表</strong>：时段不再使用固定模板，由规则中的工作日（默认周一~五）× 上班节次（默认上午 1~4 节、下午 6~9 节）推导；<code>duty_schedule.timeSlot</code> 存节次区间键（如 <code>c1-4</code>），排班表按时段节次显示。</li>
+<li><strong>每日均衡</strong>（2026-09-13）：新增规则 <code>balanceDaily</code>（默认 true）。贪心主分配按"时段紧度先难后易"逐时段填人，容量会优先消耗在排序靠前的日子上，可能出现"周一~周四已排妥、周五无人"。因此在收敛结果之上追加<strong>每日均衡阶段</strong>，判据是"该工作日的每个上班节次都达到人数下限"（下限取 <code>max(1, minPerSlot)</code>，即"某天无人"一律视为不达标）。可用手段分两档：</li>
+</ol>
+<ul>
+<li><strong>A 档 · 零损伤</strong>：① 为助理在该天新建满足最少连续节数的连续块；② 把某助理的整个连续块搬到该天的空闲连续段（块节数不变 ⇒ 工时净变化为 0）。均要求<strong>源时段移出后仍满足 <code>minPerSlot</code></strong>（只动用冗余值班），不新增未满足时段。择优选人时以"已值班天数最少者优先"。</li>
+<li><strong>B 档 · 兜底让位</strong>（2026-09-13 追加，由实测反馈驱动）：A 档要求"源时段移出后仍满足人数下限"，在<strong>工时上限已用尽</strong>的数据上等价于禁止一切搬移——实测三助理夹具（3 人 × 上限 6 节 = 18 人节 vs 40 个时段，且每个已排时段恰好 1 人、冗余数为 0）下，第 1 周周五永远无人。故追加兜底：仅当某工作日<strong>一个人都没有</strong>且 A 档无解时，允许搬走整个连续块、把源时段的覆盖让出来，从而保证"每天都有人"。硬性闸门：<strong>源日让出后仍须有 ≥1 条排班</strong>（绝不把空白天转移给别的日期）；择优顺序为损伤最小（跌出人数下限的源时段个数）→ 块最短 → 源日值班最多（从最拥挤的天让出）→ 助理 id（确定性）。</li>
+<li><strong>取舍（显式记录）</strong>：该夹具下 <code>18 &lt; 40</code>，"每个时段都有人"数学上不可达，"每天都有人"与"每时段都有人"不可兼得。实现显式优先前者（需求核心目标），被让出的时段进入未满足时段清单交由手动调整兜底——这是有意的产品取舍，而非静默破坏约束。实测效果：全周期空白天次 <strong>22 → 0</strong>、未满足时段 <strong>399 → 374</strong>（未增加），每人工时与排班总量守恒。</li>
+<li>*为什么不做"每日人数差最小化"*：各工作日上班节次相同 ⇒ 每日时段数相同，主分配本就会把每个时段填到人数上限，真正的失衡形态就是"某天归零"；而搬移粒度受最少连续节数约束、无法细分到单节微调人数差，强行迭代会在两个状态间来回搬运、永不收敛。故收敛目标锁定为"消除整天无人"。</li>
+<li>该阶段不引入新数据结构，也不需要数据库版本升级。</li>
+</ul>
+<ol>
+<li><strong>节次序号轴（2026-09-13，缺陷修复）</strong>：实测课程表的节次是"数字节次 + 命名节次"<strong>混排</strong>的连续序列——上午第 1~5 节、午间"中课1/中课2"、下午第 6~10 节、傍晚"晚课"、晚上第 11~13 节（顺序取自课程表 A 列时段块）。原设计把排班表的下午编为第 8~11 节，而课程表编为第 6~9 节，<strong>同一节真实课程在两表中编号相差 2</strong>；占用判定按节号比较区间时会漏判——例如课程"第六节-第八节"只与排班"第8节"相交，排班"第9、10节"被判为空闲，于是<strong>在学生上课时间排班</strong>（用户实测反馈）。</li>
+</ol>
+<p>*决策*：① 排班表的上班节次编号<strong>与课程表对齐</strong>（默认上午 1~4、下午 6~9），并迁移存量配置中的旧默认值 [1-4]+[8-11] → [1-4]+[6-9]（只迁移与旧默认完全一致的区间，不误改管理员自定义节次）；② 课程占用判定改为<strong>统一换算到"节次序号"后比较</strong>，序号轴集中定义于 <code>src/utils/sectionOrder.ts</code>（<code>SECTION_SEQUENCE</code>），解析器与算法共用同一换算，消除两份重复的中文节号映射；③ 命名节次（中课1=6、中课2=7、晚课=13）按其真实序号参与占用计算，不再一律按"整天占用"处理——原保守做法会把有午间/晚间课的学生<strong>整天</strong>排除在排班之外，是另一个方向的缺陷；④ 节次原文无法识别时仍退化为整天占用（宁可少排，不在课上排班）。</p>
+<p>*代价与边界*：<code>CourseInput</code> 由传数字节号改为传节次原文（算法内部换算），<code>course</code> 表结构未变、无需回填；<code>duty_schedule</code> 升至 version 3 处理（见下）。回归夹具 <code>regression-3assistants.json</code> 用三份真实课程表重建（补充节次原文、下午节次改为 6~9），并移除了无人引用且含旧节次键的历史快照字段 <code>week1</code>。</p>
+<p>*v3 迁移为何"归档 + 清空"而不是平移键*（由实测故障驱动）：最初实现为逐行平移（c8→c6、c9→c7、c10→c8、c11→c9），在真实库上直接抛 <code>ConstraintError: Unable to add key to index '[weekNo+dayOfWeek+timeSlot+assistantId]'</code>。两个独立原因——① 库中曾同时存在旧标签行与新标签行（中间版本按新编号写过排班），平移会在复合唯一索引上撞键，使<strong>整个升级事务回滚、数据库不可用</strong>（用户导入课程表时报此错）；② 更根本的是<strong>键在两套编号下语义不同</strong>（c8 旧=下午第一节、新=下午第三节），逐行平移会把下午节次<strong>静默改错</strong>，正是本次要修的缺陷类型。由于排班是 (课程表, 规则) 的纯函数结果、可由"生成排班"完整重算，最终改为：把旧排班归档进 <code>schedule_snapshot</code>（保留证据）并记一条 <code>schedule.migrate</code> 操作日志，然后清空 <code>duty_schedule</code> 交由重新生成。该决策与 v2 时段键格式变更时的清空策略保持一致，<strong>不猜测、不撞键、有留痕</strong>。</p>
+<p>*实测效果*：修正后第 1 周自然覆盖全部 5 个工作日（旧编号下"周五无人"本质是该错配的产物）；每日均衡规则在其余周次继续减少"整天无人"（全周期空白天次 13 → 3，未满足时段 401 → 378）。</p>
+<ol>
+<li><strong>按助理个性化值班节数（2026-09-13 增补）</strong>：新增需求——可为单个/多个助理单独设置值班节数上下限，覆盖全局默认；未设置者沿用全局。实现：<code>Assistant</code> 档案新增可选字段 <code>customMinSections</code> / <code>customMaxSections</code>（<strong>非索引字段，无需数据库版本升级</strong>），<code>AssistantInput</code> 增加 <code>minSections</code> / <code>maxSections</code>，算法内以 <code>minSectionsOf</code> / <code>maxSectionsOf</code> 统一解析（undefined → 跟随全局），覆盖主分配、keep 预占、最少工时修复与汇总四处；<code>AssistantSummary</code> 增加 <code>minSections</code> / <code>maxSections</code> 供界面展示"目标区间"。配套：<code>assistantRepo.update</code> 改为"读取-合并-写回"（patch 中值为 undefined 的字段会被<strong>删除</strong>），否则"关闭个性化"后旧覆盖值残留继续生效；新增 <code>validateAssistantOverrides</code>（最少 ≤ 最多、非负、上限 ≥ 1），与规则校验同一入口把关。</li>
+</ol></section><section id="sec-learn"><h1>⑧ 学习指南（AI 完成后）</h1><p class="sec-desc">代码地图、五条关键调用链、算法与事务讲解、分步练习、项目经历事实表</p><p>（源文件缺失）</p></section>
+  <footer>生成于 2026-10-28 · 源文件见仓库 docs/ 目录 · 此 HTML 为汇编快照（内容以仓库 md 为准）</footer>
+</main>
+</div>
+<script>
+const links=[...document.querySelectorAll('nav a')];
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id))}})},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('section').forEach(s=>obs.observe(s));
+const q=document.getElementById('q');
+q.addEventListener('input',()=>{const k=q.value.trim();links.forEach(l=>{const t=l.textContent;l.style.display=!k||t.includes(k)?'':'none'})});
+</script>
+</body>
+</html>
