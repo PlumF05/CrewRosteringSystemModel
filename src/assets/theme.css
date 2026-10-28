@@ -1,0 +1,132 @@
+/* ============================================================
+   CRSM 全局主题（S 界面优化，2026-10-26）
+   原则：不引新框架——用 Element Plus 的 CSS 变量覆盖统一色系，
+   加少量全局细节（卡片/表格/滚动条/过渡）。所有页面零改动受益。
+   主色：靛蓝（沉稳学院风）；成功/警告/危险沿用语义色但调柔。
+   ============================================================ */
+
+:root {
+  /* Element Plus 主色阶覆盖（light-3/5/7/8/9 被 hover/disabled 等引用） */
+  --el-color-primary: #4f6ef2;
+  --el-color-primary-light-3: #7a8ef5;
+  --el-color-primary-light-5: #a3b1f8;
+  --el-color-primary-light-7: #ccd3fb;
+  --el-color-primary-light-8: #dde2fc;
+  --el-color-primary-light-9: #eef1fd;
+  --el-color-primary-dark-2: #3f58c2;
+
+  --el-color-success: #34a870;
+  --el-color-warning: #d98a2b;
+  --el-color-danger: #d9534f;
+  --el-color-error: #d9534f;
+
+  /* 卡片阴影走官方变量（.el-card.is-always-shadow 双类引用它，变量覆盖不受优先级影响） */
+  --el-box-shadow-light: var(--crsm-shadow-card);
+  --el-box-shadow: var(--crsm-shadow-card-hover);
+
+  /* 全局圆角与底色基调 */
+  --el-border-radius-base: 8px;
+  --el-bg-page: #f4f6fa;
+  --crsm-shadow-card: 0 1px 3px rgba(30, 41, 82, 0.06), 0 4px 14px rgba(30, 41, 82, 0.05);
+  --crsm-shadow-card-hover: 0 3px 8px rgba(30, 41, 82, 0.09), 0 10px 26px rgba(30, 41, 82, 0.08);
+}
+
+body {
+  margin: 0;
+  font-family: "JetBrains Mono", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--el-bg-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 卡片：统一轻阴影 + hover 微升 ----------
+   说明：按需注入的组件样式晚于本文件加载，同优先级会反向覆盖——
+   因此组件覆盖统一加 body 前缀提权，圆角用官方变量双保险。 */
+body .el-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--crsm-shadow-card);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+body .el-card:hover {
+  box-shadow: var(--crsm-shadow-card-hover);
+}
+body .el-card__header {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+/* ---------- 表格：表头底色 + 行 hover + 斑马纹 ---------- */
+body .el-table {
+  --el-table-header-bg-color: #f7f8fc;
+  --el-table-row-hover-bg-color: #eef1fd;
+}
+body .el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+}
+body .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: #fafbfd;
+}
+
+/* ---------- 对话框/抽屉：圆角与标题 ---------- */
+body .el-dialog {
+  border-radius: 14px;
+}
+body .el-dialog__title {
+  font-weight: 600;
+}
+body .el-drawer__header {
+  font-weight: 600;
+}
+
+/* ---------- 按钮：统一圆角 ---------- */
+body .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+}
+body .el-button--primary {
+  --el-button-hover-bg-color: var(--el-color-primary-light-3);
+  --el-button-active-bg-color: var(--el-color-primary-dark-2);
+}
+
+/* ---------- 消息与通知 ---------- */
+body .el-message {
+  border-radius: 10px;
+}
+
+/* ---------- 滚动条：细而淡 ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c9cede;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aab1c6;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- 页面切换过渡（router-view 由 App/MainLayout 使用） ---------- */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ---------- 全局可聚焦元素的无障碍焦点环 ---------- */
+:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5);
+  outline-offset: 2px;
+}

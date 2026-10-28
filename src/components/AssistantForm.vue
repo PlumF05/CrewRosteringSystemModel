@@ -9,7 +9,7 @@
  * 3. 校验分两层：同步规则（rules：必填/正则）+ 异步查重（学号唯一，查数据库）。
  */
 import { onMounted, reactive, ref, watch } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { assistantRepo, configRepo, operationLogRepo } from '../db/repositories'
 import type { Assistant, Identity } from '../db/schema'
 import { IDENTITY_OPTIONS } from '../utils/dict'

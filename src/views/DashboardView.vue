@@ -6,6 +6,7 @@
  */
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { User, Reading, Camera, Tickets } from '@element-plus/icons-vue'
 import {
   assistantRepo,
   courseRepo,
@@ -211,12 +212,38 @@ const ACTION_LABEL: Record<string, string> = {
   </el-card>
 
   <el-row :gutter="14" class="stats">
-    <el-col :span="6"><el-card><el-statistic title="助理人数" :value="assistantCount" /></el-card></el-col>
-    <el-col :span="6"><el-card><el-statistic title="课程记录" :value="courseCount" /></el-card></el-col>
-    <el-col :span="6"><el-card><el-statistic title="命名快照" :value="snapshotCount" /></el-card></el-col>
-    <el-col :span="6"
-      ><el-card><el-statistic title="最近操作" :value="recentLogs.length" description="条（见下）" /></el-card
-    ></el-col>
+    <el-col :span="6">
+      <el-card class="stat-card">
+        <div class="stat-row">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #4f6ef2, #7a8ef5)"><el-icon><User /></el-icon></div>
+          <el-statistic title="助理人数" :value="assistantCount" />
+        </div>
+      </el-card>
+    </el-col>
+    <el-col :span="6">
+      <el-card class="stat-card">
+        <div class="stat-row">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #34a870, #6cc79a)"><el-icon><Reading /></el-icon></div>
+          <el-statistic title="课程记录" :value="courseCount" />
+        </div>
+      </el-card>
+    </el-col>
+    <el-col :span="6">
+      <el-card class="stat-card">
+        <div class="stat-row">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #d98a2b, #e8ae63)"><el-icon><Camera /></el-icon></div>
+          <el-statistic title="命名快照" :value="snapshotCount" />
+        </div>
+      </el-card>
+    </el-col>
+    <el-col :span="6">
+      <el-card class="stat-card">
+        <div class="stat-row">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf0, #b18df5)"><el-icon><Tickets /></el-icon></div>
+          <el-statistic title="最近操作" :value="recentLogs.length" description="条（见下）" />
+        </div>
+      </el-card>
+    </el-col>
   </el-row>
 
   <el-card class="logs">
@@ -230,6 +257,14 @@ const ACTION_LABEL: Record<string, string> = {
 </template>
 
 <style scoped>
+.stat-card :deep(.el-card__body) { padding: 16px 18px; }
+.stat-row { display: flex; align-items: center; gap: 14px; }
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 20px; flex: none;
+  box-shadow: 0 4px 10px rgba(30, 41, 82, 0.18);
+}
 .actions { margin-bottom: 14px; }
 .stats { margin-bottom: 14px; }
 .logs { margin-top: 0; }
