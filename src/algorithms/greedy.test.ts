@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { scheduleAll, scheduleOneWeek } from './greedy'
+import { evaluateSchedule } from './evaluate'
 import { sectionOrdinal, sectionOrdinalRange } from '../utils/sectionOrder'
 import {
   DEFAULT_RULES,
@@ -1099,4 +1100,81 @@ describe('个性化值班节数（2026-09-13 增补）', () => {
     expect(s2.sections).toBeLessThanOrEqual(5)
     checkInvariants(input, out)
   })
+})
+
+describe('候选策略预设（F03/FE-04 补齐，2026-10-26）', () => {
+  // 场景：单时段容量 1，两人同候选——身份/稀缺/负载的差异决定谁拿到这一格
+  it('identityFirst：本科生优先于研究生获得安排', () => {
+    const grad = { id: 1, name: '研究生', identity: 'graduate' as const }
+    const under = { id: 2, name: '本科生', identity: 'undergrad' as const }
+    const r = rules2({ candidateStrategy: 'identityFirst' }, [grad, under])
+    const out = scheduleOneWeek(r)
+    const w1c1 = out.assignments.find((a) => a.dayOfWeek === 1 && a.slotKey === 'c1')
+    expect(w1c1?.assistantId).toBe(2) // 本科生先拿第一个时段
+    const rep = evaluateSchedule({ ...r, weekNo: r.weekNo ?? 1, assignments: out.assignments })
+    void rep
+  })
+
+  it('scarceFree：可选时段更稀缺者（受课程限制者）优先', () => {
+    const free = A(1)
+    const busyMan = A(2)
+    // 2 号周一/周二全天有课 → 可选时段稀缺；策略下 2 号应先拿到第一个可排时段
+    const input = mkInput({
+      rules: baseRules({ candidateStrategy: 'scarceFree' }),
+      assistants: [free, busyMan],
+      courses: [
+        course(2, 1, 1, 2),
+        course(2, 2, 1, 2),
+      ],
+    })
+    const out = scheduleOneWeek(input)
+    const first = out.assignments.find((a) => a.dayOfWeek === 3 && a.slotKey === 'c1')
+    expect(first?.assistantId).toBe(2)
+  })
+
+  it('roundRobin：已排最少者轮换优先（构造先满一人后另一人接续）', () => {
+    const r = rules2({ candidateStrategy: 'roundRobin' }, [A(1), A(2)])
+    const out = scheduleOneWeek(r)
+    // 全部时段排满时，两人节数应完全均衡（轮换语义）
+    const s1 = out.summaries.find((s) => s.assistantId === 1)!.sections
+    const s2 = out.summaries.find((s) => s.assistantId === 2)!.sections
+    expect(Math.abs(s1 - s2)).toBeLessThanOrEqual(1)
+  })
+
+  it('所有策略输出都通过独立评价器（不绕过硬约束）', () => {
+    const strategies = ['default', 'scarceFree', 'identityFirst', 'roundRobin'] as const
+    for (const st of strategies) {
+      const input = mkInput({
+        rules: baseRules({ candidateStrategy: st, minConsecutiveSections: 2 }),
+        assistants: [A(1), A(2), A(3)],
+        courses: [course(1, 2, 1, 2), course(2, 3, 1, 1)],
+      })
+      const out = scheduleOneWeek(input)
+      const rep = evaluateSchedule({ ...input, weekNo: input.weekNo, assignments: out.assignments })
+      expect(rep.legal, `策略 ${st} 输出必须合法`).toBe(true)
+      checkInvariants(input, out)
+    }
+  })
+
+  it('枚举校验：非法策略被 validateRules 拦截；normalizeRules 回填默认', () => {
+    expect(
+      validateRules(baseRules({ candidateStrategy: 'haha' as never })).map((i) => i.field),
+    ).toContain('candidateStrategy')
+    expect(normalizeRules({ weekStart: 1 } as never).candidateStrategy).toBe('default')
+  })
+
+  // —— 局部工具：两人单格竞争场景 ——
+  function rules2(strategy: { candidateStrategy: string }, assistants: Array<{ id: number; name: string; identity: 'undergrad' | 'graduate' }>) {
+    return mkInput({
+      rules: baseRules({
+        ...(strategy as { candidateStrategy: 'default' | 'scarceFree' | 'identityFirst' | 'roundRobin' }),
+        maxPerSlot: 1,
+        minSectionsPerAssistant: 1,
+        maxSectionsPerAssistant: 8,
+        workdays: [1, 2, 3],
+      }),
+      assistants: assistants.map((a) => ({ ...a, identity: a.identity })),
+      courses: [],
+    })
+  }
 })

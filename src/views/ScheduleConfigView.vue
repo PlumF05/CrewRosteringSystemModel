@@ -9,6 +9,7 @@ import { onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { configRepo, operationLogRepo } from "../db/repositories";
 import {
+  CANDIDATE_STRATEGIES,
   DEFAULT_RULES,
   normalizeRules,
   rulesDataWarnings,
@@ -178,6 +179,20 @@ function removeSection(idx: number) {
           <div class="hint">
             排班只发生在工作日的这些节次内；默认上午 1~4 节、下午 6~9 节
           </div>
+        </div>
+      </el-form-item>
+
+      <el-form-item label="候选策略">
+        <el-select v-model="form.candidateStrategy" style="width: 320px">
+          <el-option
+            v-for="s in CANDIDATE_STRATEGIES"
+            :key="s.value"
+            :value="s.value"
+            :label="s.label"
+          />
+        </el-select>
+        <div class="hint">
+          {{ CANDIDATE_STRATEGIES.find((s) => s.value === form.candidateStrategy)?.hint }}。策略只改变安排优先级，不会绕过课程/人数/连续性等硬约束。
         </div>
       </el-form-item>
 

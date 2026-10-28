@@ -46,7 +46,25 @@ export interface SchedulingRules {
    * 见 ADR-002 第七节修订记录第 4 条。
    */
   balanceDaily: boolean
+  /**
+   * 候选策略预设（S1 补齐 / F03 / FE-04，计划 §5.3）：有限枚举，只改变主分配的
+   * 候选优先级顺序，**不得绕过硬约束**（守卫与评价器不感知策略）。
+   * - default      默认：延续连续块 → 负载均衡 → 稀缺度 → id
+   * - scarceFree   稀缺空闲优先：可选时段最少的人先获得安排
+   * - identityFirst 身份优先：本科生优先于研究生获得安排
+   * - roundRobin   轮换优先：已排节数最少者优先（严格轮流）
+   */
+  candidateStrategy: CandidateStrategy
 }
+
+export type CandidateStrategy = 'default' | 'scarceFree' | 'identityFirst' | 'roundRobin'
+
+export const CANDIDATE_STRATEGIES: Array<{ value: CandidateStrategy; label: string; hint: string }> = [
+  { value: 'default', label: '默认（连续块 → 均衡 → 稀缺）', hint: '延续已有连续块者优先，其次负载均衡、稀缺度' },
+  { value: 'scarceFree', label: '稀缺空闲优先', hint: '可选时段最少的助理优先获得安排，保护高空闲者后续可排' },
+  { value: 'identityFirst', label: '身份优先（本科生先）', hint: '同候补时本科生优先于研究生获得安排' },
+  { value: 'roundRobin', label: '轮换优先', hint: '本周已排节数最少者优先，值班在人间严格轮流' },
+]
 
 export const DEFAULT_WORKDAYS: number[] = [1, 2, 3, 4, 5]
 /**
@@ -103,6 +121,7 @@ export const DEFAULT_RULES: SchedulingRules = {
   countExperiment: true,
   minConsecutiveSections: 1,
   balanceDaily: true,
+  candidateStrategy: 'default',
 }
 
 /**
@@ -188,6 +207,12 @@ export function validateRules(rules: SchedulingRules): RuleIssue[] {
 
   if (!int(rules.minConsecutiveSections) || rules.minConsecutiveSections < 1)
     issues.push({ field: 'minConsecutiveSections', message: '最少连续值班节数必须是不小于 1 的整数' })
+
+  const strategies = CANDIDATE_STRATEGIES.map((s) => s.value)
+  // 缺省（undefined，存量数据/夹具）视为默认策略——只有显式的非法值才拦截；
+  // 归一化（normalizeRules）负责补默认，两处口径一致
+  if (rules.candidateStrategy !== undefined && !strategies.includes(rules.candidateStrategy as CandidateStrategy))
+    issues.push({ field: 'candidateStrategy', message: `候选策略必须是以下之一：${strategies.join('、')}` })
 
   if (!Array.isArray(rules.workdays) || rules.workdays.length === 0) {
     issues.push({ field: 'workdays', message: '至少选择一个工作日' })
@@ -301,6 +326,8 @@ export function normalizeRules(saved: Partial<SchedulingRules> | null | undefine
   if (typeof r.minConsecutiveSections !== 'number' || r.minConsecutiveSections < 1)
     r.minConsecutiveSections = 1
   if (typeof r.balanceDaily !== 'boolean') r.balanceDaily = true
+  // 旧配置无策略字段 → 默认（2026-10-26 补齐 FE-04 时的兼容回填）
+  if (!CANDIDATE_STRATEGIES.some((s) => s.value === r.candidateStrategy)) r.candidateStrategy = 'default'
   if (typeof r.weekStart !== 'number' || typeof r.weekEnd !== 'number') {
     r.weekStart = DEFAULT_RULES.weekStart
     r.weekEnd = DEFAULT_RULES.weekEnd

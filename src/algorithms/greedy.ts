@@ -251,19 +251,35 @@ function scheduleOneWeek(input: ScheduleInput, internalAnyWeek = false): Schedul
     const key = slotKeyOf(s.dayOfWeek, s.key)
     if (keptKeys.has(key) && slotCount.get(key)! >= rules.maxPerSlot) continue
     let candidates = candidatesFor(s)
-    // 排序：延续已有连续块者优先 → 负载均衡（已排节数少者先）→ 稀缺度 → id（确定性）
-    candidates = candidates.sort((x, y) => {
-      const ex = extendsOwnBlock(x, s) ? 0 : 1
-      const ey = extendsOwnBlock(y, s) ? 0 : 1
-      if (ex !== ey) return ex - ey
-      const hx = hours.get(x.id)!
-      const hy = hours.get(y.id)!
-      if (hx !== hy) return hx - hy
-      const fx = freeSlotCount.get(x.id)!
-      const fy = freeSlotCount.get(y.id)!
-      if (fx !== fy) return fx - fy
-      return x.id - y.id
-    })
+    // 候选优先级（计划 §5.3 / FE-04，2026-10-26 补齐）：策略只改变排序维度的前后，
+    // 约束闸门（课程/容量/上限/连续段守卫）与评价器完全不感知策略——不得绕过硬约束。
+    //   default      延续块 → 负载 → 稀缺 → id
+    //   scarceFree   稀缺 → 延续块 → 负载 → id
+    //   identityFirst 身份（本科先）→ 延续块 → 负载 → id
+    //   roundRobin   负载 → 延续块 → 稀缺 → id（严格轮流）
+    const byExtends = (x: AssistantInput, y: AssistantInput) =>
+      Number(extendsOwnBlock(y, s)) - Number(extendsOwnBlock(x, s)) // 延续块者（true）优先
+    const byHours = (x: AssistantInput, y: AssistantInput) => hours.get(x.id)! - hours.get(y.id)!
+    const byScarce = (x: AssistantInput, y: AssistantInput) => freeSlotCount.get(x.id)! - freeSlotCount.get(y.id)!
+    const byIdentity = (x: AssistantInput, y: AssistantInput) =>
+      (x.identity === 'undergrad' ? 0 : 1) - (y.identity === 'undergrad' ? 0 : 1)
+    const byId = (x: AssistantInput, y: AssistantInput) => x.id - y.id
+    const chain = (...cmps: Array<(x: AssistantInput, y: AssistantInput) => number>) => (x: AssistantInput, y: AssistantInput) => {
+      for (const cmp of cmps) {
+        const r = cmp(x, y)
+        if (r !== 0) return r
+      }
+      return 0
+    }
+    const comparator: (x: AssistantInput, y: AssistantInput) => number =
+      rules.candidateStrategy === 'scarceFree'
+        ? chain(byScarce, byExtends, byHours, byId)
+        : rules.candidateStrategy === 'identityFirst'
+          ? chain(byIdentity, byExtends, byHours, byId)
+          : rules.candidateStrategy === 'roundRobin'
+            ? chain(byHours, byExtends, byScarce, byId)
+            : chain(byExtends, byHours, byScarce, byId)
+    candidates = candidates.sort(comparator)
     for (const a of candidates) {
       if (slotCount.get(key)! >= rules.maxPerSlot) break
       if (slotMembers.get(key)!.has(a.id)) continue

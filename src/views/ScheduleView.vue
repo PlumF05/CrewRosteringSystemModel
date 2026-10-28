@@ -399,6 +399,11 @@ function weekChangeLabel(w: WeeklySchedule): string {
   return `+${d.added.length} / -${d.removed.length}`
 }
 
+/** 质量报告（计划 §5.3 / FE-04）：本周没有任何安排的工作日数（与评价器 metrics.emptyDays 同义） */
+function emptyDaysOfWeek(w: WeeklySchedule): number {
+  return rules.value.workdays.filter((d) => !w.assignments.some((a) => a.dayOfWeek === d)).length
+}
+
 /**
  * 导出时是否自动填入联系电话（2026-09-13 修订）。
  * 默认 true —— 导出即刻完成，不需要二次确认；且**只含"电话"这一项个人信息**。
@@ -688,6 +693,16 @@ const storedGrid = computed(() => buildGrid(storedGridKeys.value, storedGridDays
               size="small"
             >
               {{ weekChangeLabel(row as WeeklySchedule) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="空白天" width="90">
+          <template #default="{ row }">
+            <el-tag
+              :type="emptyDaysOfWeek(row as WeeklySchedule) === 0 ? 'success' : 'danger'"
+              size="small"
+            >
+              {{ emptyDaysOfWeek(row as WeeklySchedule) }}
             </el-tag>
           </template>
         </el-table-column>
